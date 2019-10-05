@@ -39,8 +39,7 @@ SRPG Studio Version:1.161
 		skills = SkillControl.getDirectSkillArray(unit, SkillType.CUSTOM, 'stateGuard');
 
 		for (var index = 0; index < skills.length; index++) {
-			
-			if (skills[index].skill.custom.guardStateID === state.getID()) {
+			if (skills[index].skill.custom.guardStateID === state.getId()) {
 				return true;
 			}
 		};
