@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ポジションエクスチェンジの杖 ver 1.0
+　ポジションエクスチェンジの杖 ver 1.1
 
 ■作成者
 キュウブ
@@ -12,11 +12,14 @@
 カスタム設定のアイテムでカスタムキーワードに"positionExchange"を設定するだけでおｋ
 
 ■更新履歴
+ver 1.1 (2019/10/16)
+ver 1.203対応
+
 ver 1.0 (2019/10/6)
 初版作成
 
 ■対応バージョン
-SRPG Studio Version:1.161
+SRPG Studio Version:1.203
 
 ■規約
 ・利用はSRPG Studioを使ったゲームに限ります。
@@ -132,6 +135,11 @@ var PositionExchangeItemAI = defineObject(RescueItemAI,
 }
 );
 
+var PositionExchangeItemPotency = defineObject(RescueItemPotency,
+{
+}
+);
+
 (function(){
 
 	var alias1 = ItemPackageControl.getCustomItemSelectionObject;
@@ -183,5 +191,15 @@ var PositionExchangeItemAI = defineObject(RescueItemAI,
 			return alias5.call(this, item, keyword);
 		}
 	};
+
+	var alias6 = ItemPackageControl.getCustomItemPotencyObject;
+	ItemPackageControl.getCustomItemPotencyObject = function(item, keyword) {
+		if (keyword === POSITION_EXCHANGE_CUSTOM_KEYWORD) {
+			return PositionExchangeItemPotency;
+		}
+		else {
+			return alias6.call(this, item, keyword);
+		}
+	}
 
 })();
