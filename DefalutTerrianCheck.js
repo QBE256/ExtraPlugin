@@ -1,5 +1,5 @@
 /*
-  空白地形チェック機能
+  空白地形チェック機能 ver 1.1
 
 [概要]
 このプラグインを導入するとで地形名が"空白"となっている箇所が赤く染まります。
@@ -13,6 +13,10 @@ srpg studio ver 1.161以降
 
 [製作者名]
 キュウブ
+
+[更新履歴]
+ver 1.1
+そのまま作品公開しても問題が起きないようにテストプレイ時にしか動作しないように変更
 
 [規約]
 ・利用はSRPG Studioを使ったゲームに限ります。
@@ -36,7 +40,7 @@ var DEFALUT_TERRIAN_NAME = "空白";
 		this._defaultTerrianAddressArray = [];
 		temp1.call(this);
 		
-		if (!mapInfo) {
+		if (!mapInfo || root.isTestPlay() === false) {
 			return;
 		}
 
@@ -69,7 +73,7 @@ var DEFALUT_TERRIAN_NAME = "空白";
 
 		temp2.call(this);
 
-		if (!session) {
+		if (!session || root.isTestPlay() === false) {
 			return;
 		}
 
