@@ -12,4 +12,4 @@ var MAX_DAMAGE = 255;//ここにダメージ上限値を入力します
 		
 		return damage;
 	}
-});
+})();
