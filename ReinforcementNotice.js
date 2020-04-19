@@ -41,14 +41,21 @@ SRPG Studio Version:1.161
 	};
 
 	var alias = MapLayer.drawUnitLayer;
+	MapLayer._preTurnCount = 0;
 	MapLayer.drawUnitLayer = function() {
-		var session;
+		var session, turnType;
 		
 		session = root.getCurrentSession();
 		alias.call(this);
 
-		if (session !== null && session.getTurnType() === TurnType.PLAYER && this._counter.getAnimationIndex2() % 2 === 0) {
-			this._drawReinforcementNotice();
+		if (session !== null) {
+			turnType = session.getTurnType();
+			if (turnType === TurnType.PLAYER && this._counter.getAnimationIndex2() % 2 === 0 && session.getTurnCount() > this._preTurnCount) {
+				this._drawReinforcementNotice();
+			}
+			else if (turnType === TurnType.ENEMY) {
+				this._preTurnCount = session.getTurnCount();
+			}
 		}
 	};
 
