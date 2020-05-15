@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ストックとユニット交換画面をまとめる ver 1.0
+　ストックとユニット交換画面をまとめる ver 1.1
 
 ■作成者
 キュウブ
@@ -11,6 +11,10 @@
 リソースは表示名以外はストック交換画面の設定を流用します。
 
 ■更新履歴
+ver 1.1 (2020/05/16)
+最新版でも動くように修正
+無理矢理だけどアイテムのカテゴリ切り替え時にアイテム情報が切り替わらないバグを修正してみた
+
 ver 1.0 (2020/05/14)
 初版公開
 
@@ -103,7 +107,7 @@ var CategoryStockAndUnitItemTradeScreen = defineObject(CategoryStockItemTradeScr
 		this._dataChanger = createObject(VerticalDataChanger);
 
 		this._stockCategory = createObject(StockCategory);
-		this._stockCategory.setStockCategory();
+		this._stockCategory.setStockCategory(this._stockItemWindow);
 	},
 
 	_completeScreenMemberData: function(screenParam) {
@@ -145,10 +149,10 @@ var CategoryStockAndUnitItemTradeScreen = defineObject(CategoryStockItemTradeScr
 			this._processMode(StockItemTradeMode.OPERATION);
 		}
 		else if (input === ScrollbarInput.NONE) {
-			if (this._stockItemWindow.isIndexChanged()) {
-				item = this._stockItemWindow.getCurrentItem();
-				this._itemInfoWindow.setInfoItem(item);
-			}
+			//if (this._stockItemWindow.isIndexChanged()) {
+			item = this._stockItemWindow.getCurrentItem();
+			this._itemInfoWindow.setInfoItem(item);
+			//}
 		}
 		
 		return MoveResult.CONTINUE;
@@ -221,6 +225,7 @@ var StockAndUnitItemListWindow = defineObject(ItemListWindow,
 	},
 
 	getItemCount: function() {
+		var item;
 		var itemCount = StockItemControl.getStockItemCount();
 		var unitList = PlayerList.getAliveDefaultList();
 		var unitCount = unitList.getCount();
