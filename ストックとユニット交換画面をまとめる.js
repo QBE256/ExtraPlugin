@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ストックとユニット交換画面をまとめる ver 1.1
+　ストックとユニット交換画面をまとめる ver 1.2
 
 ■作成者
 キュウブ
@@ -11,6 +11,9 @@
 リソースは表示名以外はストック交換画面の設定を流用します。
 
 ■更新履歴
+ver 1.2 (2020/05/18)
+ユニット切り替え時にアイテムリストが更新されないバグを修正
+
 ver 1.1 (2020/05/16)
 最新版でも動くように修正
 無理矢理だけどアイテムのカテゴリ切り替え時にアイテム情報が切り替わらないバグを修正してみた
@@ -158,6 +161,57 @@ var CategoryStockAndUnitItemTradeScreen = defineObject(CategoryStockItemTradeScr
 		return MoveResult.CONTINUE;
 	},
 	
+	_moveOperation: function() {
+		var index;
+		var input = this._itemOperationWindow.moveWindow();
+		var result = MoveResult.CONTINUE;
+
+		if (input === ScrollbarInput.SELECT) {
+			index = this._itemOperationWindow.getOperationIndex();
+			if (index === 0 && this.isExtractAllowed()) {
+				this._processMode(StockItemTradeMode.EXTRACT);
+			}
+			else if (index === 1 && this.isStoreAllowed()) {
+				this._processMode(StockItemTradeMode.STORE);
+			}
+			else if (index === 2 && this.isStoreAllowed()) {
+				this._storeAllItem();
+			}
+		}
+		else if (input === ScrollbarInput.CANCEL) {
+			if (this._isAction) {
+				// 何らかの交換を行った場合は、交換済みを示す値を返す
+				this._resultCode = StockItemTradeResult.TRADEEND;
+			}
+			else {
+				this._resultCode = StockItemTradeResult.TRADENO;
+			}
+			
+			// アイテムの更新が終わった後の処理を行う
+			ItemControl.updatePossessionItem(this._unit);
+			
+			result = MoveResult.END;
+		}
+		else if (input === ScrollbarInput.OPTION) {
+			this._openMenu();
+		}
+		else if (this.getCycleMode() === StockItemTradeMode.OPERATION) {
+			if (this._unitSimpleWindow === null || this._unitList === null) {
+				return result;
+			}
+			
+			index = this._dataChanger.checkDataIndex(this._unitList, this._unit); 
+			if (index !== -1) {
+				this._unit = this._unitList.getData(index);
+				this._unitItemWindow.setUnitItemFormation(this._unit);
+				this._unitSimpleWindow.setFaceUnitData(this._unit);
+				this._stockItemWindow.setExceptUnit(this._unit);
+				this._updateStockWindow();
+			}
+		}
+		
+		return result;
+	},
 	
 	_extractItem: function() {
 		var object = this._stockItemWindow.getCurrentObject();
