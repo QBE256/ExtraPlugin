@@ -26,7 +26,7 @@ ver 1.0 (2020/06/10)
 初版公開
 
 ■対応バージョン
-SRPG Studio Version:1.161
+SRPG Studio Version:1.211
 
 ■規約
 ・利用はSRPG Studioを使ったゲームに限ります。
