@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　経験値マイナスコマンド ver 1.0
+　経験値マイナスコマンド ver 1.1
 
 ■作成者
 キュウブ
@@ -19,6 +19,9 @@
 ※オンの間は常時減少してしまうので、コマンドの実行が完了したら即オフに戻す事を推奨します。
 
 ■更新履歴
+ver 1.1 (2020/06/11)
+バグ修正
+
 ver 1.0 (2020/06/10)
 初版公開
 
@@ -58,7 +61,7 @@ var MINUS_EXPERIENCE_MODE_SWITCH_ID = 0;
 
 		this._getExp = eventCommandData.getExperienceValue();
 
-		if (globalSwitchTable.isSwitchOn(globalSwitchTable.getSwitchIndexFromId(MINUS_EXPERIENCE_MODE_SWITCH_ID) === true)) {
+		if (globalSwitchTable.isSwitchOn(globalSwitchTable.getSwitchIndexFromId(MINUS_EXPERIENCE_MODE_SWITCH_ID)) === true) {
 			this._getExp *= -1;
 		}
 
