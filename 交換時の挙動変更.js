@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　交換時の挙動変更 ver1.0
+　交換時の挙動変更 ver1.1
 ■作成者
 キュウブ
 
@@ -9,6 +9,9 @@
 （SRPG Studio本来の挙動はカーソルを交換先へ移動させる手間がかかっていましたが、それが無くなります）
 
 ■更新履歴
+ver1.1 2020/11/22
+交換先がアイテムで埋まっている時にエラーになる不具合を修正
+
 ver1.0 2020/11/22
 初版
 
@@ -29,7 +32,7 @@ SRPG Studio Version:1.161
 (function(){
 	var alias = UnitItemTradeScreen._moveTradeSelect;
 	UnitItemTradeScreen._moveTradeSelect = function() {
-		var moveResult;
+		var moveResult, tradeDestinationUnit, destinationIndex, destinationWindow;
 
 		if (this._isSelect) {
 			return alias.call(this);
@@ -39,13 +42,22 @@ SRPG Studio Version:1.161
 		if (this._isSrcScrollbarActive) {
 			this._setActive(false);
 			this._isSrcScrollbarActive = false;
-			this._itemListDest.setItemIndex(UnitItemControl.getPossessionItemCount(this._unitDest));
+			tradeDestinationUnit = this._unitDest;
+			destinationWindow = this._itemListDest;
 		}
 		else {
 			this._isSrcScrollbarActive = true;
 			this._setActive(true);
-			this._itemListSrc.setItemIndex(UnitItemControl.getPossessionItemCount(this._unitSrc));
+			tradeDestinationUnit = this._unitSrc;
+			destinationWindow = this._itemListSrc;
 		}
+
+		destinationIndex = UnitItemControl.getPossessionItemCount(tradeDestinationUnit);
+		// 交換先がアイテムで埋まっている時は、交換元と同じインデックスに移動させる
+		if (destinationIndex >= DataConfig.getMaxUnitItemCount()) {
+			destinationIndex = this._selectIndex;
+		}
+		destinationWindow.setItemIndex(destinationIndex);
 
 		return moveResult;
 	};
