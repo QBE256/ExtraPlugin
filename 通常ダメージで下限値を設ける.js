@@ -1,4 +1,4 @@
-// 攻撃力20未満の時は1,20以上の時は(攻撃力÷10)+1 を通常攻撃の最低ダメージとする
+// 攻撃力20未満の時は1,20以上の時は攻撃力÷10 を通常攻撃の最低ダメージとする
 // ※最小化攻撃やダメージ半減などの特殊効果を受ければ最低ダメージ未満にはなる
 
 DamageCalculator.calculateDamage = function(active, passive, weapon, isCritical, activeTotalStatus, passiveTotalStatus, trueHitValue) {
@@ -34,7 +34,7 @@ DamageCalculator.calculateDamage = function(active, passive, weapon, isCritical,
 };
 
 /*
- 攻撃力20未満の時は1,20以上の時は(攻撃力÷10)+1 を通常攻撃の最低ダメージとする
+ 攻撃力20未満の時は1,20以上の時は攻撃力÷10 を通常攻撃の最低ダメージとする
  変更したい時はここの計算式をいじる
 */
 DamageCalculator._calculateMinNormalDamage = function(pow) {
@@ -42,6 +42,6 @@ DamageCalculator._calculateMinNormalDamage = function(pow) {
 		return 1;
 	}
 	else {
-		return Math.floor(pow / 10) + 1;
+		return Math.floor(pow / 10);
 	}
 };
