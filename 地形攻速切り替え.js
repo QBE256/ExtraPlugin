@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　地形高速切り替え ver 1.0
+　地形高速切り替え ver 1.1
 
 ■作成者
 キュウブ
@@ -8,133 +8,14 @@
 カスパラで設定したマップチップを4フレーム単位で切り替える事ができる(切り替え先は全く同じ効果の地形にしとかないと、タイミングゲーになるので注意)
 
 ■使い方
-以下のようなカスパラをマップに記入する
-changeMapChipInfo:{
-	mapChips:[
-		// ここに特定のマス目の切り替え情報を記入する
-		{
-			position: [<x座標>, <y座標>], //<---どこのマスを切り替えるか座標を記入
-			currentIndex: 0, //<---ここは必ず currentIndex:0 とだけ書いておいてください
-			changeChips:[
-				{
-					// ここには1枚目に表示されるマップチップ情報を記入する
-					isRuntime:<ランタイム画像だったらtrue、オリジナルだったらfalse>,
-					id: <画像ID>,
-					position: [<x座標>, <y座標>] //<---描画するマップチップの座標を記入
-				},
-				{
-					// ここには2枚目に表示されるマップチップ情報を記入する
-					isRuntime: ...
-					id: ...
-					position ...
-				},
-				{
-					// ここには3枚目に表示されるマップチップ情報を記入する
-					isRuntime: ...
-					id: ...
-					position ...
-				},
-				{
-					// ここには4枚目に表示されるマップチップ情報を記入する
-					isRuntime: ...
-					id: ...
-					position ...
-				},
-				...
-				{
-	
-				}
-			]
-		},
-		// ここに他のマス目の情報を記入する
-		{
-			position:...,
-			currentIndex: 0, //<---ここは必ず currentIndex:0 とだけ書いておいてください
-			changeChips:[
-				{
-					// ここには1枚目に表示されるマップチップ情報を記入する
-				},
-				{
-					// ここには2枚目に表示されるマップチップ情報を記入する
-				},
-				{
-					// ここには3枚目に表示されるマップチップ情報を記入する
-				},
-				...
-				{
-	
-				}
-			]
-		},
-		...
-	]
-}
+以下のようなカスパラを地形効果に記入する(該当地形には全て記入しておく必要あり)
+isChangeMapChip:true
 
-例:記入例
-changeMapChipInfo:{
-	mapChips:[
-		{
-			position: [0, 0],
-			currentIndex: 0,
-			changeChips:[
-				{
-					isRuntime:true,
-					id: 0,
-					position: [1, 1]
-				},
-				{
-					isRuntime:true,
-					id: 0,
-					position: [1, 2]
-				},
-				{
-					isRuntime:true,
-					id: 0,
-					position: [1, 3]
-				}
-			]
-		},
-		{
-			position: [1, 1],
-			currentIndex: 0,
-			changeChips:[
-				{
-					isRuntime:true,
-					id: 0,
-					position: [2, 2]
-				},
-				{
-					isRuntime:true,
-					id: 0,
-					position: [2, 3]
-				},
-				{
-					isRuntime:true,
-					id: 0,
-					position: [2, 4]
-				}
-			]
-		},
-		{
-			position: [2, 3],
-			currentIndex: 0,
-			changeChips:[
-				{
-					isRuntime:true,
-					id: 0,
-					position: [3, 0]
-				},
-				{
-					isRuntime:true,
-					id: 0,
-					position: [3, 1]
-				}
-			]
-		}
-	]
-}
 
 ■更新履歴
+ver 1.1 (2021/2/20)
+仕様変更
+
 ver 1.0 (2021/2/17)
 公開 
 
@@ -164,43 +45,39 @@ SRPG Studio Version:1.161
 
 	var alias2 = MapLayer.moveMapLayer;
 	MapLayer.moveMapLayer = function() {
-		var session = root.getCurrentSession();
-		var mapChip, changeMapChipInfo;
-
-		if (session !== null) {
-			changeMapChipInfo = session.getCurrentMapInfo().custom.changeMapChipInfo;
-		}
-
-		if (changeMapChipInfo && this._mapChipCounter.moveCycleCounter() !== MoveResult.CONTINUE) {
-			for (var index = 0; index < changeMapChipInfo.mapChips.length; index++) {
-				mapChip = changeMapChipInfo.mapChips[index];
-				mapChip.currentIndex = mapChip.currentIndex < mapChip.changeChips.length - 1 ?
-										mapChip.currentIndex + 1 : 0;
-
-			}
-		}
-
+		this._mapChipCounter.moveCycleCounter();
 		return alias2.call(this);
 	};
 
 	MapLayer._drawCustomAnimationMapSet = function() {
+		var generator, nextHandle;
+		var terrian, maxResourceSrcY, resourceSrcX, resourceSrcY, currentHandle;
 		var session = root.getCurrentSession();
-		var generator, mapChip, changeChip, handle, changeMapChipInfo;
+		var mapWidth = session.getCurrentMapInfo().getMapWidth();
+		var mapHeight = session.getCurrentMapInfo().getMapHeight();
 
-		if (session !== null) {
-			changeMapChipInfo = session.getCurrentMapInfo().custom.changeMapChipInfo;
-		}
-
-		if (!changeMapChipInfo || this._mapChipCounter.getCounter() !== 0) {
+		if (this._mapChipCounter.getCounter() !== 0) {
 			return;
 		}
-
 		generator = root.getEventGenerator();
-		for (var index = 0; index < changeMapChipInfo.mapChips.length; index++) {
-			mapChip = changeMapChipInfo.mapChips[index];
-			changeChip = mapChip.changeChips[mapChip.currentIndex];
-			handle = root.createResourceHandle(changeChip.isRuntime, changeChip.id, 0, changeChip.position[0], changeChip.position[1]);
-			generator.mapChipChange(mapChip.position[0], mapChip.position[1], true, handle);
+		for (var x = 0; x < mapWidth; x++) {
+			for (var y = 0; y < mapHeight; y++) {
+				terrian = session.getTerrainFromPos(x, y, true);
+				if (terrian.custom.isChangeMapChip === true) {
+					maxResourceSrcY = terrian.getMapChipImage().getHeight() / 32;
+					currentHandle = session.getMapChipGraphicsHandle(x, y, true);
+					resourceSrcX = currentHandle.getSrcX();
+					resourceSrcY = currentHandle.getSrcY();
+					nextHandle = root.createResourceHandle(
+										false,
+										currentHandle.getResourceId(),
+										0, 
+										resourceSrcX,
+										++resourceSrcY < maxResourceSrcY ? resourceSrcY : 0
+									);
+					generator.mapChipChange(x, y, true, nextHandle);
+				}
+			}
 		}
 		generator.execute();
 	};
