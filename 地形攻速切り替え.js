@@ -1,11 +1,12 @@
 /*--------------------------------------------------------------------------
-　地形高速切り替え ver 1.1
+　地形高速切り替え ver 1.2
 
 ■作成者
 キュウブ
 
 ■概要
-カスパラで設定したマップチップを4フレーム単位で切り替える事ができる(切り替え先は全く同じ効果の地形にしとかないと、タイミングゲーになるので注意)
+カスパラで設定したマップチップを4フレーム単位で切り替える事ができる
+画像を上に載せるだけなので透過チップは使い辛いと思う
 
 ■使い方
 以下のようなカスパラを地形効果に記入する(該当地形には全て記入しておく必要あり)
@@ -13,6 +14,9 @@ isChangeMapChip:true
 
 
 ■更新履歴
+ver 1.2 (2021/2/22)
+仕様変更
+
 ver 1.1 (2021/2/20)
 仕様変更
 
@@ -36,10 +40,15 @@ SRPG Studio Version:1.161
 (function(){
 	var alias1 = MapLayer.prepareMapLayer;
 	MapLayer._mapChipCounter = null;
+	MapLayer._customAnimationMapChips = null;
 	MapLayer.prepareMapLayer = function() {
+		var terrian;
+
 		this._mapChipCounter = createObject(CycleCounter);
 		this._mapChipCounter.setCounterInfo(4);
 		this._mapChipCounter.disableGameAcceleration();
+		this._customAnimationMapChips = null;
+
 		alias1.call(this);
 	};
 
@@ -50,36 +59,54 @@ SRPG Studio Version:1.161
 	};
 
 	MapLayer._drawCustomAnimationMapSet = function() {
-		var generator, nextHandle;
+		var customAnimationMapChip;
 		var terrian, maxResourceSrcY, resourceSrcX, resourceSrcY, currentHandle;
 		var session = root.getCurrentSession();
 		var mapWidth = session.getCurrentMapInfo().getMapWidth();
 		var mapHeight = session.getCurrentMapInfo().getMapHeight();
+		var scrollX = session.getScrollPixelX();
+		var scrollY = session.getScrollPixelY();
 
-		if (this._mapChipCounter.getCounter() !== 0) {
-			return;
-		}
-		generator = root.getEventGenerator();
-		for (var x = 0; x < mapWidth; x++) {
-			for (var y = 0; y < mapHeight; y++) {
-				terrian = session.getTerrainFromPos(x, y, true);
-				if (terrian.custom.isChangeMapChip === true) {
-					maxResourceSrcY = terrian.getMapChipImage().getHeight() / 32;
-					currentHandle = session.getMapChipGraphicsHandle(x, y, true);
-					resourceSrcX = currentHandle.getSrcX();
-					resourceSrcY = currentHandle.getSrcY();
-					nextHandle = root.createResourceHandle(
-										false,
-										currentHandle.getResourceId(),
-										0, 
-										resourceSrcX,
-										++resourceSrcY < maxResourceSrcY ? resourceSrcY : 0
-									);
-					generator.mapChipChange(x, y, true, nextHandle);
+		if (this._customAnimationMapChips === null) {
+			this._customAnimationMapChips = [];
+			for (var x = 0; x < mapWidth; x++) {
+				for (var y = 0; y < mapHeight; y++) {
+					terrian = session.getTerrainFromPos(x, y, true);
+					if (terrian.custom.isChangeMapChip === true) {
+						currentHandle = session.getMapChipGraphicsHandle(x, y, true);
+						this._customAnimationMapChips.push({
+							x: x,
+							y: y,
+							handle: currentHandle,
+							height: terrian.getMapChipImage().getHeight() / 32
+						});
+					}
 				}
+			}			
+		}
+
+		for (var index = 0; index < this._customAnimationMapChips.length; index++) {
+			customAnimationMapChip = this._customAnimationMapChips[index];
+
+			GraphicsRenderer.drawImage(
+				customAnimationMapChip.x * 32 - scrollX, 
+				customAnimationMapChip.y * 32 - scrollY, 
+				customAnimationMapChip.handle, 
+				GraphicsType.MAPCHIP
+			);
+
+			if (this._mapChipCounter.getCounter() === 0) {
+				resourceSrcX = customAnimationMapChip.handle.getSrcX();
+				resourceSrcY = customAnimationMapChip.handle.getSrcY();
+				customAnimationMapChip.handle = root.createResourceHandle(
+													false,
+													customAnimationMapChip.handle.getResourceId(),
+													0, 
+													resourceSrcX,
+													++resourceSrcY < customAnimationMapChip.height ? resourceSrcY : 0
+												);	
 			}
 		}
-		generator.execute();
 	};
 
 	MapLayer.drawMapLayer = function() {
