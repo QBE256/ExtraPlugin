@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ユニット選択、コマンド選択、出撃準備で自動イベント発火 ver 1.1
+　ユニット選択、コマンド選択、出撃準備で自動イベント発火 ver 1.2
 
 ■作成者
 キュウブ
@@ -30,6 +30,13 @@ autoEventType: 0
 実行条件にアクティブ状態-ナッシュといった設定を付加して、ナッシュを摘まんだ時だけ発生するイベントを設定できます。
 
 ■更新履歴
+ver 1.2 (2021/2/24)
+敵、同盟軍を掴んだ時はイベントが発火しないよう修正
+
+※ ユニット掴んだ瞬間にアクティブ化させるプラグインでは想定外のイベントを発生を避けるため、敵、同盟をアクティブ化は制限している。
+※ よって、自軍ユニットがアクティブ状態のままとなるので、敵同盟軍を掴んだ時に自軍ユニット-アクティブのイベントが発生する可能性がある。それを防止するための措置。
+※ これらの制限を解除したい場合は両プラグインを改変する事。
+
 ver 1.1 (2021/2/20)
 readme更新
 
@@ -115,7 +122,11 @@ SRPG Studio Version:1.161
 
 	MapSequenceArea._changeEventMode = function() {
 		var result;
-		
+
+		if (this._targetUnit.getUnitType() !== UnitType.PLAYER) {
+			this.changeCycleMode(MapSequenceAreaMode.AREA);
+			return;
+		}
 		result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
 		if (result === EnterResult.NOTENTER) {
 			this._doEventEndAction();
@@ -185,7 +196,7 @@ SRPG Studio Version:1.161
 
 	MapSequenceCommand._changeEventMode = function() {
 		var result;
-		
+
 		result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
 		if (result === EnterResult.NOTENTER) {
 			this._doEventEndAction();
