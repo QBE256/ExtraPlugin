@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ユニット選択、コマンド選択、出撃準備で自動イベント発火 ver 1.2
+　ユニット選択、コマンド選択、出撃準備で自動イベント発火 ver 1.3
 
 ■作成者
 キュウブ
@@ -10,6 +10,7 @@
 ・ユニットを移動させてユニットコマンドが出現した時
 ・マップでマップコマンドを開いた時
 ・出撃準備コマンドが開いた時
+・ユニットのステータス画面を開いた時
 
 ■使い方
 起こしたい自動イベント->詳細情報->カスタムパラメータにて
@@ -20,8 +21,9 @@ autoEventType:<起こしたいイベントタイプの値>
 イベントタイプの値は以下の通りです。
 ユニットを摘まんだ時に起こしたいイベント: 0
 ユニットが移動してコマンドが開いた時に起こしたいイベント: 1
-出撃準備コマンドが開いた時に起こしたいイベント: 2
-マップコマンドが開いた時に起こしたいイベント: 3
+出撃準備コマンドを開いた時に起こしたいイベント: 2
+マップコマンドを開いた時に起こしたいイベント: 3
+ユニットのステータス画面を開いた時に起こしたいイベント: 4
 
 例えば、
 autoEventType: 0
@@ -29,7 +31,26 @@ autoEventType: 0
 ※別途"ユニットを掴んだ瞬間にアクティブ化させる"プラグインを導入すれば
 実行条件にアクティブ状態-ナッシュといった設定を付加して、ナッシュを摘まんだ時だけ発生するイベントを設定できます。
 
+
+※※※※※※2021/3/4追記※※※※※※
+ユニットのステータス画面を開いた時にもイベントが実行されるようになりました。
+autoEventType: 4 で設定可能です。
+
+さらに特定のユニットのステータス画面を開いた場合にのみイベントを起こしたい場合は、
+targetUnitId: <ユニットのID>
+をカスパラに追加してください。
+ユニットIDはエディタに表示されているものではなく、実際のゲーム画面上で設定されているIDとなります。
+自軍ユニットの場合はエディタ上のIDで問題ありませんが、
+敵軍、同盟軍、ゲストなどの場合はエディタのIDに65536*nの分だけ加算する必要があります(例えば、0番の敵IDは65536、0番の同盟IDは196608となっています)。
+IDを知りたい場合は"ユニット概要"コマンドでチェックしてください。
+
+また、実行条件が何も設定されていない場合は出撃準備時にステータス画面を開いてもイベントが起こせてしまいます。
+避けたい場合は「自軍ターン-1ターン目以上」といった条件を付加しておくと良いでしょう。
+
 ■更新履歴
+ver 1.3 (2021/3/4)
+ユニットのステータス画面を開いた時にも自動開始イベントが起こせるように対応
+
 ver 1.2 (2021/2/24)
 敵、同盟軍を掴んだ時はイベントが発火しないよう修正
 
@@ -383,13 +404,83 @@ SRPG Studio Version:1.161
 		
 		return EnterResult.NOTENTER;
 	};
+
+	UnitMenuMode.AUTOEVENTCHECK = 200;
+	UnitMenuScreen._eventChecker = null;
+	var alias15 = UnitMenuScreen._prepareScreenMemberData;
+	UnitMenuScreen._prepareScreenMemberData = function(screenParam) {
+		this._eventChecker = createObject(UnitMenuEventChecker);
+		alias15.call(this, screenParam);
+	};
+
+	var alias16 = UnitMenuScreen._completeScreenMemberData;
+	UnitMenuScreen._completeScreenMemberData = function(screenParam) {
+		alias16.call(this, screenParam);
+		this._changeEventMode();
+	};
+
+	var alias17 = UnitMenuScreen.moveScreenCycle;
+	UnitMenuScreen.moveScreenCycle = function() {
+		var mode = this.getCycleMode();
+		var result = MoveResult.CONTINUE;
+
+		if (mode === UnitMenuMode.AUTOEVENTCHECK) {
+			this._moveAnimation();
+			result = this._moveAutoEventCheck();
+		}
+		else {
+			result = alias17.call(this);
+		}
+		
+		return result;
+	};
+
+	var alias18 = UnitMenuScreen._setNewTarget;
+	UnitMenuScreen._setNewTarget = function(unit) {
+		alias18.call(this, unit);
+		this._changeEventMode();
+	};
+
+	UnitMenuScreen._moveAutoEventCheck = function() {
+		if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
+			this._doEventEndAction();
+			MapLayer.getMarkingPanel().updateMarkingPanel();
+			this.changeCycleMode(UnitMenuMode.TOP);
+		}
+
+		return MoveResult.CONTINUE;
+	};
+
+	// スクリプトエラー対策のセーブはここでは行わない
+	// 念の為、ゲームオーバー判定を入れるがここのイベントでユニットロスト処理を入れる事は望ましくない
+	UnitMenuScreen._doEventEndAction = function() {
+		if (GameOverChecker.isGameOver()) {
+			GameOverChecker.startGameOver();
+		}
+	};
+
+	UnitMenuScreen._changeEventMode = function() {
+		var result;
+
+		this._eventChecker.setTargetUnit(this._unit);
+		result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
+
+		if (result === EnterResult.NOTENTER) {
+			this._doEventEndAction();
+			this.changeCycleMode(UnitMenuMode.TOP);
+		}
+		else {
+			this.changeCycleMode(UnitMenuMode.AUTOEVENTCHECK);
+		}
+	};
 })();
 
 var AutoEventType = {
 	UNIT_SELECT: 0,
 	UNIT_COMMAND: 1,
 	SETUP_COMMAND: 2,
-	MAP_COMMAND: 3
+	MAP_COMMAND: 3,
+	UNITMENU_COMMAND: 4
 };
 
 EventChecker._isTargetAutoEventType = function(event) {
@@ -424,6 +515,26 @@ var MapCommandEventChecker = defineObject(EventChecker,
 {
 	_isTargetAutoEventType: function(event) {
 		return event.custom.autoEventType === AutoEventType.MAP_COMMAND;
+	}
+}
+);
+
+var UnitMenuEventChecker = defineObject(EventChecker,
+{
+	_targetUnit: null,
+
+	setTargetUnit: function(unit) {
+		this._targetUnit = unit;
+	},
+
+	_isTargetAutoEventType: function(event) {
+		var isTargetUnit = true;
+
+		if (typeof event.custom.targetUnitId === 'number' && this._targetUnit) {
+			isTargetUnit = this._targetUnit.getId() === event.custom.targetUnitId;
+		}
+
+		return isTargetUnit && event.custom.autoEventType === AutoEventType.UNITMENU_COMMAND;
 	}
 }
 );
