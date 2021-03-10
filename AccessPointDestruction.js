@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　村破壊イベントを簡単に設定できるスクリプト ver 1.0
+　村破壊イベントを簡単に設定できるスクリプト ver 1.1
 
 ■作成者
 キュウブ
@@ -56,7 +56,40 @@ destructionSetting: {
 あとは対象ユニットを破壊ポイントとして設定した地形に向かわせれば、
 どこのマップであろうとイベント設定が無かろうと勝手に更地にしてくれます。
 
+3.村訪問イベントを仕込んでおく場合
+破壊後は該当地点の村訪問イベントは実行不能になります。
+
+■FAQ
+1.村訪問が済んだ後に破壊工作ユニットの行動AIを変更させたい
+そこまでは自動化していないので
+村訪問イベントにローカルスイッチ変更イベントを仕込むなどして、行動AIも切り替わるようにしといてください。
+
+2.村が破壊された場合に専用イベントを仕込みたい
+そこまでは自動化していないので
+該当地点に別途、待機イベントを設けて対応してください。
+
+例えば、
+・ローカルスイッチA、ローカルスイッチBをマップ開始時にオフとしておく
+・村訪問時にローカルスイッチAがオンになるイベントコマンドを仕込む
+・ローカルスイッチAがオフの時に破壊工作用ユニットが訪問地点に待機した時にローカルスイッチBがオンになる待機イベントを仕込む
+
+という設定をしておけば、マップクリア時にローカルスイッチBがオンになっている時は該当地点が破壊されていると判定する事ができます。
+このスクリプトがあれば、待機イベントで破壊演出自体は設定不要になりますのでそこでどうにか。
+
+3.カスタムパラメータの意味がわからない。
+とりあえず、例の通りに従って設定すればランタイムの黄色い家を廃墟に変える設定はできます。
+そこを参照しながら色々試してみてください。
+
+4.村のマップチップと廃墟のマップチップは同じリソース画像にしなければならないのか？
+はい。カスタムパラメータの構造が複雑になりすぎて
+使いにくくなる事を懸念したため、このような仕様にしています。
+
 ■更新履歴
+var 1.1 (2021/03/10)
+・FAQ追加
+・対象地点に場所イベント(村)が設定されていた場合、イベントを実行済みにする処理を追加
+破壊イベント後は村訪問ができなくなります
+
 ver 1.0 (2021/03/10)
 初版公開
 
@@ -143,9 +176,7 @@ var DestructionEventFlowEntry = defineObject(BaseFlowEntry,
 	},
 	
 	_completeMemberData: function(unit) {
-		var accessPointX, accessPointY, accessPointTerrian, accessPointHandle, accessPointHandleId, accessPointHandleIsRuntime;
-		var destructionPointX, destructionPointY, destructionHandle;
-		var destructionSetting, soundHandle, generator;
+		var accessPointX, accessPointY, destructionSetting, generator, villageEvents;
 		var session = root.getCurrentSession();
 
 		if (!SkillControl.getPossessionCustomSkill(unit, 'DestructionEvent')) {
@@ -153,17 +184,25 @@ var DestructionEventFlowEntry = defineObject(BaseFlowEntry,
 		}
 		accessPointX = unit.getMapX();
 		accessPointY = unit.getMapY();
-		accessPointTerrian = session.getTerrainFromPos(accessPointX, accessPointY, true);
-		destructionSetting = accessPointTerrian.custom.destructionSetting;
+		destructionSetting = 
+			session.getTerrainFromPos(accessPointX, accessPointY, true).custom.destructionSetting;
 		if (!this._validateDestructionSettingParameter(destructionSetting)) {
 			return EnterResult.NOTENTER;
 		}
-		accessPointHandle = session.getMapChipGraphicsHandle(accessPointX, accessPointY, true);
-		accessPointHandleId = accessPointHandle.getResourceId();
-		accessPointHandleIsRuntime = accessPointHandle.getHandleType() === ResourceHandleType.RUNTIME; 
-		destructionPointX = accessPointX + destructionSetting.area.mapX;
-		destructionPointY = accessPointY + destructionSetting.area.mapY;
-		generator = this._dynamicEvent.acquireEventGenerator();
+		this._setExecutedMarkInVillageEvents(session, accessPointX, accessPointY);
+		this._setDestructionEventCommands(session, accessPointX, accessPointY, destructionSetting);
+
+		return this._dynamicEvent.executeDynamicEvent();
+	},
+
+	_setDestructionEventCommands: function(session, accessPointX, accessPointY, destructionSetting) {
+		var accessPointHandle = session.getMapChipGraphicsHandle(accessPointX, accessPointY, true);
+		var accessPointHandleId = accessPointHandle.getResourceId();
+		var accessPointHandleIsRuntime = accessPointHandle.getHandleType() === ResourceHandleType.RUNTIME; 
+		var destructionPointX = accessPointX + destructionSetting.area.mapX;
+		var destructionPointY = accessPointY + destructionSetting.area.mapY;
+		var generator = this._dynamicEvent.acquireEventGenerator();
+
 		for (var dx = 0; dx < destructionSetting.area.width; dx++) {
 			for (var dy = 0; dy < destructionSetting.area.height; dy++) {
 				destructionHandle = root.createResourceHandle(
@@ -181,11 +220,34 @@ var DestructionEventFlowEntry = defineObject(BaseFlowEntry,
 					);
 			}
 		}
-		soundHandle = root.createResourceHandle(true, 604, 0, 0, 0);
-		generator.soundPlay(soundHandle, 1);
-		generator.wait(120);
+		generator.soundPlay(root.createResourceHandle(true, 604, 0, 0, 0), 1);
+		generator.wait(120);		
+	},
 
-		return this._dynamicEvent.executeDynamicEvent();
+	_setExecutedMarkInVillageEvents: function(session, accessPointX, accessPointY) {
+		var event, info;
+		var placeEventList = session.getPlaceEventList();
+		var count = placeEventList.getCount();
+		var villageEvents = [];
+
+		for (var index = 0; index < count; index++) {
+			event = placeEventList.getData(index);
+			if (
+				event.getEventType() !== EventType.PLACE ||
+				event.getExecutedMark() === EventExecutedType.EXECUTED
+			) {
+				continue;
+			}
+			info = event.getPlaceEventInfo();
+			if (
+				info.getPlaceEventType() !== PlaceEventType.VILLAGE ||
+				info.getX() !== accessPointX || 
+				info.getY() !== accessPointY
+			) {
+				continue;
+			}
+			event.setExecutedMark(EventExecutedType.EXECUTED);
+		}
 	},
 
 	_validateDestructionSettingParameter: function(destructionSetting) {
