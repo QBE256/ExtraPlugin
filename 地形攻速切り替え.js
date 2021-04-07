@@ -14,6 +14,10 @@ isChangeMapChip:true
 
 
 ■更新履歴
+ver 1.3 (2021/4/7)
+MapLayer.setCustomAnimationMapChips()を実行することで
+マップチップの更新に対応可能にした
+
 ver 1.2 (2021/2/22)
 仕様変更
 
@@ -37,10 +41,33 @@ SRPG Studio Version:1.161
 
 --------------------------------------------------------------------------*/
 
+MapLayer._customAnimationMapChips = null;
+MapLayer.setCustomAnimationMapChips = function() {
+	var terrian, currentHandle;
+	var session = root.getCurrentSession();
+	var mapWidth = session.getCurrentMapInfo().getMapWidth();
+	var mapHeight = session.getCurrentMapInfo().getMapHeight();
+
+	this._customAnimationMapChips = [];
+	for (var x = 0; x < mapWidth; x++) {
+		for (var y = 0; y < mapHeight; y++) {
+			terrian = session.getTerrainFromPos(x, y, true);
+			if (terrian.custom.isChangeMapChip === true) {
+				currentHandle = session.getMapChipGraphicsHandle(x, y, true);
+				this._customAnimationMapChips.push({
+					x: x,
+					y: y,
+					handle: currentHandle,
+					height: terrian.getMapChipImage().getHeight() / GraphicsFormat.MAPCHIP_HEIGHT
+				});
+			}
+		}
+	}		
+};
+
 (function(){
 	var alias1 = MapLayer.prepareMapLayer;
 	MapLayer._mapChipCounter = null;
-	MapLayer._customAnimationMapChips = null;
 	MapLayer.prepareMapLayer = function() {
 		var terrian;
 
@@ -59,38 +86,21 @@ SRPG Studio Version:1.161
 	};
 
 	MapLayer._drawCustomAnimationMapSet = function() {
-		var customAnimationMapChip;
-		var terrian, maxResourceSrcY, resourceSrcX, resourceSrcY, currentHandle;
+		var customAnimationMapChip, resourceSrcX, resourceSrcY;
 		var session = root.getCurrentSession();
-		var mapWidth = session.getCurrentMapInfo().getMapWidth();
-		var mapHeight = session.getCurrentMapInfo().getMapHeight();
 		var scrollX = session.getScrollPixelX();
 		var scrollY = session.getScrollPixelY();
 
 		if (this._customAnimationMapChips === null) {
-			this._customAnimationMapChips = [];
-			for (var x = 0; x < mapWidth; x++) {
-				for (var y = 0; y < mapHeight; y++) {
-					terrian = session.getTerrainFromPos(x, y, true);
-					if (terrian.custom.isChangeMapChip === true) {
-						currentHandle = session.getMapChipGraphicsHandle(x, y, true);
-						this._customAnimationMapChips.push({
-							x: x,
-							y: y,
-							handle: currentHandle,
-							height: terrian.getMapChipImage().getHeight() / 32
-						});
-					}
-				}
-			}			
+			this.setCustomAnimationMapChips();		
 		}
 
 		for (var index = 0; index < this._customAnimationMapChips.length; index++) {
 			customAnimationMapChip = this._customAnimationMapChips[index];
 
 			GraphicsRenderer.drawImage(
-				customAnimationMapChip.x * 32 - scrollX, 
-				customAnimationMapChip.y * 32 - scrollY, 
+				customAnimationMapChip.x * GraphicsFormat.MAPCHIP_WIDTH - scrollX, 
+				customAnimationMapChip.y * GraphicsFormat.MAPCHIP_HEIGHT - scrollY, 
 				customAnimationMapChip.handle, 
 				GraphicsType.MAPCHIP
 			);
