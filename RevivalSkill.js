@@ -16,7 +16,7 @@ maxActivateCount:<回数>
 で設定可能
 
 4.もし、自軍ユニットにこのスキルを持たせて毎章使用回数をリセットさせたい場合は、
-毎章、マップ共通イベントでスクリプト実行でRevivalEventControl.resetActivateCount()を実行させてください。
+毎章、マップ共通イベントでスクリプト実行->コード実行でRevivalEventControl.resetActivateCount()を実行させてください。
 全ての自軍ユニットにおいてこのスキルの使用回数がリセットされます。
 
 ※注意1
