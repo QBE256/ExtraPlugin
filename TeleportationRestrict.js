@@ -4,14 +4,17 @@
 キュウブ
 
 ■概要
-地形効果のカスパラにisEnabledTeleportation:trueを記載していない地形に対してはワープで転送できなくなる
+ワープの杖にisEnabledWarpTerrainGroupId:<地形グループID>
+を記載しておくと、指定された地形グループに所属する地形にしか転送できなくなる
 
 ■更新履歴
+var 1.1 (2021/04/28)
+仕様変更
 ver 1.0 (2021/04/28)
 初版公開
 
 ■対応バージョン
-SRPG Studio Version:1.161
+SRPG Studio Version:1.227
 
 ■規約
 ・利用はSRPG Studioを使ったゲームに限ります。
@@ -26,22 +29,23 @@ SRPG Studio Version:1.161
 (function(){
 	var _TeleportationItemSelection__isPosEnabled = TeleportationItemSelection._isPosEnabled;
 	TeleportationItemSelection._isPosEnabled = function(x, y, targetUnit) {
-		if (!PosChecker.isEnabledWarpPos(x, y)) {
+		if (
+			typeof this._item.custom.isEnabledWarpTerrainGroupId === 'number' &&
+			!PosChecker.isEnabledWarpPos(x, y, this._item.custom.isEnabledWarpTerrainGroupId)
+		) {
 			return false;
 		}
 		return _TeleportationItemSelection__isPosEnabled.apply(this, arguments);
 	};
 })();
 
-PosChecker.isEnabledWarpPos = function(x, y) {
-	var terrain;
+PosChecker.isEnabledWarpPos = function(x, y, isEnabledWarpTerrainGroupId) {
+	var terrain, terrainGroup;
 	if (!(terrain = this.getTerrainFromPos(x, y))) {
 		return false;
 	}
-	if (terrain.custom.isEnabledTeleportation === true) {
-		return true;
-	}
-	else {
+	if (!(terrainGroup = terrain.getTerrainGroup())) {
 		return false;
 	}
+	return terrainGroup.getId() === isEnabledWarpTerrainGroupId;
 };
