@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ストックとユニット交換画面をまとめる ver 1.2
+　ストックとユニット交換画面をまとめる ver 1.3
 
 ■作成者
 キュウブ
@@ -11,6 +11,9 @@
 リソースは表示名以外はストック交換画面の設定を流用します。
 
 ■更新履歴
+ver 1.3 (2021/05/07)
+出撃or未出撃ユニットの区別がつくようにした(未出撃ユニットは顔グラが薄く表示されます）
+
 ver 1.2 (2020/05/18)
 ユニット切り替え時にアイテムリストが更新されないバグを修正
 
@@ -356,9 +359,11 @@ var StockAndUnitItemListScrollbar = defineObject(ItemListScrollbar,
 	},
 
 	drawScrollContent: function(x, y, object, isSelect, index) {
-		var isAvailable, color;
+		var isAvailable, textColor;
 		var textui = this.getParentTextUI();
 		var font = textui.getFont();
+		var textAlpha = 120;
+		var faceAlpha = 255;
 		
 		if (object === null) {
 			return;
@@ -370,18 +375,23 @@ var StockAndUnitItemListScrollbar = defineObject(ItemListScrollbar,
 		else {
 			isAvailable = true;
 		}
-		color = this._getTextColor(object, isSelect, index);
+		textColor = this._getTextColor(object, isSelect, index);
 
 		if (object.unit) {
-			ContentRenderer.drawUnitPartFace(x + 100, y - 2, object.unit, false, 125);
+			if (
+				root.getCurrentScene() === SceneType.BATTLESETUP &&
+				object.unit.getSortieState() !== SortieType.SORTIE
+			) {
+				faceAlpha = 128;
+			} 
+			ContentRenderer.drawUnitPartFace(x + 120, y - 2, object.unit, false, faceAlpha);
 		}
 		
 		if (isAvailable) {
-			ItemRenderer.drawItem(x, y, object.item, color, font, true);
+			ItemRenderer.drawItem(x, y, object.item, textColor, font, true);
 		}
 		else {
-			// アイテムを利用できない場合は、薄く描画する
-			ItemRenderer.drawItemAlpha(x, y, object.item, color, font, true, 120);
+			ItemRenderer.drawItemAlpha(x, y, object.item, textColor, font, true, textAlpha);
 		}
 	},
 
@@ -409,14 +419,12 @@ ContentRenderer.drawUnitPartFace = function(x, y, unit, isReverse, alpha) {
 	var destHeight = 27;
 	var srcWidth = destWidth;
 	var srcHeight = GraphicsFormat.FACE_HEIGHT;	
-		
+
 	if (pic === null) {
 		return;
 	}
-		
 	pic.setReverse(isReverse);
-	pic.setAlpha(alpha);
-		
+	pic.setAlpha(alpha);	
 	xSrc = handle.getSrcX() * srcWidth;
 	ySrc = handle.getSrcY() * srcHeight + Math.floor(GraphicsFormat.FACE_HEIGHT / 3);
 	pic.drawStretchParts(x, y, destWidth, destHeight, xSrc, ySrc, srcWidth, destHeight);
