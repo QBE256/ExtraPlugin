@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ユニット選択、コマンド選択、出撃準備で自動イベント発火 ver 1.3
+　ユニット選択、コマンド選択、出撃準備で自動イベント発火 ver 1.4
 
 ■作成者
 キュウブ
@@ -48,6 +48,10 @@ IDを知りたい場合は"ユニット概要"コマンドでチェックして�
 避けたい場合は「自軍ターン-1ターン目以上」といった条件を付加しておくと良いでしょう。
 
 ■更新履歴
+ver 1.4 (2021/6/9)
+拠点でユニットステータス画面を開くとエラーになる不具合を修正しました
+※ゲームオーバー判定が邪魔だったので消しました。…ユニットステータス画面を開いた時の自動開始イベントに自軍を消滅させるような処理は入れないでくださいね？
+
 ver 1.3 (2021/3/4)
 ユニットのステータス画面を開いた時にも自動開始イベントが起こせるように対応
 
@@ -443,20 +447,11 @@ SRPG Studio Version:1.161
 
 	UnitMenuScreen._moveAutoEventCheck = function() {
 		if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
-			this._doEventEndAction();
 			MapLayer.getMarkingPanel().updateMarkingPanel();
 			this.changeCycleMode(UnitMenuMode.TOP);
 		}
 
 		return MoveResult.CONTINUE;
-	};
-
-	// スクリプトエラー対策のセーブはここでは行わない
-	// 念の為、ゲームオーバー判定を入れるがここのイベントでユニットロスト処理を入れる事は望ましくない
-	UnitMenuScreen._doEventEndAction = function() {
-		if (GameOverChecker.isGameOver()) {
-			GameOverChecker.startGameOver();
-		}
 	};
 
 	UnitMenuScreen._changeEventMode = function() {
@@ -466,7 +461,6 @@ SRPG Studio Version:1.161
 		result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
 
 		if (result === EnterResult.NOTENTER) {
-			this._doEventEndAction();
 			this.changeCycleMode(UnitMenuMode.TOP);
 		}
 		else {
