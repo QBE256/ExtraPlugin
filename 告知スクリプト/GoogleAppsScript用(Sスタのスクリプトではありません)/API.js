@@ -95,11 +95,11 @@ const validationNoticeInfos = (noticeInfos) => {
 
 const isOldRequestVersion = (newGameVersion, requestGameVersion, versionType = VersionType.MAJOR) => {
   if (versionType >= VersionType.UNKNOWN) {
-    return true;
+    return false;
   }
   const compareValueType = compareValue(newGameVersion[versionType],requestGameVersion[versionType]);
   if (compareValueType === CompareValueType.EQUAL) {
-    return compareValue(newGameVersion, requestGameVersion, versionType + 1);
+    return isOldRequestVersion(newGameVersion, requestGameVersion, versionType + 1);
   } else if (compareValueType === CompareValueType.SECOND_HIGHER) {
     return false;
   } else {
