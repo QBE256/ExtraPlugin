@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　マップに遠景画像を表示させる ver 1.1
+　マップに遠景画像を表示させる ver 1.2
 
 ■作成者
 キュウブ
@@ -33,6 +33,9 @@ backGroundImage: {
 下側に設定されている地形を無理やり透過チップで上書きするので、背景画像が表示されるようになります。
 
 ■更新履歴
+ver 1.2 (2021/6/24)
+タイトル画面で落ちるバグを修正
+
 ver 1.1 (2021/6/20)
 夕方、夜の時に-a,-b画像を表示できるように変更
 
@@ -85,8 +88,13 @@ MapLayer.changeClearTerrain = function() {
 
 	var _MapLayer_drawMapLayer = MapLayer.drawMapLayer;
 	MapLayer.drawMapLayer = function() {
-		var handle;
-		var mapInfo = root.getCurrentSession().getCurrentMapInfo();
+		var handle, mapInfo;
+		var session = root.getCurrentSession();
+		if (!session) {
+			_MapLayer_drawMapLayer.call(this);
+			return;
+		}
+		mapInfo = session.getCurrentMapInfo();
 		if (typeof mapInfo.custom.backGroundImage === 'object') {
 			handle = root.createResourceHandle(
 							mapInfo.custom.backGroundImage.isRuntime,
