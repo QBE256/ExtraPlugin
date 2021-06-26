@@ -96,7 +96,7 @@ MapLayer.clearDangerUnitArray = function() {
 
 MapLayer.drawDangerSymbolLayer = function() {
 	var pic, picCache, picWidth, picHeight, dangersymbolCoordinateX, dangersymbolCoordinateY;
-	var	handle = root.createResourceHandle(
+	var handle = root.createResourceHandle(
 						DangerIconSetting.isRuntime,
 						DangerIconSetting.resourceId,
 						0,
