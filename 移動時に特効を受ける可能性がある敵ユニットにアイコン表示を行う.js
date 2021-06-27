@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　移動時に特効を受ける可能性がある敵ユニットにアイコンを表示する ver 1.0
+　移動時に特効を受ける可能性がある敵ユニットにアイコンを表示する ver 1.1
 
 ■作成者
 キュウブ
@@ -14,9 +14,12 @@
 ■使い方
 デフォルトではランタイムの!マークアイコンが表示されますが、
 変更したい場合は
-37行目のDangerIconSettingの設定を変えてください。
+40行目のDangerIconSettingの設定を変えてください。
 
 ■更新履歴
+ver 1.1 (2021/6/27)
+軽微な修正(特にバグは無し)
+
 ver 1.0 (2021/6/27)
 公開 
 
@@ -42,7 +45,6 @@ var DangerIconSetting = {
 };
 
 (function(){
-	MapLayer._dangerUnitArray = [];
 	var _MapLayer_drawUnitLayer = MapLayer.drawUnitLayer;
 	MapLayer.drawUnitLayer = function() {
 		_MapLayer_drawUnitLayer.call(this);
@@ -66,7 +68,7 @@ var DangerIconSetting = {
 		return result;
 	}
 })();
-
+MapLayer._dangerUnitArray = [];
 MapLayer.createDangerUnitArray = function(unit) {
 	var enemyUnitList, enemyListCount, enemyUnit;
 
