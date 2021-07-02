@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ボイス音量調整でボイスを流す ver 1.0
+　ボイス音量調整でボイスを流す ver 1.1
 
 ■作成者
 キュウブ
@@ -9,9 +9,12 @@
 (2秒間隔で流すので、長くても1秒程度で終わるボイスを推奨)
 
 ■設定方法
-31行目のSAMPLE_VOICE_FILEにサンプルボイスのファイル名を記入するだけでOK
+34行目のSAMPLE_VOICE_FILEにサンプルボイスのファイル名を記入するだけでOK
 
 ■更新履歴
+ver 1.1 (2021/07/02)
+メンバ変数の宣言ミスを修正
+
 ver 1.0 (2021/07/02)
 初版公開
 
@@ -31,7 +34,7 @@ SRPG Studio Version:1.161
 var SAMPLE_VOICE_FILE = "mic_test.wav";//ここに再生するファイル名を記入(この場合はmic_test.wavというファイルを流そうとする)
 
 (function(){
-	var _voiceWaitCounter = null;
+	ConfigWindow._voiceWaitCounter = null;
 	var _ConfigWindow_setConfigData = ConfigWindow.setConfigData;
 	ConfigWindow.setConfigData = function() {
 		_ConfigWindow_setConfigData.call(this);
