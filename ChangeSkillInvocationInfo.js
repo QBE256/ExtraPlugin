@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　スキル発動確率の表記変更 ver 1.0
+　スキル発動確率の表記変更 ver 1.1
 
 ■作成者
 キュウブ
@@ -18,6 +18,9 @@
 
 
 ■更新履歴
+ver 1.1 (2021/10/23)
+リバイバルスキルの残り回数を表示するように対応
+
 ver 1.0 (2021/05/04)
 初版公開
 
@@ -84,4 +87,64 @@ SRPG Studio Version:1.161
 		_UnitMenuBottomWindow_changeUnitMenuTarget.call(this, unit);
 		this._skillInteraction.setUnitData(unit);
 	};
+
+	InvocationRenderer.getRivivalCountText = function(maxCount, activeCount) {
+		var restCount = maxCount > activeCount ? maxCount - activeCount : 0;
+		return 'あと' + restCount + '回発動可能';
+	};
+
+	SkillInfoWindow.drawWindowContent = function(x, y) {
+		var text, skillText, count, restCountText, activeCount;
+		var length = this._getTextLength();
+		var textui = this.getWindowTextUI();
+		var color = textui.getColor();
+		var font = textui.getFont();
+		
+		if (this._skill === null) {
+			return;
+		}
+		
+		this._drawName(x, y, this._skill, length, color, font);
+		y += ItemInfoRenderer.getSpaceY();
+		
+		if (this._isInvocationType()) {
+			this._drawInvocationValue(x, y, this._skill, length, color, font);
+			y += ItemInfoRenderer.getSpaceY();
+		}
+		
+		if (this._aggregationViewer !== null) {
+			count = this._aggregationViewer.getAggregationViewerCount();
+			if (count !== 0) {
+				this._aggregationViewer.drawAggregationViewer(x, y, this._getMatchName());
+				y += ItemInfoRenderer.getSpaceY() * this._aggregationViewer.getAggregationViewerCount();
+			}
+		}
+
+		if (typeof this._skill.custom.maxActivateCount === 'number' && this._unit) {
+			activeCount = 
+				typeof this._unit.custom.revivalSkillActivateCount === 'number' ? this._unit.custom.revivalSkillActivateCount : 0;
+			restCountText = InvocationRenderer.getRivivalCountText(this._skill.custom.maxActivateCount, activeCount);
+			TextRenderer.drawKeywordText(x, y, restCountText, length, ColorValue.KEYWORD, font);
+			y += ItemInfoRenderer.getSpaceY();
+		}
+		
+		text = this._getSkillTypeText();
+		if (text !== '') {
+			skillText = root.queryCommand('skill_object');
+			TextRenderer.drawKeywordText(x, y, text + ' ' + skillText, length, ColorValue.KEYWORD, font);
+		}
+		else {
+			text = this._getCategoryText();
+			TextRenderer.drawKeywordText(x, y, text, length, ColorValue.KEYWORD, font);
+		}
+	};
+
+	var _SkillInfoWindow_getWindowHeight = SkillInfoWindow.getWindowHeight;
+	SkillInfoWindow.getWindowHeight = function() {
+		var height = _SkillInfoWindow_getWindowHeight.call(this);
+		if (this._skill && this._unit && typeof this._skill.custom.maxActivateCount === 'number') {
+			height += ItemInfoRenderer.getSpaceY();
+		}
+		return height;
+	}
 })();
