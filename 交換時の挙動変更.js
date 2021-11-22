@@ -1,34 +1,30 @@
 /*--------------------------------------------------------------------------
-　交換時の挙動変更 ver1.2
+　交換時の挙動変更 ver1.3
 ■作成者
 キュウブ
-
 ■概要
 アイテム交換の挙動が以下のように変化します。
 1.アイテム交換で交換元のアイテムを選択した時に、カーソルが交換先の空欄まで自動で移動
 2.交換キャンセル時は、カーソルが交換元アイテムに自動で移動
 3.左右キーを入力した時にカーソルが水平移動
-
 ちなみに本来のSRPG studioの仕様では下記のような仕様になっております。
 （UX向上を目的としたスクリプトですが、作品に導入して本当に向上するかのご判断はお任せします）
 1.アイテム交換で交換元のアイテムを選択した時に、カーソルはその場から移動しない
 2.交換キャンセル時は、カーソルがその場から移動しない
 3.左右キーを入力した時は以前指していた位置に移動
-
 ■更新履歴
+ver1.3 2021/11/23
+交換実行時に交換元のインデックスにカーソルが戻る挙動を追加
+
 ver1.2 2020/11/23
 キャンセル時に交換元アイテムにカーソルが戻る挙動を追加
 左右キーを押した時に、水平移動する仕様を追加
-
 ver1.1 2020/11/22
 交換先がアイテムで埋まっている時にエラーになる不具合を修正
-
 ver1.0 2020/11/22
 初版
-
 ■対応バージョン
 SRPG Studio Version:1.161
-
 ■規約
 ・利用はSRPG Studioを使ったゲームに限ります。
 ・商用・非商用問いません。フリーです。
@@ -37,7 +33,6 @@ SRPG Studio Version:1.161
 ・再配布、転載　OK (バグなどがあったら修正できる方はご自身で修正版を配布してもらっても構いません)
 ・wiki掲載　OK
 ・SRPG Studio利用規約は遵守してください。
-
 ------------------------------------------------------*/
 
 (function(){
@@ -50,13 +45,16 @@ SRPG Studio Version:1.161
 	};
 
 	UnitItemTradeScreen._moveTradeSelect = function() {
-		var moveResult, tradeDestinationUnit, destinationIndex, destinationWindow;
+		// this._isSelectは元々の_moveTradeSelectの処理の中で更新される可能性があるので先に値を保存しておく
+		var isSelect = this._isSelect;
+		var moveResult = tempFunctions.UnitItemTradeScreen._moveTradeSelect.call(this);
+		var tradeDestinationUnit, destinationIndex, destinationWindow;
 
-		if (this._isSelect) {
-			return tempFunctions.UnitItemTradeScreen._moveTradeSelect.call(this);
+		// 交換不成立時は本スクリプトの処理を省略する
+		if (isSelect && !this._isTradable()) {
+			return moveResult;
 		}
 
-		moveResult = tempFunctions.UnitItemTradeScreen._moveTradeSelect.call(this);
 		if (this._isSrcScrollbarActive) {
 			this._setActive(false);
 			this._isSrcScrollbarActive = false;
@@ -70,10 +68,17 @@ SRPG Studio Version:1.161
 			destinationWindow = this._itemListSrc;
 		}
 
-		destinationIndex = UnitItemControl.getPossessionItemCount(tradeDestinationUnit);
-		// 交換先がアイテムで埋まっている時は、交換元と同じインデックスに移動させる
-		if (destinationIndex >= DataConfig.getMaxUnitItemCount()) {
-			destinationIndex = this._selectIndex;
+		// 交換先アイテム選択時は交換元にインデックスを戻す
+		// 交換元アイテム選択時は交換先ウィンドウの最下段のインデックスに移動させる
+		if (isSelect) {
+			destinationIndex = destinationWindow.getItemIndex();
+		}
+		else {
+			destinationIndex = UnitItemControl.getPossessionItemCount(tradeDestinationUnit);
+			// 交換先がアイテムで埋まっている時は、交換元と同じインデックスに移動させる
+			if (destinationIndex >= DataConfig.getMaxUnitItemCount()) {
+				destinationIndex = this._selectIndex;
+			}
 		}
 		destinationWindow.setItemIndex(destinationIndex);
 
