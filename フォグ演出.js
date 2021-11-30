@@ -1,5 +1,5 @@
 ﻿/*--------------------------------------------------------------------------
-　フォグ演出スクリプト ver 2.0
+　フォグ演出スクリプト ver 2.1
 
 ■作成者
 キュウブ
@@ -60,6 +60,9 @@ MapLayer.setFogData();
 を記載したイベントコマンドを実行する事で流れるようになります。
 
 ■更新履歴
+ver 2.1 (2021/12/01)
+・コードリファクタリング
+
 ver 2.0 (2021/05/18)
 ・コードをリファクタリング
 ・デモマップでエラーを起こす不具合修正
@@ -86,104 +89,119 @@ var validationFogParameter = function(fog) {
 	if (typeof fog !== 'object') {
 		return false;
 	}
-	if (!('img' in fog) || !('moveX' in fog) || !('moveY' in fog)) {
+	if (
+		!('img' in fog) ||
+		!('moveX' in fog) ||
+		!('moveY' in fog)
+	) {
 		return false;
 	}
-	if (typeof fog.img !== 'string' || typeof fog.moveX !== 'number' || typeof fog.moveY !== 'number') {
+	if (
+		typeof fog.img !== 'string' ||
+		typeof fog.moveX !== 'number' ||
+		typeof fog.moveY !== 'number'
+	) {
 		return false;
 	}
 	return true;
 };
 
 MapLayer._frontFogImage = null;
-MapLayer._frontFogSwitchId = -1;
 MapLayer._backFogImage = null;
-MapLayer._backFogSwitchId = -1;
-
-MapLayer._initializeFogData = function() {
-	this._frontFogImage = null;
-	this._frontFogSwitchId = -1;
-	this._backFogImage = null;
-	this._backFogSwitchId = -1;
-};
 
 MapLayer.setFogData = function() {
-	var currentMapInfo, currentSession, pic;
+	var frontFogPicture, backFogPicture;
+	var currentMapInfo = this._getMapInfo();
 
-	if (!(currentSession = root.getCurrentSession())) {
+	if (!currentMapInfo) {
 		return;
 	}
-	if (!(currentMapInfo = currentSession.getCurrentMapInfo())) {
-		return;
-	}		
 	if (validationFogParameter(currentMapInfo.custom.fog)) {
-		if ('switch_id' in currentMapInfo.custom.fog) {
-			this._frontFogSwitchId = currentMapInfo.custom.fog.switch_id;
-		}
-		pic = root.getMaterialManager().createImage(FogSettingFolder, currentMapInfo.custom.fog.img);
+		frontFogPicture = root.getMaterialManager().createImage(
+								FogSettingFolder,
+								currentMapInfo.custom.fog.img
+							);
 		this._frontFogImage = createObject(ScrollFogImage);
-		this._frontFogImage.startScrollBackground(pic, currentMapInfo.custom.fog.moveX, currentMapInfo.custom.fog.moveY);
+		this._frontFogImage.startScrollBackground(
+			frontFogPicture,
+			currentMapInfo.custom.fog.moveX,
+			currentMapInfo.custom.fog.moveY
+		);
 	}
 	if (validationFogParameter(currentMapInfo.custom.backFog)) {
-		if ('switch_id' in currentMapInfo.custom.backFog) {
-			this._backFogSwitchId = currentMapInfo.custom.backFog.switch_id;
-		}
-		pic = root.getMaterialManager().createImage(FogSettingFolder, currentMapInfo.custom.backFog.img);
+		backFogPicture = root.getMaterialManager().createImage(
+								FogSettingFolder,
+								currentMapInfo.custom.backFog.img
+							);
 		this._backFogImage = createObject(ScrollFogImage);
-		this._backFogImage.startScrollBackground(pic, currentMapInfo.custom.backFog.moveX, currentMapInfo.custom.backFog.moveY);
+		this._backFogImage.startScrollBackground(
+			backFogPicture,
+			currentMapInfo.custom.backFog.moveX,
+			currentMapInfo.custom.backFog.moveY
+		);
 	}		
+};
+
+MapLayer._getMapInfo = function() {
+	var currentSession = root.getCurrentSession();
+	if (!currentSession) {
+		return null;
+	}
+	return currentSession.getCurrentMapInfo();
+};
+
+MapLayer._isEnableLocalSwitch = function(fog) {
+	var localSwitchTable, switchIndex;
+	var currentMapInfo = this._getMapInfo();
+	if (!('switch_id' in fog)) {
+		return true;
+	}
+	if (typeof fog.switch_id !== 'number') {
+		return false;
+	}
+	localSwitchTable = currentMapInfo.getLocalSwitchTable();
+	switchIndex = localSwitchTable.getSwitchIndexFromId(fog.switch_id);
+	return localSwitchTable.isSwitchOn(switchIndex);
 };
 
 MapLayer._isEnableFrontFogImage = function() {
-	var currentMapInfo, switchIndex, currentSession;
+	var currentMapInfo;
 
 	if (!this._frontFogImage) {
 		return false;
 	}
-	if (!(currentSession = root.getCurrentSession())) {
+	currentMapInfo = this._getMapInfo();
+	if (!currentMapInfo) {
 		return false;
 	}
-	if (!(currentMapInfo = currentSession.getCurrentMapInfo())) {
+	if (!this._isEnableLocalSwitch(currentMapInfo.custom.fog)) {
 		return false;
 	}
-	if (this._frontFogSwitchId === -1) {
-		return true;
-	}
-	switchIndex = currentMapInfo.getLocalSwitchTable().getSwitchIndexFromId(this._frontFogSwitchId);
-	if (currentMapInfo.getLocalSwitchTable().isSwitchOn(switchIndex)) {
-		return true;
-	}
-	return false;
+	return true;
 };
 
 MapLayer._isEnableBackFogImage = function() {
-	var currentMapInfo, switchIndex, currentSession;
+	var currentMapInfo;
 
 	if (!this._backFogImage) {
 		return false;
 	}
-	if (!(currentSession = root.getCurrentSession())) {
+	currentMapInfo = this._getMapInfo();
+	if (!currentMapInfo) {
 		return false;
 	}
-	if (!(currentMapInfo = currentSession.getCurrentMapInfo())) {
+	if (!this._isEnableLocalSwitch(currentMapInfo.custom.backFog)) {
 		return false;
 	}
-	if (this._backFogSwitchId === -1) {
-		return true;
-	}
-	switchIndex = currentMapInfo.getLocalSwitchTable().getSwitchIndexFromId(this._backFogSwitchId);
-	if (currentMapInfo.getLocalSwitchTable().isSwitchOn(switchIndex)) {
-		return true;
-	}
-	return false;
+	return true;
 };
 
 var ScrollFogImage = defineObject(ScrollBackground,
 {
-	_frameSpeedX: 0,
-	_frameSpeedY: 0,
+	_xMove: 0,
+	_yMove: 0,
 
-	startScrollBackground: function(pic, frameSpeedX, frameSpeedY) {
+	startScrollBackground: function(pic, xMove, yMove) {
 		if (pic === null) {
 			this._pic = null;
 			this._picCache = null;
@@ -193,33 +211,27 @@ var ScrollFogImage = defineObject(ScrollBackground,
 			return;
 		}
 		this._isHorz = true;
-		this._xMax = pic.getWidth();
 		this._isVert = true;
+		this._xMax = pic.getWidth();
 		this._yMax = pic.getHeight();
 		this._pic = pic;
 		this._picCache = null;
-		this._frameSpeedX = frameSpeedX;
-		this._frameSpeedY = frameSpeedY;
+		this._xMove = xMove;
+		this._yMove = yMove;
 	},
 
 	moveScrollBackground: function() {
 		if (this._counter.moveCycleCounter() === MoveResult.CONTINUE) {
 			return MoveResult.CONTINUE;
 		}
-		this._xScroll += this._frameSpeedX;
-		if (this._xScroll >= this._xMax) {
-			this._xScroll = 0;
-		}
-		else if (this._xScroll < 0) {
-			this._xScroll = this._xMax;
-		}
-		this._yScroll += this._frameSpeedY;
-		if (this._yScroll >= this._yMax) {
-			this._yScroll = 0;
-		}
-		else if (this._yScroll < 0) {
-			this._yScroll = this._yMax;
-		}
+
+		this._xScroll += this._xMove;
+		this._xScroll = this._xScroll >= this._xMax ? 0 : this._xScroll;
+		this._xScroll = this._xScroll < 0 ? this._xMax : this._xScroll;
+		this._yScroll += this._yMove;
+		this._yScroll = this._yScroll >= this._yMax ? 0 : this._yScroll;
+		this._yScroll = this._yScroll < 0 ? this._yMax : this._yScroll;	
+
 		return MoveResult.CONTINUE;
 	}
 }
@@ -230,7 +242,8 @@ var ScrollFogImage = defineObject(ScrollBackground,
 	MapLayer.prepareMapLayer = function() {
 		var currentScene = root.getCurrentScene();
 		_MapLayer_prepareMapLayer.call(this);
-		this._initializeFogData();
+		this._frontFogImage = null;
+		this._backFogImage = null;
 		if (
 			currentScene !== SceneType.BATTLESETUP &&
 			currentScene !== SceneType.FREE && 
