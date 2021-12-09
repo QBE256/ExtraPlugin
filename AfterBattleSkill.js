@@ -47,9 +47,9 @@ recoveryHpAfterBattle: {
 
 pursuit: {
 	type: <ダメージ量のタイプ。固定値であれば0(PursuitDamageType.FIXED),最大HP割合であれば1(PursuitDamageType.RATE)>,
-	value: <ダメージ量>
+	value: <ダメージ量>,
 	effect: {
-		isRuntime: <ダメージエフェクトアニメがランタイムであればtrue,オリジナルであればfalse>
+		isRuntime: <ダメージエフェクトアニメがランタイムであればtrue,オリジナルであればfalse>,
 		id: <ダメージエフェクトアニメのID>
 	},
 	isFinish: <とどめをさす場合はtrue, ささない場合はfalse>
@@ -58,9 +58,9 @@ pursuit: {
 例:戦闘後敵に最大HP10%分のダメージを与えるスキル(エフェクトは炎の渦、とどめはささず最低でもHPは1残る)
 pursuit: {
 	type: PursuitDamageType.RATE,
-	value: 0.1
+	value: 0.1,
 	effect: {
-		isRuntime: true
+		isRuntime: true,
 		id: 8
 	}
 }
