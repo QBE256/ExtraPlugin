@@ -62,7 +62,8 @@ pursuit: {
 	effect: {
 		isRuntime: true,
 		id: 8
-	}
+	},
+	isFinish: false
 }
 
 ■更新履歴
