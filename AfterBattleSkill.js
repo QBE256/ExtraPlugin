@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　戦闘後に自分か相手のHPを変動させるスキル ver 1.0
+　戦闘後に自分か相手のHPを変動させるスキル ver 1.1
 
 ■作成者
 キュウブ
@@ -14,9 +14,9 @@
 
 recoveryHpAfterBattle: {
 	type: <回復量のタイプ。固定値であれば0(RecoveryHpType.FIXED),最大HP割合であれば1(RecoveryHpType.RATE)>,
-	value: <回復量>
+	value: <回復量>,
 	effect: {
-		isRuntime: <回復エフェクトアニメがランタイムであればtrue,オリジナルであればfalse>
+		isRuntime: <回復エフェクトアニメがランタイムであればtrue,オリジナルであればfalse>,
 		id: <回復エフェクトアニメのID>
 	}
 }
@@ -24,9 +24,9 @@ recoveryHpAfterBattle: {
 例.戦闘後最大HP20%回復するスキル(エフェクトは光の輪)
 recoveryHpAfterBattle: {
 	type: RecoveryHpType.RATE,
-	value: 0.2
+	value: 0.2,
 	effect: {
-		isRuntime: true
+		isRuntime: true,
 		id: 5
 	}
 }
@@ -34,9 +34,9 @@ recoveryHpAfterBattle: {
 例.戦闘後HPが5回復するスキル(エフェクトは闇の渦)
 recoveryHpAfterBattle: {
 	type: RecoveryHpType.FIXED,
-	value: 5
+	value: 5,
 	effect: {
-		isRuntime: true
+		isRuntime: true,
 		id: 6
 	}
 }
@@ -66,6 +66,9 @@ pursuit: {
 }
 
 ■更新履歴
+ver 1.1 2021/12/09
+カスパラ例が誤っていたので修正(コード部分には手を入れてないです)
+
 ver 1.0 2021/11/20
 公開
 
