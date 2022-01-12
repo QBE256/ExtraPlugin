@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　スキル:リバイバル(復活) ver 1.0
+　スキル:リバイバル(復活) ver 1.1
 
 ■作成者
 キュウブ
@@ -28,6 +28,9 @@ maxActivateCountは必ず設定してもらう必要があります。
 スキルを所持している限り、必ず発動します。
 
 ■更新履歴
+ver 1.1 (2022/01/13)
+ユニットのHPが0でなくても発動してしまうバグを修正
+
 ver 1.0 (2021/04/19)
 初版公開
 
@@ -95,6 +98,15 @@ var RevivalEventControl = {
 
 	var _UnitDeathFlowEntry__completeMemberData = UnitDeathFlowEntry._completeMemberData;
 	UnitDeathFlowEntry._completeMemberData = function(coreAttack) {
+		// ユニットが死亡していないなどの場合、本処理は行わず
+		// 元のUnitDeathFlowEntry._completeMemberDataに移行
+		if (!coreAttack.getAttackFlow().isBattleUnitLosted()) {
+			return _UnitDeathFlowEntry__completeMemberData.call(this, coreAttack);
+		}
+		if (DamageControl.isSyncope(this._passiveUnit)) {
+			return _UnitDeathFlowEntry__completeMemberData.call(this, coreAttack);
+		}
+
 		RevivalEventControl.setRevivalUnit(this._passiveUnit);
 		if (RevivalEventControl.getRevivalUnit()) {
 			// リーダーユニットが倒れた場合ゲームオーバーになってしまうのを阻止するため、この時点で復活させる
@@ -106,9 +118,14 @@ var RevivalEventControl = {
 
 	var _LoserMessageFlowEntry__completeMemberData = LoserMessageFlowEntry._completeMemberData;
 	LoserMessageFlowEntry._completeMemberData = function(preAttack) {
+		// ユニットが死亡していない場合、本処理は行わず
+		// 元のLoserMessageFlowEntry._completeMemberDataに移行
+		if (preAttack.getPassiveUnit().getHp() !== 0) {
+			return _LoserMessageFlowEntry__completeMemberData.call(this, preAttack);
+		}
 		// UnitDeathFlowEntryで既に蘇生ユニットが設定されている可能性があるので確認
 		if (RevivalEventControl.getRevivalUnit()) {
-			return EnterResult.NOTENTER;
+			return _LoserMessageFlowEntry__completeMemberData.call(this, preAttack);
 		}
 		// UnitDeathFlowEntryをスキップしている可能性があるので、ここでもう一度蘇生ユニットを設定
 		RevivalEventControl.setRevivalUnit(preAttack.getPassiveUnit());
