@@ -6,7 +6,7 @@
 魔法攻撃に関しては魔法毎にボイスを分ける事も可能です。
 
 <設定方法>
-1.CSV形式のファイルを用意します。付属のsample.csvをコピペしてください。
+1.CSV形式のファイルを用意します。付属のfighterSample.csvかmageSample.csvをコピペしてください。
 ※CSVファイルはMaterialのUnitVoiceフォルダの中にいれること。
 
 2.CSVファイルに対象ユニットのボイス情報を入力する
