@@ -1,5 +1,5 @@
 /*
- 形態変化で行動を消費しなくなる ver 1.0
+ 形態変化で行動を消費しなくなる ver 1.1
 
 ■作成者
 キュウブ
@@ -12,6 +12,9 @@
 といった事ができるようになります。
 
 ■更新履歴
+ver 1.1 (2022/2/13)
+実行後に形態変化コマンドが残らないように処理追加
+
 ver 1.0 (2022/2/13)
 初版
 
@@ -30,9 +33,9 @@ SRPG Studio Version:1.161
 */
 
 UnitCommand.Metamorphoze.endCommandAction = function() {
-	return;
+	this.rebuildCommand();
 };
 
 UnitCommand.MetamorphozeCancel.endCommandAction = function() {
-	return;
+	this.rebuildCommand();
 };
