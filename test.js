@@ -1,6 +1,5 @@
 UnitCommand.Metamorphoze.endCommandAction = function() {
-	this.rebuildCommand();
-	return;
+	this._listCommandManager.endCommandAction(null);
 };
 
 (function(){
