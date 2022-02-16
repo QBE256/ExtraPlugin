@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　特定状態のユニット数をイベントの条件に加える事ができる ver 1.0
+　特定状態のユニット数をイベントの条件に加える事ができる ver 1.1
 
 ■作成者
 キュウブ
@@ -78,6 +78,9 @@ SpecificStateUnitsCountCalculator.getStateCount(UnitFilterFlag.PLAYER | UnitFilt
 
 ※自軍は最初のマップ～現在までの死亡数をカウントするのに対して、敵同盟軍は現在のマップ中での死亡数をカウントします。微妙に扱いが異なる事に注意してください。
 
+ver 1.1 (2022/2/17)
+カウント数が文字列になっていたバグを修正
+※ver1.0では正しいカウントが全くできていませんでした。偶然うまく動いてただけの可能性があるので注意してください。
 
 ver 1.0 (2021/7/1)
 公開 
@@ -97,36 +100,32 @@ SRPG Studio Version:1.161
 --------------------------------------------------------------------------*/
 
 var SpecificStateUnitsCountCalculator = {
-	getWaitCount: function(unitType) {
+	getWaitCount: function (unitType) {
 		var allWaitCount = 0;
 		var filterList = FilterControl.getListArray(unitType);
-		allWaitCount += filterList.map(
-			function(unitList) {
-				var unit;
-				var unitListCount = unitList.getCount();
-				var waitCount = 0;
-				for (var index = 0; index < unitListCount; index++) {
-					unit = unitList.getData(index);
-					if (unit.isWait()) {
-						waitCount++;
-					}
+		filterList.forEach(function (unitList) {
+			var unit;
+			var unitListCount = unitList.getCount();
+			for (var index = 0; index < unitListCount; index++) {
+				unit = unitList.getData(index);
+				if (unit.isWait()) {
+					allWaitCount++;
 				}
-				return waitCount;
-			});
+			}
+		});
 		return allWaitCount;
 	},
 
-	getDeathCount: function(unitType) {
+	getDeathCount: function (unitType) {
 		var allDeathCount = 0;
 		var filterList = FilterControl.getDeathListArray(unitType);
-		allDeathCount += filterList.map(
-			function(unitList) {
-				return unitList.getCount();
-			});
+		filterList.forEach(function (unitList) {
+			allDeathCount += unitList.getCount();
+		});
 		return allDeathCount;
 	},
 
-	getStateCount: function(unitType, stateId) {
+	getStateCount: function (unitType, stateId) {
 		var filterList;
 		var allStateCount = 0;
 		var state = root.getBaseData().getStateList().getDataFromId(stateId);
@@ -136,112 +135,75 @@ var SpecificStateUnitsCountCalculator = {
 			return 0;
 		}
 		filterList = FilterControl.getListArray(unitType);
-		allStateCount += filterList.map(
-			function(unitList) {
-				var unit;
-				var unitListCount = unitList.getCount();
-				var stateCount = 0;
-				for (var index = 0; index < unitListCount; index++) {
-					unit = unitList.getData(index);
-					if (StateControl.getTurnState(unit, state)) {
-						stateCount++;
-					}
+		filterList.forEach(function (unitList) {
+			var unit;
+			var unitListCount = unitList.getCount();
+			for (var index = 0; index < unitListCount; index++) {
+				unit = unitList.getData(index);
+				if (StateControl.getTurnState(unit, state)) {
+					allStateCount++;
 				}
-				return stateCount;
-			});
+			}
+		});
 		return allStateCount;
 	}
 };
 
-// 以下はArray.map関数のpolyfill
-// Reference: https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/map
+// Production steps of ECMA-262, Edition 5, 15.4.4.18
+// Reference: http://es5.github.io/#x15.4.4.18
+if (!Array.prototype["forEach"]) {
+	Array.prototype.forEach = function (callback, thisArg) {
+		if (this == null) {
+			throw new TypeError("Array.prototype.forEach called on null or undefined");
+		}
 
-// Production steps of ECMA-262, Edition 5, 15.4.4.19
-// Reference: http://es5.github.io/#x15.4.4.19
-if (!Array.prototype.map) {
+		var T, k;
+		// 1. Let O be the result of calling toObject() passing the
+		// |this| value as the argument.
+		var O = Object(this);
 
-  Array.prototype.map = function(callback/*, thisArg*/) {
+		// 2. Let lenValue be the result of calling the Get() internal
+		// method of O with the argument "length".
+		// 3. Let len be toUint32(lenValue).
+		var len = O.length >>> 0;
 
-    var T, A, k;
+		// 4. If isCallable(callback) is false, throw a TypeError exception.
+		// See: http://es5.github.com/#x9.11
+		if (typeof callback !== "function") {
+			throw new TypeError(callback + " is not a function");
+		}
 
-    if (this == null) {
-      throw new TypeError('this is null or not defined');
-    }
+		// 5. If thisArg was supplied, let T be thisArg; else let
+		// T be undefined.
+		if (arguments.length > 1) {
+			T = thisArg;
+		}
 
-    // 1. Let O be the result of calling ToObject passing the |this|
-    //    value as the argument.
-    var O = Object(this);
+		// 6. Let k be 0
+		k = 0;
 
-    // 2. Let lenValue be the result of calling the Get internal
-    //    method of O with the argument "length".
-    // 3. Let len be ToUint32(lenValue).
-    var len = O.length >>> 0;
+		// 7. Repeat, while k < len
+		while (k < len) {
+			var kValue;
 
-    // 4. If IsCallable(callback) is false, throw a TypeError exception.
-    // See: http://es5.github.com/#x9.11
-    if (typeof callback !== 'function') {
-      throw new TypeError(callback + ' is not a function');
-    }
+			// a. Let Pk be ToString(k).
+			//    This is implicit for LHS operands of the in operator
+			// b. Let kPresent be the result of calling the HasProperty
+			//    internal method of O with argument Pk.
+			//    This step can be combined with c
+			// c. If kPresent is true, then
+			if (k in O) {
+				// i. Let kValue be the result of calling the Get internal
+				// method of O with argument Pk.
+				kValue = O[k];
 
-    // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
-    if (arguments.length > 1) {
-      T = arguments[1];
-    }
-
-    // 6. Let A be a new array created as if by the expression new Array(len)
-    //    where Array is the standard built-in constructor with that name and
-    //    len is the value of len.
-    A = new Array(len);
-
-    // 7. Let k be 0
-    k = 0;
-
-    // 8. Repeat, while k < len
-    while (k < len) {
-
-      var kValue, mappedValue;
-
-      // a. Let Pk be ToString(k).
-      //   This is implicit for LHS operands of the in operator
-      // b. Let kPresent be the result of calling the HasProperty internal
-      //    method of O with argument Pk.
-      //   This step can be combined with c
-      // c. If kPresent is true, then
-      if (k in O) {
-
-        // i. Let kValue be the result of calling the Get internal
-        //    method of O with argument Pk.
-        kValue = O[k];
-
-        // ii. Let mappedValue be the result of calling the Call internal
-        //     method of callback with T as the this value and argument
-        //     list containing kValue, k, and O.
-        mappedValue = callback.call(T, kValue, k, O);
-
-        // iii. Call the DefineOwnProperty internal method of A with arguments
-        // Pk, Property Descriptor
-        // { Value: mappedValue,
-        //   Writable: true,
-        //   Enumerable: true,
-        //   Configurable: true },
-        // and false.
-
-        // In browsers that support Object.defineProperty, use the following:
-        // Object.defineProperty(A, k, {
-        //   value: mappedValue,
-        //   writable: true,
-        //   enumerable: true,
-        //   configurable: true
-        // });
-
-        // For best browser support, use the following:
-        A[k] = mappedValue;
-      }
-      // d. Increase k by 1.
-      k++;
-    }
-
-    // 9. return A
-    return A;
-  };
+				// ii. Call the Call internal method of callback with T as
+				// the this value and argument list containing kValue, k, and O.
+				callback.call(T, kValue, k, O);
+			}
+			// d. Increase k by 1.
+			k++;
+		}
+		// 8. return undefined
+	};
 }
