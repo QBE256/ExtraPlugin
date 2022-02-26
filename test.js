@@ -8,7 +8,7 @@ StateControl.arrangeState = function(unit, state, increaseType) {
 		
 	if (increaseType === IncreaseType.INCREASE) {
 		turnState = this.getTurnState(unit, state);
-		if (turnState.custom.isOverlapping !== true && turnState !== null) {
+		if (turnState !== null && state.custom.isOverlapping !== true) {
 			// 既にステートが追加されている場合は、ターン数値を更新する
 			turnState.setTurn(state.getTurn());
 		}
