@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　スキル 不器用、ハードアーマー(攻撃時に武器耐久を余分に消耗させるスキル) ver 1.0
+　スキル 不器用、ハードアーマー(攻撃時に武器耐久を余分に消耗させるスキル) ver 1.1
 
 ■作成者
 キュウブ
@@ -21,6 +21,9 @@ decreaseCount:<数値>
 ※弓や魔法などで適用させたくない場合は有効相手で武器の設定をしておくとよいでしょう。
 
 ■更新履歴
+ver 1.1 (2022/03/02)
+破損設定の無い武器に対してスキルが発動すると使用回数が無限になる場合があるバグを修正
+
 ver 1.0 (2021/04/11)
 初版公開
 
@@ -92,11 +95,14 @@ SRPG Studio Version:1.161
 		var decreaseCountBySkill = 0;
 		var activeSkillArray = order.getActiveSkillArray();
 		var passiveSkillArray = order.getPassiveSkillArray();
+		var weapon = BattlerChecker.getBaseWeapon(active);
+		var isLostWeapon = !weapon.getWeaponType().getBreakedWeapon();
 
 		_AttackFlow__doAttackAction.call(this);
 		if (!order.isCurrentItemDecrement()) {
 			return;
 		}
+		
 		for (var index = 0; index < activeSkillArray.length; index++) {
 			if (activeSkillArray[index].getCustomKeyword() === 'Clumsy') {
 				decreaseCountBySkill += activeSkillArray[index].custom.decreaseCount;
@@ -108,7 +114,10 @@ SRPG Studio Version:1.161
 			}
 		}
 		for (var index = 0; index < decreaseCountBySkill; index++) {
-			ItemControl.decreaseLimit(active, BattlerChecker.getBaseWeapon(active));
+			if (isLostWeapon && weapon.getLimit() === 0) {
+				break;
+			}
+			ItemControl.decreaseLimit(active, weapon);
 		}
 	};
 })();
