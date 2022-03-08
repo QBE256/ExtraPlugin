@@ -85,22 +85,14 @@ SRPG Studio Version:1.161
 
 var FogSettingFolder = "FogImage"; //Materialフォルダ下のこのフォルダの中にフォグで使用する画像を入れてください
 
-var validationFogParameter = function(fog) {
-	if (typeof fog !== 'object') {
+var validationFogParameter = function (fog) {
+	if (typeof fog !== "object") {
 		return false;
 	}
-	if (
-		!('img' in fog) ||
-		!('moveX' in fog) ||
-		!('moveY' in fog)
-	) {
+	if (!("img" in fog) || !("moveX" in fog) || !("moveY" in fog)) {
 		return false;
 	}
-	if (
-		typeof fog.img !== 'string' ||
-		typeof fog.moveX !== 'number' ||
-		typeof fog.moveY !== 'number'
-	) {
+	if (typeof fog.img !== "string" || typeof fog.moveX !== "number" || typeof fog.moveY !== "number") {
 		return false;
 	}
 	return true;
@@ -109,7 +101,7 @@ var validationFogParameter = function(fog) {
 MapLayer._frontFogImage = null;
 MapLayer._backFogImage = null;
 
-MapLayer.setFogData = function() {
+MapLayer.setFogData = function () {
 	var frontFogPicture, backFogPicture;
 	var currentMapInfo = this._getMapInfo();
 
@@ -117,10 +109,7 @@ MapLayer.setFogData = function() {
 		return;
 	}
 	if (validationFogParameter(currentMapInfo.custom.fog)) {
-		frontFogPicture = root.getMaterialManager().createImage(
-								FogSettingFolder,
-								currentMapInfo.custom.fog.img
-							);
+		frontFogPicture = root.getMaterialManager().createImage(FogSettingFolder, currentMapInfo.custom.fog.img);
 		this._frontFogImage = createObject(ScrollFogImage);
 		this._frontFogImage.startScrollBackground(
 			frontFogPicture,
@@ -129,20 +118,17 @@ MapLayer.setFogData = function() {
 		);
 	}
 	if (validationFogParameter(currentMapInfo.custom.backFog)) {
-		backFogPicture = root.getMaterialManager().createImage(
-								FogSettingFolder,
-								currentMapInfo.custom.backFog.img
-							);
+		backFogPicture = root.getMaterialManager().createImage(FogSettingFolder, currentMapInfo.custom.backFog.img);
 		this._backFogImage = createObject(ScrollFogImage);
 		this._backFogImage.startScrollBackground(
 			backFogPicture,
 			currentMapInfo.custom.backFog.moveX,
 			currentMapInfo.custom.backFog.moveY
 		);
-	}		
+	}
 };
 
-MapLayer._getMapInfo = function() {
+MapLayer._getMapInfo = function () {
 	var currentSession = root.getCurrentSession();
 	if (!currentSession) {
 		return null;
@@ -150,13 +136,13 @@ MapLayer._getMapInfo = function() {
 	return currentSession.getCurrentMapInfo();
 };
 
-MapLayer._isEnableLocalSwitch = function(fog) {
+MapLayer._isEnableLocalSwitch = function (fog) {
 	var localSwitchTable, switchIndex;
 	var currentMapInfo = this._getMapInfo();
-	if (!('switch_id' in fog)) {
+	if (!("switch_id" in fog)) {
 		return true;
 	}
-	if (typeof fog.switch_id !== 'number') {
+	if (typeof fog.switch_id !== "number") {
 		return false;
 	}
 	localSwitchTable = currentMapInfo.getLocalSwitchTable();
@@ -164,7 +150,7 @@ MapLayer._isEnableLocalSwitch = function(fog) {
 	return localSwitchTable.isSwitchOn(switchIndex);
 };
 
-MapLayer._isEnableFrontFogImage = function() {
+MapLayer._isEnableFrontFogImage = function () {
 	var currentMapInfo;
 
 	if (!this._frontFogImage) {
@@ -180,7 +166,7 @@ MapLayer._isEnableFrontFogImage = function() {
 	return true;
 };
 
-MapLayer._isEnableBackFogImage = function() {
+MapLayer._isEnableBackFogImage = function () {
 	var currentMapInfo;
 
 	if (!this._backFogImage) {
@@ -196,12 +182,11 @@ MapLayer._isEnableBackFogImage = function() {
 	return true;
 };
 
-var ScrollFogImage = defineObject(ScrollBackground,
-{
+var ScrollFogImage = defineObject(ScrollBackground, {
 	_xMove: 0,
 	_yMove: 0,
 
-	startScrollBackground: function(pic, xMove, yMove) {
+	startScrollBackground: function (pic, xMove, yMove) {
 		if (pic === null) {
 			this._pic = null;
 			this._picCache = null;
@@ -220,7 +205,7 @@ var ScrollFogImage = defineObject(ScrollBackground,
 		this._yMove = yMove;
 	},
 
-	moveScrollBackground: function() {
+	moveScrollBackground: function () {
 		if (this._counter.moveCycleCounter() === MoveResult.CONTINUE) {
 			return MoveResult.CONTINUE;
 		}
@@ -230,23 +215,22 @@ var ScrollFogImage = defineObject(ScrollBackground,
 		this._xScroll = this._xScroll < 0 ? this._xMax : this._xScroll;
 		this._yScroll += this._yMove;
 		this._yScroll = this._yScroll >= this._yMax ? 0 : this._yScroll;
-		this._yScroll = this._yScroll < 0 ? this._yMax : this._yScroll;	
+		this._yScroll = this._yScroll < 0 ? this._yMax : this._yScroll;
 
 		return MoveResult.CONTINUE;
 	}
-}
-);
+});
 
-(function() {
+(function () {
 	var _MapLayer_prepareMapLayer = MapLayer.prepareMapLayer;
-	MapLayer.prepareMapLayer = function() {
+	MapLayer.prepareMapLayer = function () {
 		var currentScene = root.getCurrentScene();
 		_MapLayer_prepareMapLayer.call(this);
 		this._frontFogImage = null;
 		this._backFogImage = null;
 		if (
 			currentScene !== SceneType.BATTLESETUP &&
-			currentScene !== SceneType.FREE && 
+			currentScene !== SceneType.FREE &&
 			currentScene !== SceneType.BATTLERESULT
 		) {
 			return;
@@ -255,7 +239,7 @@ var ScrollFogImage = defineObject(ScrollBackground,
 	};
 
 	var _MapLayer_moveMapLayer = MapLayer.moveMapLayer;
-	MapLayer.moveMapLayer = function() {
+	MapLayer.moveMapLayer = function () {
 		if (this._isEnableFrontFogImage()) {
 			this._frontFogImage.moveScrollBackground();
 		}
@@ -266,7 +250,7 @@ var ScrollFogImage = defineObject(ScrollBackground,
 	};
 
 	var _MapLayer_drawUnitLayer = MapLayer.drawUnitLayer;
-	MapLayer.drawUnitLayer = function() {
+	MapLayer.drawUnitLayer = function () {
 		_MapLayer_drawUnitLayer.call(this);
 		if (this._isEnableFrontFogImage()) {
 			this._frontFogImage.drawScrollBackground();
@@ -274,8 +258,8 @@ var ScrollFogImage = defineObject(ScrollBackground,
 	};
 
 	var _MapLayer_drawMapLayer = MapLayer.drawMapLayer;
-	MapLayer.drawMapLayer = function() {
-		 _MapLayer_drawMapLayer.call(this);
+	MapLayer.drawMapLayer = function () {
+		_MapLayer_drawMapLayer.call(this);
 		if (this._isEnableBackFogImage()) {
 			this._backFogImage.drawScrollBackground();
 		}
