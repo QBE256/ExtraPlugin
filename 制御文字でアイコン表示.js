@@ -1,31 +1,58 @@
 /*--------------------------------------------------------------------------
-　会話でアイコンを表示 ver0.1
+　会話でアイコンを表示 ver1.0
 
 ■作成者
 キュウブ
 
 ■概要
 テキスト中で制御文字を使用することでアイコン表記が可能になります。
-試作版のため制限があります。
+※注意点
+・会話テキスト中で他の制御文字を使ってフォント変更を行うと、アイコンがテキストと被ってしまう可能性があります。
 
+■■ アイコン表示機能
+※ver0.1とは仕様変更
 ランタイムアイコンの場合は
-\rI[<リソースID>][<左から何番目か(一番左は0とする)>][<上から何番目か(一番上は0とする)>]
+\Ir<リソースID>[<左から何番目か(一番左は0とする)>][<上から何番目か(一番上は0とする)>]
 オリジナルアイコンの場合は
-\oI[<リソースID>][<左から何番目か(一番左は0とする)>][<上から何番目か(一番上は0とする)>]
+\Io<リソースID>[<左から何番目か(一番左は0とする)>][<上から何番目か(一番上は0とする)>]
 で指定可能です。
 
 例えば、
-\rI[0][0][2] と記入するとランタイムの弓アイコンが表示されます
+\Ir0[0][2]と記入するとランタイムの弓アイコンが表示されます
 
-※注意点
-・会話テキスト中で他の制御文字を使ってフォント変更を行うと、アイコンがテキストと被ってしまう可能性があります。
-・アイコンを並べて表示させる事はできません。
-※"\rI[0][0][1] \rI[0][0][2]" と制御文字を並べてもアイコンが重なって表示されてしまいます
-※"\rI[0][0][1] A \rI[0][0][2]" と制御文字の間に何かしら文字が入れば重なりません。
+■■ ブックマークアイコン表示機能
+このスクリプトの最初の方にかかれているBookMarkDrawIconsの中を編集する事で
+\I[<番号>]と記入するだけで指定したアイコンを表示する事ができます。
+こちらの方がテキストで幅を取らないため、一行でいくつも表示させる事も可能になります。
+※このファイルで設定管理を行う必要があるため、ご利用は最小限に留めておいた方が良いと思います。
+
+■■■ 設定方法
+設定は下記のように行いBookMarkDrawIconsに追加する必要があります。
+---------------------------------------------------
+{ 
+  isRuntime: <ランタイムならtrue,オリジナルならfalse>, 
+  id: <リソースID>, 
+  x: <左から何番目か(一番左は0とする)>, 
+  y: <上から何番目か(一番上は0とする)>
+}
+---------------------------------------------------
+例えば、\I[2]の部分を下記のように編集すると、\I[2]でオリジナルのID2の左から3(2)番目、上から4(3)番目のアイコンが表示されるようになります。
+-----------------------------------------------------------------------------
+var BookMarkDrawIcons = [
+	{ isRuntime: true, id: 0, x: 4, y: 9 }, // \I[0]でランタイムのハートアイコンを表示
+	{ isRuntime: true, id: 0, x: 2, y: 16 }, // \I[1]でランタイムの睡眠アイコンを表示
+	{ isRuntime: false, id: 2, x: 3, y: 4 }, // \I[2]でオリジナルID2のアイコン表示
+-----------------------------------------------------------------------------
+
 
 ■更新履歴
+ver 1.0 (2022/03/17)
+・ver0.1とは制御文字の種類を変更 ※ver0.1から更新する場合は注意
+・アイコンを連続表示できるように仕様変更
+・ブックマークアイコン機能を追加
+
 ver 0.1 (2022/03/16)
-公開
+試作版公開
 
 ■対応バージョン
 SRPG Studio Version:1.161
@@ -40,7 +67,24 @@ SRPG Studio Version:1.161
 ・SRPG Studio利用規約は遵守してください。
 --------------------------------------------------------------------------*/
 
-ControlVariable.BaseIcon = defineObject(BaseControlVariable, {
+// ここで指定したアイコンは\I[n]で描画可能になる
+// 制御文字が短い分、テキストに余裕ができる
+// \I[0]と\I[1]の例を参考に各自編集してください
+var BookMarkDrawIcons = [
+	{ isRuntime: true, id: 0, x: 4, y: 9 }, // \I[0]でランタイムのハートアイコンを表示
+	{ isRuntime: true, id: 0, x: 2, y: 16 }, // \I[1]でランタイムの睡眠アイコンを表示
+	{ isRuntime: true, id: 0, x: 0, y: 0 }, // \I[2]
+	{ isRuntime: true, id: 0, x: 0, y: 0 }, // \I[3]
+	{ isRuntime: true, id: 0, x: 0, y: 0 }, // \I[4]
+	{ isRuntime: true, id: 0, x: 0, y: 0 }, // \I[5]
+	{ isRuntime: true, id: 0, x: 0, y: 0 }, // \I[6]
+	{ isRuntime: true, id: 0, x: 0, y: 0 }, // \I[7]
+	{ isRuntime: true, id: 0, x: 0, y: 0 }, // \I[8]
+	{ isRuntime: true, id: 0, x: 0, y: 0 }, // \I[9]
+	{ isRuntime: true, id: 0, x: 0, y: 0 } // \I[10]
+];
+
+ControlVariable.Icon = defineObject(BaseControlVariable, {
 	startParser: function (text, index, objectArray) {
 		var key = this.getKey();
 		var c = text.match(key);
@@ -49,10 +93,16 @@ ControlVariable.BaseIcon = defineObject(BaseControlVariable, {
 		obj.index = index;
 		obj.parentObject = this;
 		obj.isDrawingObject = this.isDrawingObject();
-		obj.handle = this._getHandle(Number(c[1]), Number(c[2]), Number(c[3]));
+		obj.handle = this._getHandle(c[1] === "r", Number(c[2]), Number(c[3]), Number(c[4]));
 		objectArray.push(obj);
 
-		return "     ";
+		return "   ";
+	},
+
+	getKey: function () {
+		var key = /\\I(r|o)(\d+)\[(\d+)\]\[(\d+)\]/;
+
+		return key;
 	},
 
 	checkDrawInfo: function (index, objectArray, drawInfo) {
@@ -61,11 +111,10 @@ ControlVariable.BaseIcon = defineObject(BaseControlVariable, {
 		if (obj === null) {
 			return;
 		}
-
-		if (drawInfo.currentIndex < obj.index - drawInfo.baseIndex) {
+		if (drawInfo.currentIndex < index - drawInfo.baseIndex) {
 			return;
 		}
-		if (typeof drawInfo.icons !== "undefined") {
+		if (Array.isArray(drawInfo.icons)) {
 			drawInfo.icons.push(obj);
 		} else {
 			drawInfo.icons = [obj];
@@ -76,48 +125,80 @@ ControlVariable.BaseIcon = defineObject(BaseControlVariable, {
 		return true;
 	},
 
-	_getHandle: function (id, x, y) {
-		var handle = root.createEmptyHandle();
+	_getHandle: function (isRuntime, id, x, y) {
+		var handle = root.createResourceHandle(isRuntime, id, 0, x, y);
 		return handle;
 	}
 });
 
-ControlVariable.RuntimeIcon = defineObject(ControlVariable.BaseIcon, {
-	getKey: function () {
-		var key = /\\rI\[(\d+)\]\[(\d+)\]\[(\d+)\]/;
+ControlVariable.BookMarkIcon = defineObject(ControlVariable.Icon, {
+	startParser: function (text, index, objectArray) {
+		var key = this.getKey();
+		var c = text.match(key);
+		var obj = {};
+		var bookMarkDrawIcon = BookMarkDrawIcons[Number(c[1])];
 
-		return key;
+		obj.index = index;
+		obj.parentObject = this;
+		obj.isDrawingObject = this.isDrawingObject();
+		obj.handle = this._getHandle(
+			bookMarkDrawIcon.isRuntime,
+			bookMarkDrawIcon.id,
+			bookMarkDrawIcon.x,
+			bookMarkDrawIcon.y
+		);
+		objectArray.push(obj);
+
+		return "   ";
 	},
 
-	_getHandle: function (id, x, y) {
-		var handle = root.createResourceHandle(true, id, 0, x, y);
-		return handle;
-	}
-});
-
-ControlVariable.OriginalIcon = defineObject(ControlVariable.BaseIcon, {
 	getKey: function () {
-		var key = /\\oI\[(\d+)\]\[(\d+)\]\[(\d+)\]/;
+		var key = /\\I\[(\d+)\]/;
 
 		return key;
-	},
-
-	_getHandle: function (id, x, y) {
-		var handle = root.createResourceHandle(false, id, 0, x, y);
-		return handle;
 	}
 });
+
+CoreAnalyzer.drawIcon = function (x, y, currentLineText, drawInfo) {
+	var currentDrawText = "";
+	var adujstXPosition = 0;
+	var adujstYPosition = -3;
+	// getTextWidthでテキストの長さを測定する際に末尾がスペースだと本来より短い値になってしまうため、
+	// ダミーの文字を末尾に挿入して値を測定させる
+	var dummyEndCharacter = "|";
+	var dummyEndCharacterWidth = root.getGraphicsManager().getTextWidth(dummyEndCharacter, drawInfo.defaultFont);
+
+	if (!Array.isArray(drawInfo.icons)) {
+		return;
+	}
+
+	for (var index = 0; index < drawInfo.icons.length; index++) {
+		currentDrawText = currentLineText.substr(0, drawInfo.icons[index].index - drawInfo.baseIndex);
+		// 現在表示されているテキストの長さを計測する。長さの分だけx軸をずらしてアイコンを表示させる必要がある。
+		// フォントはメッセージのデフォルトフォントとする。
+		// したがって、他の制御文字でフォントの設定を変えている場合は正しい長さにはならない。
+		adujstXPosition =
+			root.getGraphicsManager().getTextWidth(currentDrawText + dummyEndCharacter, drawInfo.defaultFont) -
+			dummyEndCharacterWidth;
+		GraphicsRenderer.drawImage(
+			x + adujstXPosition,
+			y + adujstYPosition,
+			drawInfo.icons[index].handle,
+			GraphicsType.ICON
+		);
+	}
+};
 
 (function () {
 	var _TextParser__configureVariableObject = TextParser._configureVariableObject;
 	TextParser._configureVariableObject = function (groupArray) {
 		_TextParser__configureVariableObject.apply(this, arguments);
-		groupArray.appendObject(ControlVariable.RuntimeIcon);
-		groupArray.appendObject(ControlVariable.OriginalIcon);
+		groupArray.appendObject(ControlVariable.Icon);
+		groupArray.appendObject(ControlVariable.BookMarkIcon);
 	};
 
 	CoreAnalyzer.drawCoreAnalyzer = function (xStart, yStart) {
-		var i, j, adujstXPosition;
+		var i, j;
 		var drawInfo, textLine, count2;
 		var count = this._textLineArray.length;
 
@@ -147,6 +228,9 @@ ControlVariable.OriginalIcon = defineObject(ControlVariable.BaseIcon, {
 			drawInfo.baseIndex = textLine.baseIndex;
 			drawInfo.defaultColor = this._parserInfo.defaultColor;
 			drawInfo.defaultFont = this._parserInfo.defaultFont;
+			// アイコンを描画するべきかどうかの判定は
+			// ControlVariable.Icon.checkDrawInfoで行わせるのが本来のメソッドの役割として望ましい
+			// これを実現するために、drawInfoにcurrentIndexを追加する
 			drawInfo.currentIndex = textLine.currentIndex;
 
 			count2 = textLine.text.length + 1;
@@ -154,23 +238,17 @@ ControlVariable.OriginalIcon = defineObject(ControlVariable.BaseIcon, {
 				this._textParser.checkDrawInfo(j + textLine.baseIndex, drawInfo);
 			}
 			textLine.formattedText.drawFormattedText(xStart, yStart, 0x0, 0);
-			if (drawInfo.icons) {
-				for (var iconIndex = 0; iconIndex < drawInfo.icons.length; iconIndex++) {
-					adujstXPosition = root
-						.getGraphicsManager()
-						.getTextWidth(
-							textLine.text.substr(0, drawInfo.icons[iconIndex].index - textLine.baseIndex),
-							drawInfo.defaultFont
-						);
-					GraphicsRenderer.drawImage(
-						xStart + adujstXPosition,
-						yStart - 3,
-						drawInfo.icons[iconIndex].handle,
-						GraphicsType.ICON
-					);
-				}
-			}
+			// アイコンの描画を行う
+			this.drawIcon(xStart, yStart, textLine.text, drawInfo);
 			yStart += this.getCharSpaceHeight();
 		}
 	};
 })();
+
+// Array.isArray pollyfill
+// reference: https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray#polyfill
+if (!Array.isArray) {
+	Array.isArray = function (arg) {
+		return Object.prototype.toString.call(arg) === "[object Array]";
+	};
+}
