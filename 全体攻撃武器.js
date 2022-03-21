@@ -30,6 +30,7 @@ https://github.com/QBE256/ExtraPlugin/blob/master/%E8%99%9A%E7%84%A1%E3%81%AE%E5
 
 ■更新履歴
 ver 1.1 (2022/03/21)
+連続戦闘時にエラー落ちすることがあるバグを改修
 後発スクリプトで応用しやすいように微修正
 
 ver 1.0 (2022/03/13)
@@ -215,6 +216,7 @@ var PreMultipleAttack = defineObject(PreAttack, {
 					) {
 						continue;
 					}
+					AttackControl.setPreAttackObject(this);
 					BattlerChecker.setUnit(
 						this._attackParam.unit,
 						this._attackParam.targetUnit
