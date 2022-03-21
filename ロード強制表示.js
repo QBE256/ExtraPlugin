@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ロード強制表示 ver 1.0
+　ロード強制表示 ver 1.1
 
 ■作成者
 キュウブ
@@ -8,9 +8,13 @@
 環境項目からロード表示有無の項目が消えて、
 ロードコマンドがマップコマンド上で強制的に表示されるようになります(レイアウト設定で非表示にしている場合はもちろん表示されません)
 
+↓ver 1.0までの仕様↓
 ※環境系の他スクリプトと競合する可能性があります。その時は ConfigWindow._configureConfigItem の中をいじって何とかしてください。
 
 ■更新履歴
+ver1.1 2022/03/21
+競合が起きにくいように不親切な部分を改修
+
 ver1.0 2020/09/17
 初版
 
@@ -32,32 +36,12 @@ LoadScreenLauncher.isLaunchable = function() {
 	return true;
 };
 
-// オプションからロード有無の選択肢を消す
-ConfigWindow._configureConfigItem = function(groupArray) {
-	groupArray.appendObject(ConfigItem.MusicPlay);
-	groupArray.appendObject(ConfigItem.SoundEffect);
-	if (DataConfig.getVoiceCategoryName() !== '') {
-		groupArray.appendObject(ConfigItem.Voice);
-	}
-	if (DataConfig.isMotionGraphicsEnabled()) {
-		groupArray.appendObject(ConfigItem.RealBattle);
-		if (DataConfig.isHighResolution()) {
-			groupArray.appendObject(ConfigItem.RealBattleScaling);
+(function(){
+	var _ConfigWindow__isVisible = ConfigWindow._isVisible;
+	ConfigWindow._isVisible = function(commandLayoutType, commandActionType) {
+		if (commandLayoutType === CommandLayoutType.MAPCOMMAND && commandActionType === CommandActionType.LOAD) {
+			return false;
 		}
+		return _ConfigWindow__isVisible.apply(this, arguments);
 	}
-	groupArray.appendObject(ConfigItem.AutoCursor);
-	groupArray.appendObject(ConfigItem.AutoTurnEnd);
-	groupArray.appendObject(ConfigItem.AutoTurnSkip);
-	groupArray.appendObject(ConfigItem.EnemyMarking);
-	groupArray.appendObject(ConfigItem.MapGrid);
-	groupArray.appendObject(ConfigItem.UnitSpeed);
-	groupArray.appendObject(ConfigItem.MessageSpeed);
-	groupArray.appendObject(ConfigItem.ScrollSpeed);
-	groupArray.appendObject(ConfigItem.UnitMenuStatus);
-	groupArray.appendObject(ConfigItem.MapUnitHpVisible);
-	groupArray.appendObject(ConfigItem.MapUnitSymbol);
-	groupArray.appendObject(ConfigItem.DamagePopup);
-	groupArray.appendObject(ConfigItem.SkipControl);
-	groupArray.appendObject(ConfigItem.MouseOperation);
-	groupArray.appendObject(ConfigItem.MouseCursorTracking);
-};
+})();
