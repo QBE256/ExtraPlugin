@@ -1,5 +1,5 @@
 ﻿/*--------------------------------------------------------------------------
-　マップ設置兵器(ロングアーチ等) ver1.0
+　マップ設置兵器(ロングアーチ等) ver1.1
 
 ■作成者
 キュウブ
@@ -19,6 +19,9 @@
 ※通常地形を別の通常地形に変更する分には問題ありません
 
 更新履歴
+ver 1.1 2022/03/27
+コードリファクタリング
+
 ver 1.0 2022/03/26
 初版
 
@@ -69,28 +72,21 @@ SRPG Studio Version:1.161
 	UnitRangePanel._installedWeaponSimulators = [];
 	var _UnitRangePanel__setLight = UnitRangePanel._setLight;
 	UnitRangePanel._setLight = function (isWeapon) {
+		var moveableIndexArray;
+		var that = this;
 		_UnitRangePanel__setLight.apply(this, arguments);
 		if (this._installedWeaponSimulators.length === 0) {
 			return;
 		}
 		if (!isWeapon) {
 			this._mapChipLightWeapon.setLightType(MapLightType.RANGE);
-			this._mapChipLightWeapon.setIndexArray(
-				this._installedWeaponSimulators[0].getSimulationWeaponIndexArray()
-			);
 		}
-		for (
-			var index = 0;
-			index < this._installedWeaponSimulators.length;
-			index++
-		) {
-			var installedWeaponIndexArray =
-				this._installedWeaponSimulators[index].getSimulationWeaponIndexArray();
-			this._mapChipLightWeapon.mergeIndexArray(installedWeaponIndexArray);
-		}
-		this._mapChipLightWeapon.dedupeIndexArray(
-			this._simulator.getSimulationIndexArray()
-		);
+		this._installedWeaponSimulators.forEach(function (simulator) {
+			var indexArray = simulator.getSimulationWeaponIndexArray();
+			that._mapChipLightWeapon.mergeIndexArray(indexArray);
+		});
+		moveableIndexArray = this._simulator.getSimulationIndexArray();
+		this._mapChipLightWeapon.dedupeIndexArray(moveableIndexArray);
 	};
 
 	MapChipLight.mergeIndexArray = function (addIndexArray) {
@@ -112,30 +108,34 @@ SRPG Studio Version:1.161
 	};
 
 	UnitRangePanel._setInstalledWeaponRangeDatas = function () {
-		var simulator;
+		var that = this;
 		var moveableIndexArray = this._simulator.getSimulationIndexArray();
-		for (var index = 0; index < moveableIndexArray.length; index++) {
-			var x = CurrentMap.getX(moveableIndexArray[index]);
-			var y = CurrentMap.getY(moveableIndexArray[index]);
+		var attackaleIndexArray = moveableIndexArray.filter(function (index) {
+			var x = CurrentMap.getX(index);
+			var y = CurrentMap.getY(index);
 			var weapon = CurrentMap.getInstalledWeapon(x, y);
-			if (
+			return (
 				weapon &&
 				!ItemControl.isItemBroken(weapon) &&
-				ItemControl.isWeaponAvailable(this._unit, weapon)
-			) {
-				this._unit.setMapX(x);
-				this._unit.setMapY(y);
-				simulator = root.getCurrentSession().createMapSimulator();
-				simulator.disableRestrictedPass();
-				simulator.startSimulationWeapon(
-					this._unit,
-					0,
-					weapon.getStartRange(),
-					weapon.getEndRange()
-				);
-				this._installedWeaponSimulators.push(simulator);
-			}
-		}
+				ItemControl.isWeaponAvailable(that._unit, weapon)
+			);
+		});
+		attackaleIndexArray.forEach(function (index) {
+			var simulator = root.getCurrentSession().createMapSimulator();
+			var x = CurrentMap.getX(index);
+			var y = CurrentMap.getY(index);
+			var weapon = CurrentMap.getInstalledWeapon(x, y);
+			that._unit.setMapX(x);
+			that._unit.setMapY(y);
+			simulator.disableRestrictedPass();
+			simulator.startSimulationWeapon(
+				that._unit,
+				0,
+				weapon.getStartRange(),
+				weapon.getEndRange()
+			);
+			that._installedWeaponSimulators.push(simulator);
+		});
 		this._unit.setMapX(this._x);
 		this._unit.setMapY(this._y);
 	};
@@ -211,7 +211,10 @@ SRPG Studio Version:1.161
 			return _ItemControl_getEquippedWeapon.apply(this, arguments);
 		}
 		if (CurrentMap.getEnableInstalledWeaponFlag()) {
-			return CurrentMap.getInstalledWeapon(unit.getMapX(), unit.getMapY());
+			return CurrentMap.getInstalledWeapon(
+				unit.getMapX(),
+				unit.getMapY()
+			);
 		}
 		return _ItemControl_getEquippedWeapon.apply(this, arguments);
 	};
@@ -246,38 +249,40 @@ SRPG Studio Version:1.161
 
 	MarkingPanel._addInstalledIndexWeaponArray = function () {
 		var enemyList = EnemyList.getAliveList();
+		var that = this;
 		for (var unitIndex = 0; unitIndex < enemyList.getCount(); unitIndex++) {
 			var unit = enemyList.getData(unitIndex);
 			var currentUnitMapX = unit.getMapX();
 			var currentUnitMapY = unit.getMapY();
-			var isUsedInstalledWeapon = false;
-			for (var index = 0; index < this._indexArray.length; index++) {
-				var x = CurrentMap.getX(this._indexArray[index]);
-				var y = CurrentMap.getY(this._indexArray[index]);
+			var attackaleIndexArray = this._indexArray.filter(function (index) {
+				var x = CurrentMap.getX(index);
+				var y = CurrentMap.getY(index);
 				var weapon = CurrentMap.getInstalledWeapon(x, y);
-				if (
+				return (
 					weapon &&
 					!ItemControl.isItemBroken(weapon) &&
 					ItemControl.isWeaponAvailable(unit, weapon)
-				) {
-					isUsedInstalledWeapon = true;
-					unit.setMapX(x);
-					unit.setMapY(y);
-					var simulator = root.getCurrentSession().createMapSimulator();
-					simulator.disableRestrictedPass();
-					simulator.startSimulationWeapon(
-						unit,
-						0,
-						weapon.getStartRange(),
-						weapon.getEndRange()
-					);
-					var installedWeaponIndexArray =
-						simulator.getSimulationWeaponIndexArray();
-					this._mergeIndexArray(installedWeaponIndexArray);
-				}
-			}
-			// 計算コストが高いのでマップ設置武器を考慮した場合にしか下記の処理は実行させない
-			if (isUsedInstalledWeapon) {
+				);
+			});
+			attackaleIndexArray.forEach(function (index) {
+				var x = CurrentMap.getX(index);
+				var y = CurrentMap.getY(index);
+				var weapon = CurrentMap.getInstalledWeapon(x, y);
+				unit.setMapX(x);
+				unit.setMapY(y);
+				var simulator = root.getCurrentSession().createMapSimulator();
+				simulator.disableRestrictedPass();
+				simulator.startSimulationWeapon(
+					unit,
+					0,
+					weapon.getStartRange(),
+					weapon.getEndRange()
+				);
+				var weaponIndexArray =
+					simulator.getSimulationWeaponIndexArray();
+				that._mergeIndexArray(weaponIndexArray);
+			});
+			if (attackaleIndexArray.length > 0) {
 				unit.setMapX(currentUnitMapX);
 				unit.setMapY(currentUnitMapY);
 				this._dedupeIndexArray(this._indexArray);
@@ -297,7 +302,9 @@ SRPG Studio Version:1.161
 	};
 
 	MarkingPanel._dedupeIndexArray = function (targetIndexArray) {
-		var dedupedIndexArray = this._indexArrayWeapon.filter(function (element) {
+		var dedupedIndexArray = this._indexArrayWeapon.filter(function (
+			element
+		) {
 			return targetIndexArray.indexOf(element) < 0;
 		});
 		this._indexArrayWeapon = dedupedIndexArray;
@@ -305,13 +312,14 @@ SRPG Studio Version:1.161
 
 	CombinationCollector.Weapon._getInstalledWeaponInfo = function (weapon) {
 		var installedWeaponInfos = CurrentMap.getInstalledWeaponInfos();
-		for (var index = 0; index < installedWeaponInfos.length; index++) {
-			// 同じアドレスを指しているかどうかで同位置の設置武器か判定する
-			if (installedWeaponInfos[index].weapon === weapon) {
-				return installedWeaponInfos[index];
-			}
-		}
-		return null;
+		var usedInstalledWeaponInfos = installedWeaponInfos.filter(function (
+			weaponInfo
+		) {
+			return weaponInfo.weapon === weapon;
+		});
+		return usedInstalledWeaponInfos.length > 0
+			? usedInstalledWeaponInfos[0]
+			: null;
 	};
 
 	var _CombinationCollector_Weapon__createCostArrayInternal =
@@ -336,30 +344,31 @@ SRPG Studio Version:1.161
 	CombinationCollector.Weapon.collectCombination = function (misc) {
 		var installedWeaponInfos = CurrentMap.getInstalledWeaponInfos();
 		var unit = misc.unit;
+		var that = this;
 		_CombinationCollector_Weapon_collectCombination.apply(this, arguments);
-		for (var index = 0; index < installedWeaponInfos.length; index++) {
-			var weapon = installedWeaponInfos[index].weapon;
-			// 装備できない場合に加え、破損している場合は装備不可
-			if (
-				ItemControl.isItemBroken(weapon) ||
-				!this._isWeaponEnabled(unit, weapon, misc)
-			) {
-				continue;
-			}
-
-			misc.item = weapon;
+		var enabledInstalledWeaponInfos = installedWeaponInfos.filter(function (
+			weaponInfo
+		) {
+			return (
+				!ItemControl.isItemBroken(weaponInfo.weapon) &&
+				that._isWeaponEnabled(unit, weaponInfo.weapon, misc)
+			);
+		});
+		enabledInstalledWeaponInfos.forEach(function (weaponInfo) {
+			misc.item = weaponInfo.weapon;
 
 			var rangeMetrics = StructureBuilder.buildRangeMetrics();
-			rangeMetrics.startRange = weapon.getStartRange();
-			rangeMetrics.endRange = weapon.getEndRange();
+			rangeMetrics.startRange = weaponInfo.weapon.getStartRange();
+			rangeMetrics.endRange = weaponInfo.weapon.getEndRange();
 
-			var filter = this._getWeaponFilter(unit);
-			this._checkSimulator(misc);
-			this._setUnitRangeCombination(misc, filter, rangeMetrics);
-		}
+			var filter = that._getWeaponFilter(unit);
+			that._checkSimulator(misc);
+			that._setUnitRangeCombination(misc, filter, rangeMetrics);
+		});
 	};
 
-	var _WeaponAutoAction_setAutoActionInfo = WeaponAutoAction.setAutoActionInfo;
+	var _WeaponAutoAction_setAutoActionInfo =
+		WeaponAutoAction.setAutoActionInfo;
 	WeaponAutoAction.setAutoActionInfo = function (unit, combination) {
 		if (this._isUsedInstalledWeapon(combination)) {
 			CurrentMap.changeEnableInstalledWeaponFlag(true);
@@ -384,21 +393,17 @@ SRPG Studio Version:1.161
 
 	WeaponAutoAction._isUsedInstalledWeapon = function (combination) {
 		var installedWeaponInfos = CurrentMap.getInstalledWeaponInfos();
-		return CurrentMap.getInstalledWeaponInfos().some(function (
-			installedWeaponInfo
-		) {
+		return installedWeaponInfos.some(function (weaponInfo) {
 			// 同じアドレスを指しているかどうかで同位置の設置武器か判定する
-			return installedWeaponInfo.weapon === combination.item;
+			return weaponInfo.weapon === combination.item;
 		});
 	};
 
 	AIScorer.Weapon._isUsedInstalledWeapon = function (combination) {
 		var installedWeaponInfos = CurrentMap.getInstalledWeaponInfos();
-		return CurrentMap.getInstalledWeaponInfos().some(function (
-			installedWeaponInfo
-		) {
+		return installedWeaponInfos.some(function (weaponInfo) {
 			// 同じアドレスを指しているかどうかで同位置の設置武器か判定する
-			return installedWeaponInfo.weapon === combination.item;
+			return weaponInfo.weapon === combination.item;
 		});
 	};
 
@@ -437,15 +442,17 @@ CurrentMap.updateCurrentMapInstalledWeaponParamter = function (currentMapId) {
 		mapId: currentMapId,
 		installedWeaponInfos: []
 	};
-	for (var index = 0; index < this._installedWeaponInfos.length; index++) {
-		var installedWeaponInfo = {
-			x: this._installedWeaponInfos[index].x,
-			y: this._installedWeaponInfos[index].y,
-			weaponId: this._installedWeaponInfos[index].weapon.getId(),
-			limit: this._installedWeaponInfos[index].weapon.getLimit()
+	var installedWeaponInfos = this._installedWeaponInfos.map(function (
+		weaponInfo
+	) {
+		return {
+			x: weaponInfo.x,
+			y: weaponInfo.y,
+			weaponId: weaponInfo.weapon.getId(),
+			limit: weaponInfo.weapon.getLimit()
 		};
-		currentMapInstalledWeapon.installedWeaponInfos.push(installedWeaponInfo);
-	}
+	});
+	currentMapInstalledWeapon.installedWeaponInfos = installedWeaponInfos;
 	root.getMetaSession().global.currentMapInstalledWeapon =
 		currentMapInstalledWeapon;
 };
@@ -465,9 +472,12 @@ CurrentMap._resetCurrentMapInstalledWeaponParamter = function () {
 
 CurrentMap._loadCurrentMapInstalledWeapon = function () {
 	var installedWeaponInfos =
-		root.getMetaSession().global.currentMapInstalledWeapon.installedWeaponInfos;
+		root.getMetaSession().global.currentMapInstalledWeapon
+			.installedWeaponInfos;
 	var weaponList = root.getBaseData().getWeaponList();
-	this._installedWeaponInfos = installedWeaponInfos.map(function (weaponInfo) {
+	this._installedWeaponInfos = installedWeaponInfos.map(function (
+		weaponInfo
+	) {
 		var baseWeapon = weaponList.getDataFromId(weaponInfo.weaponId);
 		var weapon = root.duplicateItem(baseWeapon);
 		weapon.setLimit(weaponInfo.limit);
@@ -508,15 +518,14 @@ CurrentMap.getEnableInstalledWeaponFlag = function () {
 	return this._isEnableInstalledWeapon;
 };
 CurrentMap.getInstalledWeapon = function (x, y) {
-	for (var index = 0; index < this._installedWeaponInfos.length; index++) {
-		if (
-			x === this._installedWeaponInfos[index].x &&
-			y === this._installedWeaponInfos[index].y
-		) {
-			return this._installedWeaponInfos[index].weapon;
+	var targetInstalledWeaponInfos = this._installedWeaponInfos.filter(
+		function (weaponInfo) {
+			return weaponInfo.x === x && weaponInfo.y === y;
 		}
-	}
-	return null;
+	);
+	return targetInstalledWeaponInfos.length > 0
+		? targetInstalledWeaponInfos[0].weapon
+		: null;
 };
 
 UnitCommand.InstalledWeaponAttack = defineObject(UnitCommand.Attack, {
@@ -542,7 +551,9 @@ UnitCommand.InstalledWeaponAttack = defineObject(UnitCommand.Attack, {
 		var unit = this.getCommandTarget();
 		var mapX = unit.getMapX();
 		var mapY = unit.getMapY();
-		var terrain = root.getCurrentSession().getTerrainFromPos(mapX, mapY, true);
+		var terrain = root
+			.getCurrentSession()
+			.getTerrainFromPos(mapX, mapY, true);
 		if (typeof terrain.custom.installedWeaponId === "number") {
 			installedWeapon = CurrentMap.getInstalledWeapon(mapX, mapY);
 			if (!installedWeapon) {
@@ -699,7 +710,12 @@ if (!Array.prototype.map) {
 if (!Array.prototype.filter) {
 	Array.prototype.filter = function (func, thisArg) {
 		"use strict";
-		if (!((typeof func === "Function" || typeof func === "function") && this))
+		if (
+			!(
+				(typeof func === "Function" || typeof func === "function") &&
+				this
+			)
+		)
 			throw new TypeError();
 
 		var len = this.length >>> 0,
@@ -744,7 +760,9 @@ if (!Array.prototype.some) {
 		"use strict";
 
 		if (this == null) {
-			throw new TypeError("Array.prototype.some called on null or undefined");
+			throw new TypeError(
+				"Array.prototype.some called on null or undefined"
+			);
 		}
 
 		if (typeof fun !== "function") {
@@ -761,5 +779,52 @@ if (!Array.prototype.some) {
 		}
 
 		return false;
+	};
+}
+
+// Array.prototype.forEach polyfill
+// Production steps of ECMA-262, Edition 5, 15.4.4.18
+// Reference: http://es5.github.com/#x15.4.4.18
+if (!Array.prototype.forEach) {
+	Array.prototype.forEach = function (callback, thisArg) {
+		var T, k;
+		if (this == null) {
+			throw new TypeError(" this is null or not defined");
+		}
+		// 1. Let O be the result of calling ToObject passing the |this| value as the argument.
+		var O = Object(this);
+		// 2. Let lenValue be the result of calling the Get internal method of O with the argument "length".
+		// 3. Let len be ToUint32(lenValue).
+		var len = O.length >>> 0;
+		// 4. If IsCallable(callback) is false, throw a TypeError exception.
+		// See: http://es5.github.com/#x9.11
+		if (typeof callback !== "function") {
+			throw new TypeError(callback + " is not a function");
+		}
+		// 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
+		if (thisArg) {
+			T = thisArg;
+		}
+		// 6. Let k be 0
+		k = 0;
+		// 7. Repeat, while k < len
+		while (k < len) {
+			var kValue;
+			// a. Let Pk be ToString(k).
+			//   This is implicit for LHS operands of the in operator
+			// b. Let kPresent be the result of calling the HasProperty internal method of O with argument Pk.
+			//   This step can be combined with c
+			// c. If kPresent is true, then
+			if (k in O) {
+				// i. Let kValue be the result of calling the Get internal method of O with argument Pk.
+				kValue = O[k];
+				// ii. Call the Call internal method of callback with T as the this value and
+				// argument list containing kValue, k, and O.
+				callback.call(T, kValue, k, O);
+			}
+			// d. Increase k by 1.
+			k++;
+		}
+		// 8. return undefined
 	};
 }
