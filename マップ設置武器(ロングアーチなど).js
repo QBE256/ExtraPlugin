@@ -1,5 +1,6 @@
 ﻿/*--------------------------------------------------------------------------
-　マップ設置兵器(ロングアーチ等) ver1.1
+
+　マップ設置兵器(ロングアーチ等) ver1.2
 
 ■作成者
 キュウブ
@@ -19,6 +20,9 @@
 ※通常地形を別の通常地形に変更する分には問題ありません
 
 更新履歴
+ver 1.2 2022/03/27
+地形情報が存在しない時にエラーが出る不具合を修正
+
 ver 1.1 2022/03/27
 コードリファクタリング
 
@@ -176,6 +180,9 @@ SRPG Studio Version:1.161
 		var installedWeapon, limit, textui;
 
 		_MapParts_Terrain__drawContent.apply(this, arguments);
+		if (!terrain) {
+			return;
+		}
 		if (typeof terrain.custom.installedWeaponId !== "number") {
 			return;
 		}
