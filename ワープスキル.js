@@ -1,38 +1,67 @@
 /*
-	Teleporte Skill ver1.0
+自己ワープスキル ver1.0
 
-	Author: CUBE(qbu)
+■作成者
+キュウブ
 
-	How to use
-	1.setting teleporation item
-	This skill is to be used while not in possession of a teleportation item.
-	So, item setting.
-	teleporation item is setting "target is self only" and "exp is 0".
+■概要
+このスキルを持ったユニットはユニットコマンドでワープが使用できるようになります。
+ワープで任意の位置に移動してから、通常移動や各種コマンドの実行が可能になります。
 
-	2.setting teleporation skill.
-	Custom keyword:"Teleporation"
-	Custom parameter is {teleportationItemId: <item ID>} <--- I want you to put ID of the teleporte item you set up in 1.
+■使い方
+1.ワープアイテムの設定
+このスキルはコマンド選択時にダミーのワープアイテムを一時的に生成して対象ユニットが使用する仕組みになっています。
+なのでダミーで扱うためのワープアイテムを設定する必要があります。
 
-	The activation rate becomes effective when the enemy uses it.
-	For example, at 50%, the enemy only has a 50% chance of warping.
-	If the unit is player, it is activated 100%.
+アイテムの設定は以下のようにしてください
+・取得経験値は0にする事(コマンドを使用する度に経験値を取得させたい場合はその限りではありません)
+・フィルタは「自軍」である事
+・範囲の設定は「単体」である事
+
+また、アイテム名がコマンド名になります
 
 
-	Technical specification
-	PLAYER
-	・If the unit has not moved yet, it can select teleporte command. 
-	・The unit can only use once 1 turn.
-	・After teleportation, the unit can select move and other unit command.
+2.スキルの設定
+カスタムスキルで
+カスタムキーワードを"Teleporation"
+カスタムパラメータで
+{teleportationItemId: <1番で設定したアイテムのID>}
+と設定します。
+例えばアイテムIDが10番であったら
+{teleportationItemId: 10}
+と設定してください。
 
-	ENEMY
-	・This skill is used only when Approach type AI.
-	・Used only when player unit is within range of teleporation item (this is teleporation item AI specification).
-	  - So the range of the teleporation item should be infinite or longer.
+※発動率はCPUに限り有効になります。50%と設定した場合はCPUユニットは50%の確率でしかワープを使用しなくなります。
 
-	
-	(C)2021 CUBE
-	This software is released under the MIT License.
-	http://opensource.org/licenses/mit-license.php
+※※このスキルの仕様※※
+プレイヤーユニット側の仕様
+・ワープコマンドはまだ1マスも移動してない場合のみ出現します
+・ワープ後にキャンセルを押しても元の位置に戻る事はできません
+・ワープコマンドは1ターンに1度しか使えません。行動回復などを用いても次ターンにならないと使用できません。
+
+CPUユニット側の仕様
+・CPUは行動型の場合のみこのスキルを使用します。（「範囲内のみ行動する」の設定の有無は関係無し）
+・ワープの行動ロジックはSRPGStudioのワープ時のAIに依存します。
+  - 射程範囲に敵勢力ユニットがいる場合にその位置までワープしようとします
+  - したがって、射程範囲にいないとワープは行わず通常移動だけ行います
+  - ワープアイテムの射程はゲームバランスを壊さない範囲で長めにとっておく事を推奨します
+
+更新履歴
+ver 1.0 2022/03/29
+初版
+
+■対応バージョン
+SRPG Studio Version:1.161
+
+■規約
+・利用はSRPG Studioを使ったゲームに限ります。
+・商用・非商用問いません。フリーです。
+・加工等、問題ありません。
+・クレジット明記無し　OK (明記する場合は"キュウブ"でお願いします)
+・再配布、転載　OK (バグなどがあったらプルリクエストしてくださると嬉しいです)
+・wiki掲載　OK
+・SRPG Studio利用規約は遵守してください。
+
 */
 
 AutoActionBuilder.buildTeleporationAction = function(unit, autoActionArray) {
