@@ -65,26 +65,21 @@ SRPG Studio Version:1.161
 
 */
 
-AutoActionBuilder.buildTeleporationAction = function(unit, autoActionArray) {
+AutoActionBuilder.buildTeleporationAction = function (unit, autoActionArray) {
 	var combination = CombinationManager.getTeleportationCombination(unit);
 	unit.custom.usedTeleportation = true;
 	unit.setOrderMark(OrderMarkType.FREE);
 
 	if (combination === null) {
 		return this._buildEmptyAction();
-	}
-	else {
+	} else {
 		this._pushTeleportation(unit, autoActionArray, combination);
 	}
 
 	return true;
 };
 
-AutoActionBuilder._pushTeleportation = function (
-	unit,
-	autoActionArray,
-	combination
-) {
+AutoActionBuilder._pushTeleportation = function (unit, autoActionArray, combination) {
 	var autoAction = createObject(ItemAutoAction);
 
 	autoAction.setAutoActionInfo(unit, combination);
@@ -103,10 +98,7 @@ CombinationManager.getTeleportationCombination = function (unit) {
 		return null;
 	}
 
-	combinationIndex = CombinationSelector.getCombinationIndex(
-		unit,
-		combinationArray
-	);
+	combinationIndex = CombinationSelector.getCombinationIndex(unit, combinationArray);
 	if (combinationIndex < 0) {
 		return null;
 	}
@@ -132,9 +124,9 @@ CombinationCollector.Teleportation = defineObject(CombinationCollector.Item, {
 	collectCombination: function (misc) {
 		var obj, actionTargetType, itemId, baseItem;
 		var unit = misc.unit;
-		var skill = SkillControl.getPossessionCustomSkill(unit, 'Teleporation');
+		var skill = SkillControl.getPossessionCustomSkill(unit, "Teleporation");
 
-		if (!skill || typeof skill.custom.teleportationItemId !== 'number') {
+		if (!skill || typeof skill.custom.teleportationItemId !== "number") {
 			return;
 		}
 		itemId = skill.custom.teleportationItemId;
@@ -165,24 +157,24 @@ CombinationCollector.Teleportation = defineObject(CombinationCollector.Item, {
 	}
 });
 
-EnemyTurn._invocationTeleporation = function() {
+EnemyTurn._invocationTeleporation = function () {
 	var skill;
 	if (this._orderUnit.custom.usedTeleportation) {
 		return false;
 	}
-	skill = SkillControl.getPossessionCustomSkill(this._orderUnit, 'Teleporation');
-	if (!skill || typeof skill.custom.teleportationItemId !== 'number') {
+	skill = SkillControl.getPossessionCustomSkill(this._orderUnit, "Teleporation");
+	if (!skill || typeof skill.custom.teleportationItemId !== "number") {
 		return false;
 	}
 	return Probability.getInvocationProbabilityFromSkill(this._orderUnit, skill);
 };
 
 UnitCommand._canRollbackPosition = true;
-UnitCommand.canRollbackPosition = function() {
+UnitCommand.canRollbackPosition = function () {
 	return this._canRollbackPosition;
 };
 
-UnitCommand.setRollbackPosition = function(flag) {
+UnitCommand.setRollbackPosition = function (flag) {
 	this._canRollbackPosition = flag;
 };
 
@@ -191,43 +183,40 @@ var TeleportationCommandMode = {
 	USE: 1
 };
 
-UnitCommand.Teleportation = defineObject(UnitListCommand,
-{
+UnitCommand.Teleportation = defineObject(UnitListCommand, {
 	_itemUse: null,
 	_itemSelection: null,
 	_baseItem: null,
-	
-	openCommand: function() {
+
+	openCommand: function () {
 		this._prepareCommandMemberData();
 		this._completeCommandMemberData();
 	},
-	
-	moveCommand: function() {
+
+	moveCommand: function () {
 		var mode = this.getCycleMode();
 		var result = MoveResult.CONTINUE;
-		
+
 		if (mode === TeleportationCommandMode.SELECTION) {
 			result = this._moveSelection();
-		}
-		else if (mode === TeleportationCommandMode.USE) {
+		} else if (mode === TeleportationCommandMode.USE) {
 			result = this._moveUse();
 		}
-		
+
 		return result;
 	},
-	
-	drawCommand: function() {
+
+	drawCommand: function () {
 		var mode = this.getCycleMode();
-		
+
 		if (mode === TeleportationCommandMode.SELECTION) {
 			this._drawSelection();
-		}
-		else if (mode === TeleportationCommandMode.USE) {
+		} else if (mode === TeleportationCommandMode.USE) {
 			this._drawUse();
 		}
 	},
-	
-	isCommandDisplayable: function() {
+
+	isCommandDisplayable: function () {
 		var skill;
 		var unit = this.getCommandTarget();
 		var isMoved = unit.getMostResentMov() !== 0;
@@ -238,103 +227,106 @@ UnitCommand.Teleportation = defineObject(UnitListCommand,
 		if (isUsedTeleportation) {
 			return false;
 		}
-		skill = SkillControl.getPossessionCustomSkill(unit, 'Teleporation');
+		skill = SkillControl.getPossessionCustomSkill(unit, "Teleporation");
 		if (!skill) {
 			return false;
 		}
-		if (typeof skill.custom.teleportationItemId !== 'number') {
+		if (typeof skill.custom.teleportationItemId !== "number") {
 			return false;
 		}
 		var item = root.getBaseData().getItemList().getDataFromId(skill.custom.teleportationItemId);
-		var isSelfTeleporationItem = item.getItemType() === ItemType.TELEPORTATION && item.getRangeType() === SelectionRangeType.SELFONLY;
+		var isSelfTeleporationItem =
+			item.getItemType() === ItemType.TELEPORTATION &&
+			item.getRangeType() === SelectionRangeType.SELFONLY;
 		if (!isSelfTeleporationItem) {
 			return false;
 		}
 		return ItemControl.isItemUsable(unit, item);
 	},
-	
-	getCommandName: function() {
-		var skill = SkillControl.getPossessionCustomSkill(this.getCommandTarget(), 'Teleporation');
+
+	getCommandName: function () {
+		var skill = SkillControl.getPossessionCustomSkill(this.getCommandTarget(), "Teleporation");
 		var item = root.getBaseData().getItemList().getDataFromId(skill.custom.teleportationItemId);
 		return item.getName();
 	},
-	
-	isRepeatMoveAllowed: function() {
+
+	isRepeatMoveAllowed: function () {
 		return false;
 	},
-	
-	_prepareCommandMemberData: function() {
+
+	_prepareCommandMemberData: function () {
 		this._itemUse = null;
 		this._itemSelection = null;
 	},
-	
-	_completeCommandMemberData: function() {
+
+	_completeCommandMemberData: function () {
 		var unit = this.getCommandTarget();
-		var skill = SkillControl.getPossessionCustomSkill(this.getCommandTarget(), 'Teleporation');
-		this._baseItem = root.getBaseData().getItemList().getDataFromId(skill.custom.teleportationItemId);
+		var skill = SkillControl.getPossessionCustomSkill(this.getCommandTarget(), "Teleporation");
+		this._baseItem = root
+			.getBaseData()
+			.getItemList()
+			.getDataFromId(skill.custom.teleportationItemId);
 		this._itemSelection = ItemPackageControl.getItemSelectionObject(this._baseItem);
 		this._itemSelection.enterItemSelectionCycle(unit, this._baseItem);
 		this.changeCycleMode(TeleportationCommandMode.SELECTION);
 	},
 
-	_moveSelection: function() {
+	_moveSelection: function () {
 		if (this._itemSelection.moveItemSelectionCycle() !== MoveResult.CONTINUE) {
 			if (this._itemSelection.isSelection()) {
 				this._useItem();
 				this.changeCycleMode(TeleportationCommandMode.USE);
-			}
-			else {
+			} else {
 				return MoveResult.END;
 			}
 		}
-		
+
 		return MoveResult.CONTINUE;
 	},
-	
-	_moveUse: function() {
+
+	_moveUse: function () {
 		if (this._itemUse.moveUseCycle() !== MoveResult.CONTINUE) {
 			this.endCommandAction(this);
 			return MoveResult.END;
 		}
-		
+
 		return MoveResult.CONTINUE;
 	},
-	
-	_drawSelection: function() {
+
+	_drawSelection: function () {
 		this._itemSelection.drawItemSelectionCycle();
 	},
-	
-	_drawUse: function() {
+
+	_drawUse: function () {
 		this._itemUse.drawUseCycle();
 	},
-	
-	_useItem: function() {
+
+	_useItem: function () {
 		var itemTargetInfo;
 		var virtualItem = root.duplicateItem(this._baseItem);
-		
+
 		this._itemUse = ItemPackageControl.getItemUseParent(virtualItem);
 		itemTargetInfo = this._itemSelection.getResultItemTargetInfo();
-		
+
 		itemTargetInfo.unit = this.getCommandTarget();
 		itemTargetInfo.item = virtualItem;
 		itemTargetInfo.isPlayerSideCall = true;
 		this._itemUse.enterUseCycle(itemTargetInfo);
 	},
 
-	endCommandAction: function(command) {
+	endCommandAction: function (command) {
 		this.getCommandTarget().custom.usedTeleportation = true;
 		this._listCommandManager.setRollbackPosition();
 		this._listCommandManager.endCommandAction(this);
 	}
-}
-);
+});
 
-(function(){
+(function () {
 	var _EnemyTurn__createAutoAction = EnemyTurn._createAutoAction;
-	EnemyTurn._createAutoAction = function() {
+	EnemyTurn._createAutoAction = function () {
 		var patternType = this._orderUnit.getAIPattern().getPatternType();
 		this._autoActionArray = [];
-		
+
 		if (patternType === PatternType.APPROACH && this._invocationTeleporation()) {
 			AutoActionBuilder.buildTeleporationAction(this._orderUnit, this._autoActionArray);
 			this._orderUnit.custom.usedTeleportation = true;
@@ -347,18 +339,18 @@ UnitCommand.Teleportation = defineObject(UnitListCommand,
 	};
 
 	var _UnitCommand_configureCommands = UnitCommand.configureCommands;
-	UnitCommand.configureCommands = function(groupArray) {
+	UnitCommand.configureCommands = function (groupArray) {
 		groupArray.appendObject(UnitCommand.Teleportation);
 		_UnitCommand_configureCommands.apply(this, arguments);
 	};
 
 	var _MapSequenceCommand__doLastAction = MapSequenceCommand._doLastAction;
-	MapSequenceCommand._doLastAction = function() {
+	MapSequenceCommand._doLastAction = function () {
 		var i;
 		var unit = null;
 		var list = PlayerList.getSortieList();
 		var count = list.getCount();
-		
+
 		for (i = 0; i < count; i++) {
 			if (this._targetUnit === list.getData(i)) {
 				unit = this._targetUnit;
@@ -376,7 +368,7 @@ UnitCommand.Teleportation = defineObject(UnitListCommand,
 	};
 
 	var _TurnChangeStart_doLastAction = TurnChangeStart.doLastAction;
-	TurnChangeStart.doLastAction = function() {
+	TurnChangeStart.doLastAction = function () {
 		var turnType = root.getCurrentSession().getTurnType();
 		if (turnType === TurnType.PLAYER) {
 			var playerList = PlayerList.getMainList();
