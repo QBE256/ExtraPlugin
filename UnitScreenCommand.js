@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-UnitScreenCommand
+UnitScreenCommand ver1.1
 
 Author: Cube
 
@@ -42,6 +42,35 @@ var UnitMenuCommandTargetId = -1;
 		groupArray.appendObject(UnitMenuScreenCommand);
 	};
 
+	QuestionWindow._isEnableCancel = true;
+	QuestionWindow.moveWindowContent = function() {
+		var index;
+		var input = this._scrollbar.moveInput();
+		
+		if (input === ScrollbarInput.SELECT) {
+			index = this._scrollbar.getIndex();
+			if (index === 0) {
+				this._ans = QuestionAnswer.YES;
+			}
+			else {
+				this._ans = QuestionAnswer.NO;
+			}
+			this.setQuestionIndex(0);
+			return MoveResult.END;
+		}
+		else if (input === ScrollbarInput.CANCEL && this._isEnableCancel) {
+			this._ans = QuestionAnswer.NO;
+			this.setQuestionIndex(0);
+			return MoveResult.END;
+		}
+		
+		return MoveResult.CONTINUE;
+	};
+
+	QuestionWindow.disableCancel = function() {
+		this._isEnableCancel = false;
+	};
+
 	var UnitMenuCommandMode = {
 		TOP: 0,
 		HELP: 1,
@@ -55,7 +84,7 @@ var UnitMenuCommandTargetId = -1;
 		_prepareScreenMemberData: function (screenParam) {
 			this._questionWindow = createWindowObject(QuestionWindow, this);
 			this._questionWindow.setQuestionMessage(StringTable.UnitMenuCommand_Question);
-
+			this._questionWindow.disableCancel();
 			UnitMenuScreen._prepareScreenMemberData.apply(this, arguments);
 		},
 
@@ -72,7 +101,7 @@ var UnitMenuCommandTargetId = -1;
 			if (this._questionWindow.moveWindow() !== MoveResult.CONTINUE) {
 				if (this._questionWindow.getQuestionAnswer() === QuestionAnswer.YES) {
 					root.setSelfSwitch(0, true);
-				} else {
+				} else if (this._questionWindow.getQuestionAnswer() === QuestionAnswer.NO) {
 					root.setSelfSwitch(1, true);
 				}
 				return MoveResult.END;
