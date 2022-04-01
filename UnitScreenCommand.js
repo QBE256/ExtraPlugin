@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-UnitScreenCommand ver1.1
+UnitScreenCommand ver1.2
 
 Author: Cube
 
@@ -151,6 +151,9 @@ var UnitMenuCommandTargetId = -1;
 
 		drawScreenCycle: function () {
 			var x, y;
+			var interopData = this.getScreenInteropData();
+			var textui = interopData.getBottomFrameTextUI();
+			this.drawScreenBottomText(textui);
 			UnitMenuScreen.drawScreenCycle.apply(this, arguments);
 			if (this.getCycleMode() === UnitMenuMode.CHECK) {
 				x = LayoutControl.getCenterX(-1, this._questionWindow.getWindowWidth());
