@@ -36,6 +36,18 @@ var EventRestartControl = {
 };
 
 (function () {
+	var _ScriptCall_Reset = ScriptCall_Reset;
+	ScriptCall_Reset = function () {
+		_ScriptCall_Reset.apply(this, arguments);
+		EventRestartControl.reset();
+	};
+
+	var _ScriptCall_Load = ScriptCall_Load;
+	ScriptCall_Load = function () {
+		_ScriptCall_Load.apply(this, arguments);
+		EventRestartControl.reset();
+	};
+
 	var _CapsuleEvent_moveCapsuleEvent = CapsuleEvent.moveCapsuleEvent;
 	CapsuleEvent.moveCapsuleEvent = function () {
 		var mode = this.getCycleMode();
