@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-RestartEventCommand ver1.0
+RestartEventCommand ver1.1
 
 The event will run again after it is over.
 
@@ -22,52 +22,33 @@ http://opensource.org/licenses/mit-license.php
 var EventRestartControl = {
 	_restartEventType: -1,
 
-	reset: function() {
+	reset: function () {
 		this._restartEventType = -1;
 	},
 
-	setRestartFlag: function(eventType) {
+	setRestartFlag: function (eventType) {
 		this._restartEventType = eventType;
 	},
 
-	isRestart: function(event) {
-		return this._restartEventType === event.getEventType();
+	isRestart: function (event) {
+		return event && this._restartEventType === event.getEventType();
 	}
 };
 
-(function(){
+(function () {
+	var _CapsuleEvent_moveCapsuleEvent = CapsuleEvent.moveCapsuleEvent;
+	CapsuleEvent.moveCapsuleEvent = function () {
+		var mode = this.getCycleMode();
+		var isEventRunning = EventCommandManager.isEventRunning(this._event);
+		var isRestart = EventRestartControl.isRestart(this._event);
 
-	var _EventChecker_enterEventChecker = EventChecker.enterEventChecker;
-	EventChecker.enterEventChecker = function(eventList, eventType) {
-		EventRestartControl.reset();
-		return _EventChecker_enterEventChecker.apply(this, arguments);
-	};
-
-	EventChecker._restartChecker = function() {
-		var checkEventIndex = this._eventIndex - 1;
-		if (checkEventIndex >= 0 && EventRestartControl.isRestart(this._eventArray[checkEventIndex])) {
-			this._eventArray[checkEventIndex].setExecutedMark(EventExecutedType.FREE);
-			this._eventIndex = checkEventIndex;
+		if (!isEventRunning && isRestart && mode !== CapsuleEventMode.NONE) {
 			EventRestartControl.reset();
+			this.enterCapsuleEvent(this._event, this._isExecuteMark);
+			return MoveResult.CONTINUE;
+		} else {
+			return _CapsuleEvent_moveCapsuleEvent.apply(this, arguments);
 		}
-	};
-
-	EventChecker.moveEventChecker = function() {
-		if (this._capsuleEvent === null) {
-			EventCommandManager.setActiveEventChecker(null);
-			return MoveResult.END;
-		}
-
-		if (this._capsuleEvent.moveCapsuleEvent() !== MoveResult.CONTINUE) {
-			this._restartChecker();
-			if (this._checkEvent() === EnterResult.NOTENTER) {
-				EventCommandManager.setActiveEventChecker(null);
-				this._capsuleEvent = null;
-				return MoveResult.END;
-			}
-		}
-		
-		return MoveResult.CONTINUE;
 	};
 
 	var _ScriptExecuteEventCommand__configureOriginalEventCommand =
@@ -78,7 +59,6 @@ var EventRestartControl = {
 	};
 
 	var EventRestartCommand = defineObject(BaseEventCommand, {
-
 		enterEventCommandCycle: function () {
 			return EnterResult.OK;
 		},
@@ -92,8 +72,7 @@ var EventRestartControl = {
 			return MoveResult.END;
 		},
 
-		drawEventCommandCycle: function () {
-		},
+		drawEventCommandCycle: function () {},
 
 		getEventCommmandName: function () {
 			return "EventRestartCommand";
@@ -104,7 +83,7 @@ var EventRestartControl = {
 		},
 
 		isEventCommandSkipAllowed: function () {
-			return true;
+			return false;
 		}
 	});
 })();
