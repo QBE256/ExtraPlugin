@@ -1,6 +1,5 @@
 ﻿/*--------------------------------------------------------------------------
-
-　マップ設置兵器(ロングアーチ等) ver1.2
+　マップ設置兵器(ロングアーチ等) ver1.3
 
 ■作成者
 キュウブ
@@ -20,6 +19,9 @@
 ※通常地形を別の通常地形に変更する分には問題ありません
 
 更新履歴
+ver 1.3 2022/04/08
+敵ターンスキップ時に敵が設置兵器を使用すると全てのキャラが武器を装備できなくなるバグを修正
+
 ver 1.2 2022/03/27
 地形情報が存在しない時にエラーが出る不具合を修正
 
@@ -95,10 +97,7 @@ SRPG Studio Version:1.161
 
 	MapChipLight.mergeIndexArray = function (addIndexArray) {
 		var mergedIndexArray = this._indexArray.concat(addIndexArray);
-		var filterMergedIndexArray = mergedIndexArray.filter(function (
-			element,
-			index
-		) {
+		var filterMergedIndexArray = mergedIndexArray.filter(function (element, index) {
 			return Number(mergedIndexArray.indexOf(element)) === index;
 		});
 		this._indexArray = filterMergedIndexArray;
@@ -186,10 +185,7 @@ SRPG Studio Version:1.161
 		if (typeof terrain.custom.installedWeaponId !== "number") {
 			return;
 		}
-		installedWeapon = CurrentMap.getInstalledWeapon(
-			this.getMapPartsX(),
-			this.getMapPartsY()
-		);
+		installedWeapon = CurrentMap.getInstalledWeapon(this.getMapPartsX(), this.getMapPartsY());
 		limit = installedWeapon.getLimit();
 
 		x += 2;
@@ -218,10 +214,7 @@ SRPG Studio Version:1.161
 			return _ItemControl_getEquippedWeapon.apply(this, arguments);
 		}
 		if (CurrentMap.getEnableInstalledWeaponFlag()) {
-			return CurrentMap.getInstalledWeapon(
-				unit.getMapX(),
-				unit.getMapY()
-			);
+			return CurrentMap.getInstalledWeapon(unit.getMapX(), unit.getMapY());
 		}
 		return _ItemControl_getEquippedWeapon.apply(this, arguments);
 	};
@@ -244,8 +237,7 @@ SRPG Studio Version:1.161
 		this._addInstalledIndexWeaponArray();
 	};
 
-	_MarkingPanel_updateMarkingPanelFromUnit =
-		MarkingPanel.updateMarkingPanelFromUnit;
+	_MarkingPanel_updateMarkingPanelFromUnit = MarkingPanel.updateMarkingPanelFromUnit;
 	MarkingPanel.updateMarkingPanelFromUnit = function (unit) {
 		_MarkingPanel_updateMarkingPanelFromUnit.apply(this, arguments);
 		if (!this.isMarkingEnabled()) {
@@ -285,8 +277,7 @@ SRPG Studio Version:1.161
 					weapon.getStartRange(),
 					weapon.getEndRange()
 				);
-				var weaponIndexArray =
-					simulator.getSimulationWeaponIndexArray();
+				var weaponIndexArray = simulator.getSimulationWeaponIndexArray();
 				that._mergeIndexArray(weaponIndexArray);
 			});
 			if (attackaleIndexArray.length > 0) {
@@ -299,19 +290,14 @@ SRPG Studio Version:1.161
 
 	MarkingPanel._mergeIndexArray = function (addIndexArray) {
 		var mergedIndexArray = this._indexArrayWeapon.concat(addIndexArray);
-		var filterMergedIndexArray = mergedIndexArray.filter(function (
-			element,
-			index
-		) {
+		var filterMergedIndexArray = mergedIndexArray.filter(function (element, index) {
 			return Number(mergedIndexArray.indexOf(element)) === index;
 		});
 		this._indexArrayWeapon = filterMergedIndexArray;
 	};
 
 	MarkingPanel._dedupeIndexArray = function (targetIndexArray) {
-		var dedupedIndexArray = this._indexArrayWeapon.filter(function (
-			element
-		) {
+		var dedupedIndexArray = this._indexArrayWeapon.filter(function (element) {
 			return targetIndexArray.indexOf(element) < 0;
 		});
 		this._indexArrayWeapon = dedupedIndexArray;
@@ -319,14 +305,10 @@ SRPG Studio Version:1.161
 
 	CombinationCollector.Weapon._getInstalledWeaponInfo = function (weapon) {
 		var installedWeaponInfos = CurrentMap.getInstalledWeaponInfos();
-		var usedInstalledWeaponInfos = installedWeaponInfos.filter(function (
-			weaponInfo
-		) {
+		var usedInstalledWeaponInfos = installedWeaponInfos.filter(function (weaponInfo) {
 			return weaponInfo.weapon === weapon;
 		});
-		return usedInstalledWeaponInfos.length > 0
-			? usedInstalledWeaponInfos[0]
-			: null;
+		return usedInstalledWeaponInfos.length > 0 ? usedInstalledWeaponInfos[0] : null;
 	};
 
 	var _CombinationCollector_Weapon__createCostArrayInternal =
@@ -340,10 +322,7 @@ SRPG Studio Version:1.161
 		) {
 			return;
 		}
-		_CombinationCollector_Weapon__createCostArrayInternal.apply(
-			this,
-			arguments
-		);
+		_CombinationCollector_Weapon__createCostArrayInternal.apply(this, arguments);
 	};
 
 	var _CombinationCollector_Weapon_collectCombination =
@@ -353,9 +332,7 @@ SRPG Studio Version:1.161
 		var unit = misc.unit;
 		var that = this;
 		_CombinationCollector_Weapon_collectCombination.apply(this, arguments);
-		var enabledInstalledWeaponInfos = installedWeaponInfos.filter(function (
-			weaponInfo
-		) {
+		var enabledInstalledWeaponInfos = installedWeaponInfos.filter(function (weaponInfo) {
 			return (
 				!ItemControl.isItemBroken(weaponInfo.weapon) &&
 				that._isWeaponEnabled(unit, weaponInfo.weapon, misc)
@@ -374,22 +351,39 @@ SRPG Studio Version:1.161
 		});
 	};
 
-	var _WeaponAutoAction_setAutoActionInfo =
-		WeaponAutoAction.setAutoActionInfo;
+	var _WeaponAutoAction_setAutoActionInfo = WeaponAutoAction.setAutoActionInfo;
 	WeaponAutoAction.setAutoActionInfo = function (unit, combination) {
 		if (this._isUsedInstalledWeapon(combination)) {
 			CurrentMap.changeEnableInstalledWeaponFlag(true);
 		}
+
 		_WeaponAutoAction_setAutoActionInfo.apply(this, arguments);
+	};
+
+	var _WeaponAutoAction_enterAutoAction = WeaponAutoAction.enterAutoAction;
+	WeaponAutoAction.enterAutoAction = function () {
+		var isSkipMode = this.isSkipMode();
+		var result = _WeaponAutoAction_enterAutoAction.apply(this, arguments);
+
+		if (
+			isSkipMode &&
+			result === EnterResult.NOTENTER &&
+			CurrentMap.getEnableInstalledWeaponFlag()
+		) {
+			CurrentMap.changeEnableInstalledWeaponFlag(false);
+			CurrentMap.updateCurrentMapInstalledWeaponParamter(
+				root.getCurrentSession().getCurrentMapInfo().getId()
+			);
+		}
+
+		return result;
 	};
 
 	var _WeaponAutoAction_moveAutoAction = WeaponAutoAction.moveAutoAction;
 	WeaponAutoAction.moveAutoAction = function () {
 		var result = _WeaponAutoAction_moveAutoAction.apply(this, arguments);
-		if (
-			result === MoveResult.END &&
-			CurrentMap.getEnableInstalledWeaponFlag()
-		) {
+
+		if (result === MoveResult.END && CurrentMap.getEnableInstalledWeaponFlag()) {
 			CurrentMap.changeEnableInstalledWeaponFlag(false);
 			CurrentMap.updateCurrentMapInstalledWeaponParamter(
 				root.getCurrentSession().getCurrentMapInfo().getId()
@@ -425,13 +419,8 @@ SRPG Studio Version:1.161
 
 		return _AIScorer_Weapon__setTemporaryWeapon.apply(this, arguments);
 	};
-	var _AIScorer_Weapon__resetTemporaryWeapon =
-		AIScorer.Weapon._resetTemporaryWeapon;
-	AIScorer.Weapon._resetTemporaryWeapon = function (
-		unit,
-		combination,
-		prevItemIndex
-	) {
+	var _AIScorer_Weapon__resetTemporaryWeapon = AIScorer.Weapon._resetTemporaryWeapon;
+	AIScorer.Weapon._resetTemporaryWeapon = function (unit, combination, prevItemIndex) {
 		if (this._isUsedInstalledWeapon(combination)) {
 			UnitItemControl.setItem(unit, 0, this._currentItem);
 		} else {
@@ -449,9 +438,7 @@ CurrentMap.updateCurrentMapInstalledWeaponParamter = function (currentMapId) {
 		mapId: currentMapId,
 		installedWeaponInfos: []
 	};
-	var installedWeaponInfos = this._installedWeaponInfos.map(function (
-		weaponInfo
-	) {
+	var installedWeaponInfos = this._installedWeaponInfos.map(function (weaponInfo) {
 		return {
 			x: weaponInfo.x,
 			y: weaponInfo.y,
@@ -460,13 +447,11 @@ CurrentMap.updateCurrentMapInstalledWeaponParamter = function (currentMapId) {
 		};
 	});
 	currentMapInstalledWeapon.installedWeaponInfos = installedWeaponInfos;
-	root.getMetaSession().global.currentMapInstalledWeapon =
-		currentMapInstalledWeapon;
+	root.getMetaSession().global.currentMapInstalledWeapon = currentMapInstalledWeapon;
 };
 
 CurrentMap._isEnableLoadCurrentMapInstalledWeapon = function (currentMapId) {
-	var currentMapInstalledWeapon =
-		root.getMetaSession().global.currentMapInstalledWeapon;
+	var currentMapInstalledWeapon = root.getMetaSession().global.currentMapInstalledWeapon;
 	if (typeof currentMapInstalledWeapon !== "object") {
 		return false;
 	}
@@ -479,12 +464,9 @@ CurrentMap._resetCurrentMapInstalledWeaponParamter = function () {
 
 CurrentMap._loadCurrentMapInstalledWeapon = function () {
 	var installedWeaponInfos =
-		root.getMetaSession().global.currentMapInstalledWeapon
-			.installedWeaponInfos;
+		root.getMetaSession().global.currentMapInstalledWeapon.installedWeaponInfos;
 	var weaponList = root.getBaseData().getWeaponList();
-	this._installedWeaponInfos = installedWeaponInfos.map(function (
-		weaponInfo
-	) {
+	this._installedWeaponInfos = installedWeaponInfos.map(function (weaponInfo) {
 		var baseWeapon = weaponList.getDataFromId(weaponInfo.weaponId);
 		var weapon = root.duplicateItem(baseWeapon);
 		weapon.setLimit(weaponInfo.limit);
@@ -503,9 +485,7 @@ CurrentMap._initializeInstalledWeaponInfos = function () {
 		for (var mapX = 0; mapX < this._width; mapX++) {
 			var terrain = currentSession.getTerrainFromPos(mapX, mapY, true);
 			if (typeof terrain.custom.installedWeaponId === "number") {
-				var installedWeapon = weaponList.getDataFromId(
-					terrain.custom.installedWeaponId
-				);
+				var installedWeapon = weaponList.getDataFromId(terrain.custom.installedWeaponId);
 				var installedWeaponInfo = {
 					x: mapX,
 					y: mapY,
@@ -525,14 +505,10 @@ CurrentMap.getEnableInstalledWeaponFlag = function () {
 	return this._isEnableInstalledWeapon;
 };
 CurrentMap.getInstalledWeapon = function (x, y) {
-	var targetInstalledWeaponInfos = this._installedWeaponInfos.filter(
-		function (weaponInfo) {
-			return weaponInfo.x === x && weaponInfo.y === y;
-		}
-	);
-	return targetInstalledWeaponInfos.length > 0
-		? targetInstalledWeaponInfos[0].weapon
-		: null;
+	var targetInstalledWeaponInfos = this._installedWeaponInfos.filter(function (weaponInfo) {
+		return weaponInfo.x === x && weaponInfo.y === y;
+	});
+	return targetInstalledWeaponInfos.length > 0 ? targetInstalledWeaponInfos[0].weapon : null;
 };
 
 UnitCommand.InstalledWeaponAttack = defineObject(UnitCommand.Attack, {
@@ -558,9 +534,7 @@ UnitCommand.InstalledWeaponAttack = defineObject(UnitCommand.Attack, {
 		var unit = this.getCommandTarget();
 		var mapX = unit.getMapX();
 		var mapY = unit.getMapY();
-		var terrain = root
-			.getCurrentSession()
-			.getTerrainFromPos(mapX, mapY, true);
+		var terrain = root.getCurrentSession().getTerrainFromPos(mapX, mapY, true);
 		if (typeof terrain.custom.installedWeaponId === "number") {
 			installedWeapon = CurrentMap.getInstalledWeapon(mapX, mapY);
 			if (!installedWeapon) {
@@ -717,12 +691,7 @@ if (!Array.prototype.map) {
 if (!Array.prototype.filter) {
 	Array.prototype.filter = function (func, thisArg) {
 		"use strict";
-		if (
-			!(
-				(typeof func === "Function" || typeof func === "function") &&
-				this
-			)
-		)
+		if (!((typeof func === "Function" || typeof func === "function") && this))
 			throw new TypeError();
 
 		var len = this.length >>> 0,
@@ -767,9 +736,7 @@ if (!Array.prototype.some) {
 		"use strict";
 
 		if (this == null) {
-			throw new TypeError(
-				"Array.prototype.some called on null or undefined"
-			);
+			throw new TypeError("Array.prototype.some called on null or undefined");
 		}
 
 		if (typeof fun !== "function") {
