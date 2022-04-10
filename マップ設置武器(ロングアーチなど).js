@@ -1,5 +1,5 @@
 ﻿/*--------------------------------------------------------------------------
-　マップ設置兵器(ロングアーチ等) ver1.4
+　マップ設置兵器(ロングアーチ等) ver1.5
 
 ■作成者
 キュウブ
@@ -19,6 +19,9 @@
 ※通常地形を別の通常地形に変更する分には問題ありません
 
 更新履歴
+ver 1.5 2022/04/11
+マップ兵器で攻撃した時に相手側が武器を装備しないバグを修正
+
 ver 1.4 2022/04/11
 攻撃対象選択時にキャンセルを押すとゲームが正常に進行しなくなる不具合を修正
 
@@ -213,13 +216,14 @@ SRPG Studio Version:1.161
 
 	var _ItemControl_getEquippedWeapon = ItemControl.getEquippedWeapon;
 	ItemControl.getEquippedWeapon = function (unit) {
+		var weapon;
 		if (unit === null) {
 			return _ItemControl_getEquippedWeapon.apply(this, arguments);
 		}
 		if (CurrentMap.getEnableInstalledWeaponFlag()) {
-			return CurrentMap.getInstalledWeapon(unit.getMapX(), unit.getMapY());
+			weapon = CurrentMap.getInstalledWeapon(unit.getMapX(), unit.getMapY());
 		}
-		return _ItemControl_getEquippedWeapon.apply(this, arguments);
+		return weapon ? weapon : _ItemControl_getEquippedWeapon.apply(this, arguments);
 	};
 
 	var _ItemControl_setEquippedWeapon = ItemControl.setEquippedWeapon;
