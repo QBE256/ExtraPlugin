@@ -1,5 +1,5 @@
 ﻿/*--------------------------------------------------------------------------
-　マップ設置兵器(ロングアーチ等) ver1.3
+　マップ設置兵器(ロングアーチ等) ver1.4
 
 ■作成者
 キュウブ
@@ -19,6 +19,9 @@
 ※通常地形を別の通常地形に変更する分には問題ありません
 
 更新履歴
+ver 1.4 2022/04/11
+攻撃対象選択時にキャンセルを押すとゲームが正常に進行しなくなる不具合を修正
+
 ver 1.3 2022/04/08
 敵ターンスキップ時に敵が設置兵器を使用すると全てのキャラが武器を装備できなくなるバグを修正
 
@@ -590,12 +593,22 @@ UnitCommand.InstalledWeaponAttack = defineObject(UnitCommand.Attack, {
 		return UnitCommand.Attack._createAttackParam.apply(this, arguments);
 	},
 
-	endCommandAction: function () {
-		CurrentMap.changeEnableInstalledWeaponFlag(false);
-		CurrentMap.updateCurrentMapInstalledWeaponParamter(
-			root.getCurrentSession().getCurrentMapInfo().getId()
-		);
-		UnitCommand.Attack.endCommandAction.apply(this, arguments);
+	_moveTop: function() {
+		return MoveResult.END;
+	},
+
+	_drawTop: function() {},
+
+	moveCommand: function() {
+		var result = UnitCommand.Attack.moveCommand.apply(this, arguments);
+		if (result === MoveResult.END) {
+			CurrentMap.changeEnableInstalledWeaponFlag(false);
+			CurrentMap.updateCurrentMapInstalledWeaponParamter(
+				root.getCurrentSession().getCurrentMapInfo().getId()
+			);
+		}
+		
+		return result;
 	}
 });
 
