@@ -1,5 +1,5 @@
 ﻿/*--------------------------------------------------------------------------
-　マップ設置兵器(ロングアーチ等) ver1.5
+　マップ設置兵器(ロングアーチ等) ver1.6
 
 ■作成者
 キュウブ
@@ -10,15 +10,28 @@
 
 ■使い方
 地形効果のカスパラに
-{installedWeaponId:<設置したい武器のID>}
+installedWeaponId:<設置したい武器のID>
 と入力する。
 
+さらに、
+canDrawOverEquippedUnit:true
+を入力した場合は攻撃可能なユニットが地形の上に到達した場合、
+マップチップがユニットの上に被さって描画されるようになります。
+
 ■注意点
+canDrawOverEquippedUnit:trueによって、
+ユニットの上に被さって描画されるマップチップはアニメーション機能が有効になりません。
+この機能を使用される場合、地形は静的なマップチップにしておくことを推奨します。
+
 設置兵器地形を別の地形に変更したり、
 なんでもない地形を設置兵器地形に変更した場合は正しく動作しなくなる可能性があります。
 ※通常地形を別の通常地形に変更する分には問題ありません
 
 更新履歴
+ver 1.6 2022/04/14
+カスタムパラメータcanDrawOverEquippedUnitを追加
+攻撃可能なユニットが地形に到達した場合は、マップチップをユニットの上に描画する事も可能になりました
+
 ver 1.5 2022/04/11
 マップ兵器で攻撃した時に相手側が武器を装備しないバグを修正
 
@@ -434,7 +447,50 @@ SRPG Studio Version:1.161
 			_AIScorer_Weapon__resetTemporaryWeapon.apply(this, arguments);
 		}
 	};
+
+	MapLayer.drawUnitLayer = function () {
+		var index = this._counter.getAnimationIndex();
+		var index2 = this._counter.getAnimationIndex2();
+		var session = root.getCurrentSession();
+
+		this._markingPanel.drawMarkingPanel();
+
+		this._unitRangePanel.drawRangePanel();
+		this._mapChipLight.drawLight();
+
+		if (session !== null) {
+			session.drawUnitSet(true, true, true, index, index2);
+			this._drawMapChipsOverUnit(session);
+		}
+
+		if (root.getScriptVersion() > 1161) {
+			this._drawColor(EffectRangeType.MAPANDCHAR);
+		}
+
+		if (this._effectRangeType === EffectRangeType.MAPANDCHAR) {
+			this._drawScreenColor();
+		}
+	};
 })();
+
+MapLayer._drawMapChipsOverUnit = function (session) {
+	var installedWeaponInfos = CurrentMap.getInstalledWeaponInfos();
+
+	installedWeaponInfos.forEach(function (weaponInfo) {
+		var terrain = session.getTerrainFromPos(weaponInfo.x, weaponInfo.y, true);
+		var unit = PosChecker.getUnitFromPos(weaponInfo.x, weaponInfo.y);
+		var canDrawOverUnit = !!terrain.custom.canDrawOverEquippedUnit;
+		var isWeaponAvailable = unit && ItemControl.isWeaponAvailable(unit, weaponInfo.weapon);
+		if (canDrawOverUnit && isWeaponAvailable) {
+			GraphicsRenderer.drawImage(
+				LayoutControl.getPixelX(weaponInfo.x),
+				LayoutControl.getPixelY(weaponInfo.y),
+				session.getMapChipGraphicsHandle(weaponInfo.x, weaponInfo.y, true),
+				GraphicsType.MAPCHIP
+			);
+		}
+	});
+};
 
 CurrentMap._installedWeaponInfos = [];
 CurrentMap.getInstalledWeaponInfos = function () {
@@ -597,13 +653,13 @@ UnitCommand.InstalledWeaponAttack = defineObject(UnitCommand.Attack, {
 		return UnitCommand.Attack._createAttackParam.apply(this, arguments);
 	},
 
-	_moveTop: function() {
+	_moveTop: function () {
 		return MoveResult.END;
 	},
 
-	_drawTop: function() {},
+	_drawTop: function () {},
 
-	moveCommand: function() {
+	moveCommand: function () {
 		var result = UnitCommand.Attack.moveCommand.apply(this, arguments);
 		if (result === MoveResult.END) {
 			CurrentMap.changeEnableInstalledWeaponFlag(false);
@@ -611,7 +667,7 @@ UnitCommand.InstalledWeaponAttack = defineObject(UnitCommand.Attack, {
 				root.getCurrentSession().getCurrentMapInfo().getId()
 			);
 		}
-		
+
 		return result;
 	}
 });
