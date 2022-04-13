@@ -1,5 +1,5 @@
 ﻿/*--------------------------------------------------------------------------
-　マップ設置兵器(ロングアーチ等) ver1.6
+　マップ設置兵器(ロングアーチ等) ver1.7
 
 ■作成者
 キュウブ
@@ -14,12 +14,12 @@ installedWeaponId:<設置したい武器のID>
 と入力する。
 
 さらに、
-canDrawOverEquippedUnit:true
+drawOverUsableUnit:true
 を入力した場合は攻撃可能なユニットが地形の上に到達した場合、
 マップチップがユニットの上に被さって描画されるようになります。
 
 ■注意点
-canDrawOverEquippedUnit:trueによって、
+drawOverUsableUnit:trueによって、
 ユニットの上に被さって描画されるマップチップはアニメーション機能が有効になりません。
 この機能を使用される場合、地形は静的なマップチップにしておくことを推奨します。
 
@@ -28,8 +28,10 @@ canDrawOverEquippedUnit:trueによって、
 ※通常地形を別の通常地形に変更する分には問題ありません
 
 更新履歴
+ver 1.7 2022/04/14
+ver1.6で追加したカスパラ名をdrawOverUsableUnit:trueに変更
+
 ver 1.6 2022/04/14
-カスタムパラメータcanDrawOverEquippedUnitを追加
 攻撃可能なユニットが地形に到達した場合は、マップチップをユニットの上に描画する事も可能になりました
 
 ver 1.5 2022/04/11
@@ -479,9 +481,9 @@ MapLayer._drawMapChipsOverUnit = function (session) {
 	installedWeaponInfos.forEach(function (weaponInfo) {
 		var terrain = session.getTerrainFromPos(weaponInfo.x, weaponInfo.y, true);
 		var unit = PosChecker.getUnitFromPos(weaponInfo.x, weaponInfo.y);
-		var canDrawOverUnit = !!terrain.custom.canDrawOverEquippedUnit;
+		var drawOverUsableUnit = !!terrain.custom.drawOverUsableUnit;
 		var isWeaponAvailable = unit && ItemControl.isWeaponAvailable(unit, weaponInfo.weapon);
-		if (canDrawOverUnit && isWeaponAvailable) {
+		if (drawOverUsableUnit && isWeaponAvailable) {
 			GraphicsRenderer.drawImage(
 				LayoutControl.getPixelX(weaponInfo.x),
 				LayoutControl.getPixelY(weaponInfo.y),
