@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　戦闘後に自分か相手のHPを変動させるスキル ver 1.1
+　戦闘後に自分か相手のHPを変動させるスキル ver 1.2
 
 ■作成者
 キュウブ
@@ -18,7 +18,8 @@ recoveryHpAfterBattle: {
 	effect: {
 		isRuntime: <回復エフェクトアニメがランタイムであればtrue,オリジナルであればfalse>,
 		id: <回復エフェクトアニメのID>
-	}
+	},
+	isFastAttack: <先制でのみ発動させる場合はtrue or 後攻で発動させたい場合はfalse, どちらでも発動させたい場合はこのパラメータは記載しない事>
 }
 
 例.戦闘後最大HP20%回復するスキル(エフェクトは光の輪)
@@ -53,6 +54,8 @@ pursuit: {
 		id: <ダメージエフェクトアニメのID>
 	},
 	isFinish: <とどめをさす場合はtrue, ささない場合はfalse>
+	isFastAttack: <先制でのみ発動させる場合はtrue or 後攻で発動させたい場合はfalse, どちらでも発動させたい場合はこのパラメータは記載しない事>,
+	max: <ダメージ上限値, typeが1のときのみ有効。上限値が不要な場合はこのパラメータを記載する必要は無い>
 }
 
 例:戦闘後敵に最大HP10%分のダメージを与えるスキル(エフェクトは炎の渦、とどめはささず最低でもHPは1残る)
@@ -66,7 +69,23 @@ pursuit: {
 	isFinish: false
 }
 
+例:下記の場合は、上記に加えて、先手の場合しか発動しない上にダメージ上限が5になる
+pursuit: {
+	type: PursuitDamageType.RATE,
+	value: 0.1,
+	max: 5,
+	effect: {
+		isRuntime: true,
+		id: 8
+	},
+	isFinish: false,
+	isFastAttack: true
+}
+
 ■更新履歴
+ver 1.2 2022/04/24
+ダメージ上限値と先制or後攻のみ発動可能になるパラメータを追加
+
 ver 1.1 2021/12/09
 カスパラ例が誤っていたので修正(コード部分には手を入れてないです)
 
@@ -86,9 +105,9 @@ SRPG Studio Version:1.161
 ・SRPG Studio利用規約は遵守してください。
 
 --------------------------------------------------------------------------*/
-(function(){
+(function () {
 	var _PreAttack__pushFlowEntriesEnd = PreAttack._pushFlowEntriesEnd;
-	PreAttack._pushFlowEntriesEnd = function(straightFlow) {
+	PreAttack._pushFlowEntriesEnd = function (straightFlow) {
 		_PreAttack__pushFlowEntriesEnd.apply(this, arguments);
 		straightFlow.pushFlowEntry(RecoveryHpFlowEntry);
 		straightFlow.pushFlowEntry(PursuitFlowEntry);
@@ -102,72 +121,63 @@ var RecoveryHpType = {
 
 var PursuitDamageType = {
 	FIXED: 0,
-	RATE: 1	
+	RATE: 1
 };
 
-var RecoveryHpFlowEntry = defineObject(BaseFlowEntry,
-{	
+var RecoveryHpFlowEntry = defineObject(BaseFlowEntry, {
 	_dynamicEvent: null,
 
-	enterFlowEntry: function(preAttack) {
+	enterFlowEntry: function (preAttack) {
 		this._prepareMemberData(preAttack);
 		return this._completeMemberData(preAttack);
 	},
-	
-	moveFlowEntry: function() {
+
+	moveFlowEntry: function () {
 		return this._dynamicEvent.moveDynamicEvent();
 	},
-	
-	_prepareMemberData: function(preAttack) {
+
+	_prepareMemberData: function (preAttack) {
 		this._dynamicEvent = createObject(DynamicEvent);
 	},
-	
-	_completeMemberData: function(preAttack) {
-		var activeUnit = preAttack.getActiveUnit();
-		var passiveUnit = preAttack.getPassiveUnit();
+
+	_completeMemberData: function (preAttack) {
+		var attackUnit = preAttack.getAttackParam().unit;
+		var defenseUnit = preAttack.getAttackParam().targetUnit;
 		var generator = this._dynamicEvent.acquireEventGenerator();
-		this._setDynamicEvent(activeUnit, generator);
-		this._setDynamicEvent(passiveUnit, generator);
+		this._setDynamicEvent(attackUnit, generator, true);
+		this._setDynamicEvent(defenseUnit, generator, false);
 		return this._dynamicEvent.executeDynamicEvent();
 	},
 
-	_setDynamicEvent: function(unit, generator) {
+	_setDynamicEvent: function (unit, generator, isFastAttack) {
 		var effect;
-		var skill = SkillControl.getPossessionCustomSkill(unit, 'RecoveryHpAfterBattle');
-		
-		if (!this._isEnableSkill(unit, skill)) {
+		var skill = SkillControl.getPossessionCustomSkill(unit, "RecoveryHpAfterBattle");
+
+		if (!this._isEnableSkill(unit, skill, isFastAttack)) {
 			return;
 		}
 		effect = this._getRecoveryEffect(skill);
-		generator.locationFocus(unit.getMapX(), unit.getMapY(), true); 
-		generator.hpRecovery(
-			unit,
-			effect,
-			this._getRecoveryValue(unit, skill),
-			RecoveryType.SPECIFY,
-			false
-		);
+		generator.locationFocus(unit.getMapX(), unit.getMapY(), true);
+		generator.hpRecovery(unit, effect, this._getRecoveryValue(unit, skill), RecoveryType.SPECIFY, false);
 	},
 
-	_getRecoveryEffect: function(skill) {
+	_getRecoveryEffect: function (skill) {
 		var isRuntime = skill.custom.recoveryHpAfterBattle.effect.isRuntime;
 		var id = skill.custom.recoveryHpAfterBattle.effect.id;
 		return root.getBaseData().getEffectAnimationList(isRuntime).getDataFromId(id);
 	},
 
-	_getRecoveryValue: function(unit, skill) {
+	_getRecoveryValue: function (unit, skill) {
 		if (skill.custom.recoveryHpAfterBattle.type === RecoveryHpType.FIXED) {
 			return skill.custom.recoveryHpAfterBattle.value;
-		}
-		else if (skill.custom.recoveryHpAfterBattle.type === RecoveryHpType.RATE) {
+		} else if (skill.custom.recoveryHpAfterBattle.type === RecoveryHpType.RATE) {
 			return Math.floor(ParamBonus.getMhp(unit) * skill.custom.recoveryHpAfterBattle.value);
-		}
-		else {
+		} else {
 			return skill.custom.recoveryHpAfterBattle.value;
 		}
 	},
 
-	_isEnableSkill: function(unit, skill) {
+	_isEnableSkill: function (unit, skill, isFastAttack) {
 		if (!skill) {
 			return false;
 		}
@@ -180,73 +190,68 @@ var RecoveryHpFlowEntry = defineObject(BaseFlowEntry,
 		if (unit.getHp() >= ParamBonus.getMhp(unit)) {
 			return false;
 		}
-		return true;
+		if (!("isFastAttack" in skill.custom.recoveryHpAfterBattle)) {
+			return true;
+		}
+		return skill.custom.recoveryHpAfterBattle.isFastAttack === isFastAttack;
 	}
-}
-);
+});
 
-var PursuitFlowEntry = defineObject(BaseFlowEntry,
-{	
+var PursuitFlowEntry = defineObject(BaseFlowEntry, {
 	_dynamicEvent: null,
 
-	enterFlowEntry: function(preAttack) {
+	enterFlowEntry: function (preAttack) {
 		this._prepareMemberData(preAttack);
 		return this._completeMemberData(preAttack);
 	},
-	
-	moveFlowEntry: function() {
+
+	moveFlowEntry: function () {
 		return this._dynamicEvent.moveDynamicEvent();
 	},
-	
-	_prepareMemberData: function(preAttack) {
+
+	_prepareMemberData: function (preAttack) {
 		this._dynamicEvent = createObject(DynamicEvent);
 	},
-	
-	_completeMemberData: function(preAttack) {
-		var activeUnit = preAttack.getActiveUnit();
-		var passiveUnit = preAttack.getPassiveUnit();
+
+	_completeMemberData: function (preAttack) {
+		var attackUnit = preAttack.getAttackParam().unit;
+		var defenseUnit = preAttack.getAttackParam().targetUnit;
 		var generator = this._dynamicEvent.acquireEventGenerator();
-		this._setDynamicEvent(activeUnit, passiveUnit, generator);
-		this._setDynamicEvent(passiveUnit, activeUnit, generator);
+		this._setDynamicEvent(attackUnit, defenseUnit, generator, true);
+		this._setDynamicEvent(defenseUnit, attackUnit, generator, false);
 		return this._dynamicEvent.executeDynamicEvent();
 	},
 
-	_setDynamicEvent: function(unit, targetUnit, generator) {
+	_setDynamicEvent: function (unit, targetUnit, generator, isFastAttack) {
 		var effect;
-		var skill = SkillControl.getPossessionCustomSkill(unit, 'Pursuit');
-		
-		if (!this._isEnableSkill(unit, targetUnit, skill)) {
+		var skill = SkillControl.getPossessionCustomSkill(unit, "Pursuit");
+
+		if (!this._isEnableSkill(unit, targetUnit, skill, isFastAttack)) {
 			return;
 		}
 		effect = this._getDamageEffect(skill);
-		generator.locationFocus(targetUnit.getMapX(), targetUnit.getMapY(), true); 
-		generator.damageHit(
-			targetUnit,
-			effect,
-			this._getDamageValue(targetUnit, skill),
-			DamageType.FIXED,
-			unit,
-			false
-		);
+		generator.locationFocus(targetUnit.getMapX(), targetUnit.getMapY(), true);
+		generator.damageHit(targetUnit, effect, this._getDamageValue(targetUnit, skill), DamageType.FIXED, unit, false);
 	},
 
-	_getDamageEffect: function(skill) {
+	_getDamageEffect: function (skill) {
 		var isRuntime = skill.custom.pursuit.effect.isRuntime;
 		var id = skill.custom.pursuit.effect.id;
 		return root.getBaseData().getEffectAnimationList(isRuntime).getDataFromId(id);
 	},
 
-	_getDamageValue: function(targetUnit, skill) {
+	_getDamageValue: function (targetUnit, skill) {
 		var damage;
 		var isFinish = skill.custom.pursuit.isFinish;
 		var currentHp = targetUnit.getHp();
 		if (skill.custom.pursuit.type === PursuitDamageType.FIXED) {
 			damage = skill.custom.pursuit.value;
-		}
-		else if (skill.custom.pursuit.type === PursuitDamageType.RATE) {
+		} else if (skill.custom.pursuit.type === PursuitDamageType.RATE) {
 			damage = Math.floor(ParamBonus.getMhp(targetUnit) * skill.custom.pursuit.value);
-		}
-		else {
+			if ("max" in skill.custom.pursuit && skill.custom.pursuit.max < damage) {
+				damage = skill.custom.pursuit.max;
+			}
+		} else {
 			damage = skill.custom.pursuit.value;
 		}
 		if (!isFinish && currentHp - damage <= 0) {
@@ -255,7 +260,7 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry,
 		return damage;
 	},
 
-	_isEnableSkill: function(unit, targetUnit, skill) {
+	_isEnableSkill: function (unit, targetUnit, skill, isFastAttack) {
 		if (!skill) {
 			return false;
 		}
@@ -268,82 +273,83 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry,
 		if (targetUnit.getAliveState() !== AliveType.ALIVE) {
 			return false;
 		}
-		return true;
-	}
-}
-);
 
-var validateRecoveryHpAfterBattleSkill = function(skill) {
-	if (typeof skill.custom.recoveryHpAfterBattle !== 'object') {
+		if (!("isFastAttack" in skill.custom.pursuit)) {
+			return true;
+		}
+
+		return skill.custom.pursuit.isFastAttack === isFastAttack;
+	}
+});
+
+var validateRecoveryHpAfterBattleSkill = function (skill) {
+	if (typeof skill.custom.recoveryHpAfterBattle !== "object") {
 		return false;
 	}
 	if (
-		!('type' in skill.custom.recoveryHpAfterBattle) ||
-		!('value' in skill.custom.recoveryHpAfterBattle) || 
-		!('effect' in skill.custom.recoveryHpAfterBattle)
+		!("type" in skill.custom.recoveryHpAfterBattle) ||
+		!("value" in skill.custom.recoveryHpAfterBattle) ||
+		!("effect" in skill.custom.recoveryHpAfterBattle)
 	) {
-		root.log('invalid recoveryHpAfterBattle parameter');
+		root.log("invalid recoveryHpAfterBattle parameter");
 		return false;
 	}
 	if (
-		typeof skill.custom.recoveryHpAfterBattle.type !== 'number' ||
-		typeof skill.custom.recoveryHpAfterBattle.value !== 'number' ||
-		typeof skill.custom.recoveryHpAfterBattle.effect !== 'object'
+		typeof skill.custom.recoveryHpAfterBattle.type !== "number" ||
+		typeof skill.custom.recoveryHpAfterBattle.value !== "number" ||
+		typeof skill.custom.recoveryHpAfterBattle.effect !== "object"
 	) {
-		root.log('invalid recoveryHpAfterBattle parameter');
+		root.log("invalid recoveryHpAfterBattle parameter");
 		return false;
 	}
 	if (
-		!('isRuntime' in skill.custom.recoveryHpAfterBattle.effect) ||
-		!('id' in skill.custom.recoveryHpAfterBattle.effect)
+		!("isRuntime" in skill.custom.recoveryHpAfterBattle.effect) ||
+		!("id" in skill.custom.recoveryHpAfterBattle.effect)
 	) {
-		root.log('invalid recoveryHpAfterBattle parameter');
+		root.log("invalid recoveryHpAfterBattle parameter");
 		return false;
 	}
 	if (
-		typeof skill.custom.recoveryHpAfterBattle.effect.isRuntime !== 'boolean' ||
-		typeof skill.custom.recoveryHpAfterBattle.effect.id !== 'number'
+		typeof skill.custom.recoveryHpAfterBattle.effect.isRuntime !== "boolean" ||
+		typeof skill.custom.recoveryHpAfterBattle.effect.id !== "number"
 	) {
-		root.log('invalid recoveryHpAfterBattle parameter');
+		root.log("invalid recoveryHpAfterBattle parameter");
 		return false;
 	}
 	return true;
 };
 
-var validatePursuitSkill = function(skill) {
-	if (typeof skill.custom.pursuit !== 'object') {
+var validatePursuitSkill = function (skill) {
+	if (typeof skill.custom.pursuit !== "object") {
 		return false;
 	}
 	if (
-		!('type' in skill.custom.pursuit) ||
-		!('value' in skill.custom.pursuit) || 
-		!('effect' in skill.custom.pursuit) || 
-		!('isFinish' in skill.custom.pursuit)
+		!("type" in skill.custom.pursuit) ||
+		!("value" in skill.custom.pursuit) ||
+		!("effect" in skill.custom.pursuit) ||
+		!("isFinish" in skill.custom.pursuit)
 	) {
-		root.log('invalid pursuit parameter');
+		root.log("invalid pursuit parameter");
 		return false;
 	}
 	if (
-		typeof skill.custom.pursuit.type !== 'number' ||
-		typeof skill.custom.pursuit.value !== 'number' ||
-		typeof skill.custom.pursuit.effect !== 'object' ||
-		typeof skill.custom.pursuit.isFinish !== 'boolean'
+		typeof skill.custom.pursuit.type !== "number" ||
+		typeof skill.custom.pursuit.value !== "number" ||
+		typeof skill.custom.pursuit.effect !== "object" ||
+		typeof skill.custom.pursuit.isFinish !== "boolean"
 	) {
-		root.log('invalid pursuit parameter');
+		root.log("invalid pursuit parameter");
+		return false;
+	}
+	if (!("isRuntime" in skill.custom.pursuit.effect) || !("id" in skill.custom.pursuit.effect)) {
+		root.log("invalid pursuit parameter");
 		return false;
 	}
 	if (
-		!('isRuntime' in skill.custom.pursuit.effect) ||
-		!('id' in skill.custom.pursuit.effect)
+		typeof skill.custom.pursuit.effect.isRuntime !== "boolean" ||
+		typeof skill.custom.pursuit.effect.id !== "number"
 	) {
-		root.log('invalid pursuit parameter');
-		return false;
-	}
-	if (
-		typeof skill.custom.pursuit.effect.isRuntime !== 'boolean' ||
-		typeof skill.custom.pursuit.effect.id !== 'number'
-	) {
-		root.log('invalid pursuit parameter');
+		root.log("invalid pursuit parameter");
 		return false;
 	}
 	return true;
