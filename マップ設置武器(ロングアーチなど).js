@@ -1,5 +1,5 @@
 ﻿/*--------------------------------------------------------------------------
-　マップ設置兵器(ロングアーチ等) ver1.7
+　マップ設置兵器(ロングアーチ等) ver1.8
 
 ■作成者
 キュウブ
@@ -28,6 +28,9 @@ drawOverUsableUnit:trueによって、
 ※通常地形を別の通常地形に変更する分には問題ありません
 
 更新履歴
+ver 1.8 2022/04/25
+ユニットコマンド説明スクリプトに対応
+
 ver 1.7 2022/04/14
 ver1.6で追加したカスパラ名をdrawOverUsableUnit:trueに変更
 
@@ -592,6 +595,11 @@ UnitCommand.InstalledWeaponAttack = defineObject(UnitCommand.Attack, {
 		}
 		attackaleIndexArray = this._getIndexArray(unit, installedWeapon);
 		return attackaleIndexArray.length > 0;
+	},
+
+	getDescription: function() {
+		var installedWeapon = this._getInstalledWeapon();
+		return installedWeapon.custom.commandDescriptionText || '設置されている武器で戦闘を行います';
 	},
 
 	_getInstalledWeapon: function () {

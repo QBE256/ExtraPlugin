@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　連携攻撃スクリプト ver 0.1
+　連携攻撃スクリプト ver 0.2
 
 ■作成者
 キュウブ
@@ -63,6 +63,9 @@ https://github.com/QBE256/ExtraPlugin/blob/master/%E5%85%A8%E4%BD%93%E6%94%BB%E6
 本スクリプト内のAbilityCalculator.getCooperateAttackの中を改変してください。
 
 ■更新履歴
+ver 0.2 (2022/04/25)
+ユニットコマンド説明スクリプトに対応
+
 ver 0.1 (2022/03/22)
 試作版公開
 
@@ -423,6 +426,10 @@ UnitCommand.FusionRide = defineObject(UnitCommand.FusionCatch, {
 		}
 
 		return indexArray;
+	},
+
+	getDescription: function() {
+		return this._fusionData.custom.commandDescriptionText || '味方と連携します(一定確率で連携攻撃が可能になります)';
 	}
 });
 
@@ -452,6 +459,10 @@ UnitCommand.FusionUnitChange = defineObject(BaseFusionCommand,
 	
 	_getFusionIndexArray: function(unit) {
 		return [CurrentMap.getIndex(unit.getMapX(), unit.getMapY())];
+	},
+
+	getDescription: function() {
+		return '連携を交代します';
 	}
 }
 );

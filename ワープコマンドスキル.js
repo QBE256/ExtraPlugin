@@ -1,5 +1,5 @@
 /*
-ワープコマンドスキル ver1.0
+ワープコマンドスキル ver1.1
 
 ■作成者
 キュウブ
@@ -48,6 +48,9 @@ CPUユニット側の仕様
   - ワープアイテムの射程はゲームバランスを壊さない範囲で長めにとっておく事を推奨します
 
 更新履歴
+ver 1.1 2022/04/25
+ユニットコマンド説明スクリプトに対応
+
 ver 1.0 2022/03/29
 初版
 
@@ -215,6 +218,12 @@ UnitCommand.Teleportation = defineObject(UnitListCommand, {
 			this._drawUse();
 		}
 	},
+
+	getDescription: function() {
+		var skill = SkillControl.getPossessionCustomSkill(this.getCommandTarget(), "Teleporation");
+		var item = root.getBaseData().getItemList().getDataFromId(skill.custom.teleportationItemId);
+		return item.custom.commandDescriptionText || '各種行動を行う前に他の場所へワープします';
+  },
 
 	isCommandDisplayable: function () {
 		var skill;
