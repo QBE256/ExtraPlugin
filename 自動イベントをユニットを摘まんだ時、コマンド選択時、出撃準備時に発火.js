@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ユニット選択、コマンド選択、出撃準備で自動イベント発火 ver 1.4
+　ユニット選択、コマンド選択、出撃準備で自動イベント発火 ver 1.5
 
 ■作成者
 キュウブ
@@ -24,6 +24,7 @@ autoEventType:<起こしたいイベントタイプの値>
 出撃準備コマンドを開いた時に起こしたいイベント: 2
 マップコマンドを開いた時に起こしたいイベント: 3
 ユニットのステータス画面を開いた時に起こしたいイベント: 4
+プレイヤーユニットの誰かが待機した時だけ起こしたい(=マップコマンドの開閉では発生させたくない)イベント: 5
 
 例えば、
 autoEventType: 0
@@ -47,7 +48,16 @@ IDを知りたい場合は"ユニット概要"コマンドでチェックして�
 また、実行条件が何も設定されていない場合は出撃準備時にステータス画面を開いてもイベントが起こせてしまいます。
 避けたい場合は「自軍ターン-1ターン目以上」といった条件を付加しておくと良いでしょう。
 
+※※※※※※2022/3/24追記※※※※※※
+プレイヤーユニットが待機する度にもイベントが実行できるようになりました。
+autoEventType: 5 で設定可能です。
+※通常の待機イベントとは異なり、位置や特定ユニットを問わず発生させる事ができます。
+※通常の自動開始イベントはユニット待機だけでなく、マップコマンドの開閉だけでも起きてしまいますが後者によるイベント発生を防ぐ事ができます。
+
 ■更新履歴
+ver 1.5 (2022/3/24)
+プレイヤーユニットが待機する度に自動開始イベントが起こせるように対応
+
 ver 1.4 (2021/6/9)
 拠点でユニットステータス画面を開くとエラーになる不具合を修正しました
 ※ゲームオーバー判定が邪魔だったので消しました。…ユニットステータス画面を開いた時の自動開始イベントに自軍を消滅させるような処理は入れないでくださいね？
@@ -467,6 +477,67 @@ SRPG Studio Version:1.161
 			this.changeCycleMode(UnitMenuMode.AUTOEVENTCHECK);
 		}
 	};
+
+	var UnitWaitFlowMode = {
+		WAITEVENT: 0,
+		AUTOEVENTCHECK: 1
+	};
+
+	UnitWaitFlowEntry._eventChecker = null;
+	var alias19 = UnitWaitFlowEntry._prepareMemberData;
+	UnitWaitFlowEntry._prepareMemberData = function(playerTurn) {
+		alias19.call(this, playerTurn);
+		this.changeCycleMode(UnitWaitFlowMode.WAITEVENT);
+		this._eventChecker = createObject(PlayerUnitWaitEventChecker);
+	};
+
+	var alias20 = UnitWaitFlowEntry._completeMemberData;
+	UnitWaitFlowEntry._completeMemberData = function(playerTurn) {
+		var result = alias20.call(this, playerTurn);
+		if (result === EnterResult.NOTENTER) {
+			this._changeAutoEventMode();
+			this.changeCycleMode(UnitWaitFlowMode.AUTOEVENTCHECK);
+		}
+		else {
+			this.changeCycleMode(UnitWaitFlowMode.WAITEVENT);
+		}
+
+		return EnterResult.OK;
+	};
+
+	UnitWaitFlowEntry._changeAutoEventMode = function() {
+		var result;
+
+		result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
+
+		if (result !== EnterResult.NOTENTER) {
+			this.changeCycleMode(UnitWaitFlowMode.AUTOEVENTCHECK);
+		}
+	};
+
+	UnitWaitFlowEntry._moveAutoEventCheck = function() {
+		if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
+			MapLayer.getMarkingPanel().updateMarkingPanel();
+			return MoveResult.END;
+		}
+		return MoveResult.CONTINUE;
+	};
+
+	var alias21 = UnitWaitFlowEntry.moveFlowEntry;
+	UnitWaitFlowEntry.moveFlowEntry = function() {
+		var mode = this.getCycleMode();
+		var result = MoveResult.CONTINUE;
+		if (mode === UnitWaitFlowMode.WAITEVENT) {
+			if (alias21.call(this) === MoveResult.END) {
+				this._changeAutoEventMode();
+			}
+		}
+		else if (mode === UnitWaitFlowMode.AUTOEVENTCHECK) {
+			result = this._moveAutoEventCheck();
+		}
+		
+		return result;
+	};
 })();
 
 var AutoEventType = {
@@ -474,7 +545,8 @@ var AutoEventType = {
 	UNIT_COMMAND: 1,
 	SETUP_COMMAND: 2,
 	MAP_COMMAND: 3,
-	UNITMENU_COMMAND: 4
+	UNITMENU_COMMAND: 4,
+	PLAYER_UNIT_WAIT: 5
 };
 
 EventChecker._isTargetAutoEventType = function(event) {
@@ -529,6 +601,14 @@ var UnitMenuEventChecker = defineObject(EventChecker,
 		}
 
 		return isTargetUnit && event.custom.autoEventType === AutoEventType.UNITMENU_COMMAND;
+	}
+}
+);
+
+var PlayerUnitWaitEventChecker = defineObject(EventChecker,
+{
+	_isTargetAutoEventType: function(event) {
+		return event.custom.autoEventType === AutoEventType.PLAYER_UNIT_WAIT;
 	}
 }
 );
