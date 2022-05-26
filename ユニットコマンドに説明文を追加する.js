@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ユニットコマンド説明スクリプト ver1.0
+　ユニットコマンド説明スクリプト ver1.1
 
 ■作成者
 キュウブ
@@ -12,7 +12,6 @@
 ユニットイベントのコマンド
 フュージョンデータ
 形態変化スキル(※形態変化データではない事に注意)
-会話イベント
 場所イベント(カスタム)
 では、それぞれのカスパラに
 {
@@ -112,8 +111,7 @@ UnitCommand.PlaceCommand.getDescription = function() {
 };
 
 UnitCommand.Talk.getDescription = function() {
-	var event = this._getTargetEvent();
-	return event.custom.commandDescriptionText || '会話を行います';
+	return '会話を行います';
 };
 
 UnitCommand.Steal.getDescription = function() {
