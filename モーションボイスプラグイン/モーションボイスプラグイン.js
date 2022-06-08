@@ -68,95 +68,95 @@ SRPG Studio Version:1.161
 */
 
 (function () {
-	var _AnimeMotion__setFrame = AnimeMotion._setFrame;
-	AnimeMotion._setFrame = function (frameIndex) {
-		this._checkVoice();
-		_AnimeMotion__setFrame.call(this, frameIndex);
-	};
+  var _AnimeMotion__setFrame = AnimeMotion._setFrame;
+  AnimeMotion._setFrame = function (frameIndex) {
+    this._checkVoice();
+    _AnimeMotion__setFrame.call(this, frameIndex);
+  };
 
-	AnimeMotion._checkVoice = function () {
-		var templateType, templateVoices, motionVoices, voiceFiles, motionId;
-		var voiceIndex = 0;
-		if (!this._unit) {
-			return;
-		}
-		if (this._frameIndex !== 0) {
-			return;
-		}
-		templateType = this._animeData.getAttackTemplateType();
-		if (templateType === AttackTemplateType.FIGHTER) {
-			templateVoices = getVoices(this._unit, VoiceType.FIGHTER_MOTION);
-		} else if (templateType === AttackTemplateType.ARCHER) {
-			templateVoices = getVoices(this._unit, VoiceType.ARCHER_MOTION);
-		} else {
-			templateVoices = getVoices(this._unit, VoiceType.MAGE_MOTION);
-		}
+  AnimeMotion._checkVoice = function () {
+    var templateType, templateVoices, motionVoices, voiceFiles, motionId;
+    var voiceIndex = 0;
+    if (!this._unit) {
+      return;
+    }
+    if (this._frameIndex !== 0) {
+      return;
+    }
+    templateType = this._animeData.getAttackTemplateType();
+    if (templateType === AttackTemplateType.FIGHTER) {
+      templateVoices = getVoices(this._unit, VoiceType.FIGHTER_MOTION);
+    } else if (templateType === AttackTemplateType.ARCHER) {
+      templateVoices = getVoices(this._unit, VoiceType.ARCHER_MOTION);
+    } else {
+      templateVoices = getVoices(this._unit, VoiceType.MAGE_MOTION);
+    }
 
-		motionId = this._motionId;
-		motionVoices = templateVoices.filter(getCorrespondingRows, { correspondingId: motionId });
-		if (motionVoices.length === 0) {
-			return;
-		}
-		voiceFiles = motionVoices[0].filter(getVoiceFiles);
-		if (voiceFiles.length === 0) {
-			return;
-		}
-		voiceIndex = root.getRandomNumber() % voiceFiles.length;
-		root.getMaterialManager().voiceStop(1, false);
-		root.getMaterialManager().voicePlay(
-			DataConfig.getVoiceCategoryName(),
-			voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
-			1
-		);
-	};
+    motionId = this._motionId;
+    motionVoices = templateVoices.filter(getCorrespondingRows, { correspondingId: motionId });
+    if (motionVoices.length === 0) {
+      return;
+    }
+    voiceFiles = motionVoices[0].filter(getVoiceFiles);
+    if (voiceFiles.length === 0) {
+      return;
+    }
+    voiceIndex = root.getRandomNumber() % voiceFiles.length;
+    root.getMaterialManager().voiceStop(1, false);
+    root.getMaterialManager().voicePlay(
+      DataConfig.getVoiceCategoryName(),
+      voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
+      1
+    );
+  };
 
-	BaseBattler._attackCount = 0;
-	var _MagicBattler__createInvocationEffect = MagicBattler._createInvocationEffect;
-	MagicBattler._createInvocationEffect = function () {
-		var voiceFiles;
-		var voiceIndex = 0;
-		var weaponId = BattlerChecker.getRealBattleWeapon(this._unit).getId();
-		var templateVoices = getVoices(this._unit, VoiceType.INVOCATION_MAGIC);
-		var weaponVoices = templateVoices.filter(getCorrespondingRows, { correspondingId: weaponId });
-		_MagicBattler__createInvocationEffect.call(this);
-		if (weaponVoices.length === 0) {
-			return;
-		}
-		voiceFiles = weaponVoices[0].filter(getVoiceFiles);
-		if (voiceFiles.length === 0) {
-			return;
-		}
-		voiceIndex = this._attackCount % voiceFiles.length;
-		root.getMaterialManager().voiceStop(1, false);
-		root.getMaterialManager().voicePlay(
-			DataConfig.getVoiceCategoryName(),
-			voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
-			1
-		);
-	};
+  BaseBattler._attackCount = 0;
+  var _MagicBattler__createInvocationEffect = MagicBattler._createInvocationEffect;
+  MagicBattler._createInvocationEffect = function () {
+    var voiceFiles;
+    var voiceIndex = 0;
+    var weaponId = BattlerChecker.getRealBattleWeapon(this._unit).getId();
+    var templateVoices = getVoices(this._unit, VoiceType.INVOCATION_MAGIC);
+    var weaponVoices = templateVoices.filter(getCorrespondingRows, { correspondingId: weaponId });
+    _MagicBattler__createInvocationEffect.call(this);
+    if (weaponVoices.length === 0) {
+      return;
+    }
+    voiceFiles = weaponVoices[0].filter(getVoiceFiles);
+    if (voiceFiles.length === 0) {
+      return;
+    }
+    voiceIndex = this._attackCount % voiceFiles.length;
+    root.getMaterialManager().voiceStop(1, false);
+    root.getMaterialManager().voicePlay(
+      DataConfig.getVoiceCategoryName(),
+      voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
+      1
+    );
+  };
 
-	var _MagicBattler__createMagicEffect = MagicBattler._createMagicEffect;
-	MagicBattler._createMagicEffect = function () {
-		var voiceFiles;
-		var voiceIndex = 0;
-		var weaponId = BattlerChecker.getRealBattleWeapon(this._unit).getId();
-		var templateVoices = getVoices(this._unit, VoiceType.ATTACK_MAGIC);
-		var weaponVoices = templateVoices.filter(getCorrespondingRows, { correspondingId: weaponId });
-		_MagicBattler__createMagicEffect.call(this);
-		if (weaponVoices.length === 0) {
-			return;
-		}
-		voiceFiles = weaponVoices[0].filter(getVoiceFiles);
-		if (voiceFiles.length === 0) {
-			return;
-		}
-		voiceIndex = this._attackCount % voiceFiles.length;
-		root.getMaterialManager().voiceStop(1, false);
-		root.getMaterialManager().voicePlay(
-			DataConfig.getVoiceCategoryName(),
-			voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
-			1
-		);
-		this._attackCount++;
-	};
+  var _MagicBattler__createMagicEffect = MagicBattler._createMagicEffect;
+  MagicBattler._createMagicEffect = function () {
+    var voiceFiles;
+    var voiceIndex = 0;
+    var weaponId = BattlerChecker.getRealBattleWeapon(this._unit).getId();
+    var templateVoices = getVoices(this._unit, VoiceType.ATTACK_MAGIC);
+    var weaponVoices = templateVoices.filter(getCorrespondingRows, { correspondingId: weaponId });
+    _MagicBattler__createMagicEffect.call(this);
+    if (weaponVoices.length === 0) {
+      return;
+    }
+    voiceFiles = weaponVoices[0].filter(getVoiceFiles);
+    if (voiceFiles.length === 0) {
+      return;
+    }
+    voiceIndex = this._attackCount % voiceFiles.length;
+    root.getMaterialManager().voiceStop(1, false);
+    root.getMaterialManager().voicePlay(
+      DataConfig.getVoiceCategoryName(),
+      voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
+      1
+    );
+    this._attackCount++;
+  };
 })();
