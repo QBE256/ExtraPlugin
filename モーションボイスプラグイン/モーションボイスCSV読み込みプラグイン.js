@@ -1,11 +1,14 @@
 /*
 
-モーションボイス用CSVファイル読み込みプラグイン ver1.0
+モーションボイス用CSVファイル読み込みプラグイン ver2.0
 作成者:キュウブ
 
-モーションボイスプラグインと併用してください。
+モーションボイスプラグインか出撃ボイスプラグインと併用してください。
 
 ■更新履歴
+ver 2.0 (2022/6/9)
+出撃ボイスプラグインにも対応
+
 ver 1.0 (2022/2/9)
 初版
 
@@ -27,7 +30,9 @@ var VoiceType = {
   ARCHER_MOTION: "archerMotion",
   MAGE_MOTION: "mageMotion",
   INVOCATION_MAGIC: "invocationMagic",
-  ATTACK_MAGIC: "attackMagic"
+  ATTACK_MAGIC: "attackMagic",
+  SELECT_SORTIE: 'selectSortie',
+  CANCEL_SORTIE: 'cancelSortie'
 };
 
 var VoiceIndex = {
