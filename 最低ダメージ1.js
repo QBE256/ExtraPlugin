@@ -8,6 +8,7 @@ AttackEvaluator.ActiveAction._arrangePassiveDamage = function (
   virtualPassive,
   attackEntry
 ) {
+  var minDamage;
   var damagePassive = attackEntry.damagePassive;
   var value = this._getDamageGuardValue(
     virtualActive,
@@ -18,6 +19,7 @@ AttackEvaluator.ActiveAction._arrangePassiveDamage = function (
   if (value !== -1) {
     value = 100 - value;
     damagePassive = Math.floor(damagePassive * (value / 100));
+    minDamage = DefineControl.getMinDamage();
     if (minDamage > damagePassive) {
       damagePassive = minDamage;
     }
