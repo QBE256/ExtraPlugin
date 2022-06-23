@@ -19,33 +19,33 @@ ver2.0にてPerimeterAttack(自分の周囲にいる敵のHPを削るスキル)�
 2.以下のようなカスタムパラメータを設定
 
 recoveryHpAfterBattle: {
-	type: <回復量のタイプ。固定値であれば0(RecoveryHpType.FIXED),最大HP割合であれば1(RecoveryHpType.RATE)>,
-	value: <回復量>,
-	effect: {
-		isRuntime: <回復エフェクトアニメがランタイムであればtrue,オリジナルであればfalse>,
-		id: <回復エフェクトアニメのID>
-	},
-	isFastAttack: <先制でのみ発動させる場合はtrue or 後攻で発動させたい場合はfalse, どちらでも発動させたい場合はこのパラメータは記載しない事>
+  type: <回復量のタイプ。固定値であれば0(RecoveryHpType.FIXED),最大HP割合であれば1(RecoveryHpType.RATE)>,
+  value: <回復量>,
+  effect: {
+    isRuntime: <回復エフェクトアニメがランタイムであればtrue,オリジナルであればfalse>,
+    id: <回復エフェクトアニメのID>
+  },
+  isFastAttack: <先制でのみ発動させる場合はtrue or 後攻で発動させたい場合はfalse, どちらでも発動させたい場合はこのパラメータは記載しない事>
 }
 
 例.戦闘後最大HP20%回復するスキル(エフェクトは光の輪)
 recoveryHpAfterBattle: {
-	type: RecoveryHpType.RATE,
-	value: 0.2,
-	effect: {
-		isRuntime: true,
-		id: 5
-	}
+  type: RecoveryHpType.RATE,
+  value: 0.2,
+  effect: {
+    isRuntime: true,
+    id: 5
+  }
 }
 
 例.戦闘後HPが5回復するスキル(エフェクトは闇の渦)
 recoveryHpAfterBattle: {
-	type: RecoveryHpType.FIXED,
-	value: 5,
-	effect: {
-		isRuntime: true,
-		id: 6
-	}
+  type: RecoveryHpType.FIXED,
+  value: 5,
+  effect: {
+    isRuntime: true,
+    id: 6
+  }
 }
 
 ■■ 敵にダメージを与えるスキル
@@ -53,39 +53,39 @@ recoveryHpAfterBattle: {
 2.以下のようなカスタムパラメータを設定
 
 pursuit: {
-	type: <ダメージ量のタイプ。固定値であれば0(PursuitDamageType.FIXED),最大HP割合であれば1(PursuitDamageType.RATE)>,
-	value: <ダメージ量>,
-	effect: {
-		isRuntime: <ダメージエフェクトアニメがランタイムであればtrue,オリジナルであればfalse>,
-		id: <ダメージエフェクトアニメのID>
-	},
-	isFinish: <とどめをさす場合はtrue, ささない場合はfalse>
-	isFastAttack: <先制でのみ発動させる場合はtrue or 後攻で発動させたい場合はfalse, どちらでも発動させたい場合はこのパラメータは記載しない事>,
-	max: <ダメージ上限値, typeが1のときのみ有効。上限値が不要な場合はこのパラメータを記載する必要は無い>
+  type: <ダメージ量のタイプ。固定値であれば0(PursuitDamageType.FIXED),最大HP割合であれば1(PursuitDamageType.RATE)>,
+  value: <ダメージ量>,
+  effect: {
+    isRuntime: <ダメージエフェクトアニメがランタイムであればtrue,オリジナルであればfalse>,
+    id: <ダメージエフェクトアニメのID>
+  },
+  isFinish: <とどめをさす場合はtrue, ささない場合はfalse>
+  isFastAttack: <先制でのみ発動させる場合はtrue or 後攻で発動させたい場合はfalse, どちらでも発動させたい場合はこのパラメータは記載しない事>,
+  max: <ダメージ上限値, typeが1のときのみ有効。上限値が不要な場合はこのパラメータを記載する必要は無い>
 }
 
 例:戦闘後敵に最大HP10%分のダメージを与えるスキル(エフェクトは炎の渦、とどめはささず最低でもHPは1残る)
 pursuit: {
-	type: PursuitDamageType.RATE,
-	value: 0.1,
-	effect: {
-		isRuntime: true,
-		id: 8
-	},
-	isFinish: false
+  type: PursuitDamageType.RATE,
+  value: 0.1,
+  effect: {
+    isRuntime: true,
+    id: 8
+  },
+  isFinish: false
 }
 
 例:下記の場合は、上記に加えて、先手の場合しか発動しない上にダメージ上限が5になる
 pursuit: {
-	type: PursuitDamageType.RATE,
-	value: 0.1,
-	max: 5,
-	effect: {
-		isRuntime: true,
-		id: 8
-	},
-	isFinish: false,
-	isFastAttack: true
+  type: PursuitDamageType.RATE,
+  value: 0.1,
+  max: 5,
+  effect: {
+    isRuntime: true,
+    id: 8
+  },
+  isFinish: false,
+  isFastAttack: true
 }
 
 ■■自分の周囲にいる敵のHPを削るスキル(ver2.0にて新規追加)
@@ -93,25 +93,25 @@ pursuit: {
 2.以下のようなカスタムパラメータを設定
 
 perimeterAttack: {
-	type: <ダメージ量のタイプ。固定値であれば0(PerimeterAttackDamageType.FIXED),最大HP割合であれば1(PerimeterAttackDamageType.RATE)>,
-	value: <ダメージ量>,
-	range: <射程距離>
-	effect: {
-		isRuntime: <ダメージエフェクトアニメがランタイムであればtrue,オリジナルであればfalse>,
-		id: <ダメージエフェクトアニメのID>
-	},
-	max: <ダメージ上限値, typeが1のときのみ有効。上限値が不要な場合はこのパラメータを記載する必要は無い>
+  type: <ダメージ量のタイプ。固定値であれば0(PerimeterAttackDamageType.FIXED),最大HP割合であれば1(PerimeterAttackDamageType.RATE)>,
+  value: <ダメージ量>,
+  range: <射程距離>
+  effect: {
+    isRuntime: <ダメージエフェクトアニメがランタイムであればtrue,オリジナルであればfalse>,
+    id: <ダメージエフェクトアニメのID>
+  },
+  max: <ダメージ上限値, typeが1のときのみ有効。上限値が不要な場合はこのパラメータを記載する必要は無い>
 }
 
 例:先制で戦闘後周囲2マスの敵に最大HP20%分のダメージを与えるスキル(エフェクトは氷魔法、とどめはさせない)
 perimeterAttack: {
-	type: PerimeterAttackDamageType.RATE,
-	value: 0.2,
-	effect: {
-		isRuntime: true,
-		id: 17
-	},
-	range: 2
+  type: PerimeterAttackDamageType.RATE,
+  value: 0.2,
+  effect: {
+    isRuntime: true,
+    id: 17
+  },
+  range: 2
 }
 
 ■更新履歴
@@ -141,640 +141,640 @@ SRPG Studio Version:1.161
 
 --------------------------------------------------------------------------*/
 (function () {
-	var _PreAttack__pushFlowEntriesEnd = PreAttack._pushFlowEntriesEnd;
-	PreAttack._pushFlowEntriesEnd = function (straightFlow) {
-		_PreAttack__pushFlowEntriesEnd.apply(this, arguments);
-		straightFlow.pushFlowEntry(RecoveryHpFlowEntry);
-		straightFlow.pushFlowEntry(PursuitFlowEntry);
-		straightFlow.pushFlowEntry(PerimeterAttackFlowEntry);
-	};
+  var _PreAttack__pushFlowEntriesEnd = PreAttack._pushFlowEntriesEnd;
+  PreAttack._pushFlowEntriesEnd = function (straightFlow) {
+    _PreAttack__pushFlowEntriesEnd.apply(this, arguments);
+    straightFlow.pushFlowEntry(RecoveryHpFlowEntry);
+    straightFlow.pushFlowEntry(PursuitFlowEntry);
+    straightFlow.pushFlowEntry(PerimeterAttackFlowEntry);
+  };
 })();
 
 var RecoveryHpType = {
-	FIXED: 0,
-	RATE: 1
+  FIXED: 0,
+  RATE: 1
 };
 
 var PursuitDamageType = {
-	FIXED: 0,
-	RATE: 1
+  FIXED: 0,
+  RATE: 1
 };
 
 var PerimeterAttackDamageType = {
-	FIXED: 0,
-	RATE: 1
+  FIXED: 0,
+  RATE: 1
 };
 
 var RecoveryHpFlowEntry = defineObject(BaseFlowEntry, {
-	_dynamicEvent: null,
+  _dynamicEvent: null,
 
-	enterFlowEntry: function (preAttack) {
-		this._prepareMemberData(preAttack);
-		return this._completeMemberData(preAttack);
-	},
+  enterFlowEntry: function (preAttack) {
+    this._prepareMemberData(preAttack);
+    return this._completeMemberData(preAttack);
+  },
 
-	moveFlowEntry: function () {
-		return this._dynamicEvent.moveDynamicEvent();
-	},
+  moveFlowEntry: function () {
+    return this._dynamicEvent.moveDynamicEvent();
+  },
 
-	_prepareMemberData: function (preAttack) {
-		this._dynamicEvent = createObject(DynamicEvent);
-	},
+  _prepareMemberData: function (preAttack) {
+    this._dynamicEvent = createObject(DynamicEvent);
+  },
 
-	_completeMemberData: function (preAttack) {
-		var attackUnit = preAttack.getAttackParam().unit;
-		var defenseUnit = preAttack.getAttackParam().targetUnit;
-		var generator = this._dynamicEvent.acquireEventGenerator();
-		this._setDynamicEvent(attackUnit, generator, true);
-		this._setDynamicEvent(defenseUnit, generator, false);
+  _completeMemberData: function (preAttack) {
+    var attackUnit = preAttack.getAttackParam().unit;
+    var defenseUnit = preAttack.getAttackParam().targetUnit;
+    var generator = this._dynamicEvent.acquireEventGenerator();
+    this._setDynamicEvent(attackUnit, generator, true);
+    this._setDynamicEvent(defenseUnit, generator, false);
 
-		return this._dynamicEvent.executeDynamicEvent();
-	},
+    return this._dynamicEvent.executeDynamicEvent();
+  },
 
-	_setDynamicEvent: function (unit, generator, isFastAttack) {
-		var effect;
-		var skill = SkillControl.getPossessionCustomSkill(unit, "RecoveryHpAfterBattle");
-		var enabledEvent = this._enabledSkill(unit, skill, isFastAttack);
+  _setDynamicEvent: function (unit, generator, isFastAttack) {
+    var effect;
+    var skill = SkillControl.getPossessionCustomSkill(unit, "RecoveryHpAfterBattle");
+    var enabledEvent = this._enabledSkill(unit, skill, isFastAttack);
 
-		if (enabledEvent) {
-			effect = this._getRecoveryEffect(skill);
-			generator.locationFocus(unit.getMapX(), unit.getMapY(), true);
-			generator.hpRecovery(
-				unit,
-				effect,
-				this._getRecoveryValue(unit, skill),
-				RecoveryType.SPECIFY,
-				false
-			);
-		}
-	},
+    if (enabledEvent) {
+      effect = this._getRecoveryEffect(skill);
+      generator.locationFocus(unit.getMapX(), unit.getMapY(), true);
+      generator.hpRecovery(
+        unit,
+        effect,
+        this._getRecoveryValue(unit, skill),
+        RecoveryType.SPECIFY,
+        false
+      );
+    }
+  },
 
-	_getRecoveryEffect: function (skill) {
-		var isRuntime = skill.custom.recoveryHpAfterBattle.effect.isRuntime;
-		var id = skill.custom.recoveryHpAfterBattle.effect.id;
+  _getRecoveryEffect: function (skill) {
+    var isRuntime = skill.custom.recoveryHpAfterBattle.effect.isRuntime;
+    var id = skill.custom.recoveryHpAfterBattle.effect.id;
 
-		return root.getBaseData().getEffectAnimationList(isRuntime).getDataFromId(id);
-	},
+    return root.getBaseData().getEffectAnimationList(isRuntime).getDataFromId(id);
+  },
 
-	_getRecoveryValue: function (unit, skill) {
-		var maxHp, rate;
-		var recoveryValue = 0;
+  _getRecoveryValue: function (unit, skill) {
+    var maxHp, rate;
+    var recoveryValue = 0;
 
-		if (skill.custom.recoveryHpAfterBattle.type === RecoveryHpType.FIXED) {
-			recoveryValue = skill.custom.recoveryHpAfterBattle.value;
-		} else if (skill.custom.recoveryHpAfterBattle.type === RecoveryHpType.RATE) {
-			maxHp = ParamBonus.getMhp(unit);
-			rate = skill.custom.recoveryHpAfterBattle.value;
-			recoveryValue = Math.floor(maxHp * rate);
-		}
+    if (skill.custom.recoveryHpAfterBattle.type === RecoveryHpType.FIXED) {
+      recoveryValue = skill.custom.recoveryHpAfterBattle.value;
+    } else if (skill.custom.recoveryHpAfterBattle.type === RecoveryHpType.RATE) {
+      maxHp = ParamBonus.getMhp(unit);
+      rate = skill.custom.recoveryHpAfterBattle.value;
+      recoveryValue = Math.floor(maxHp * rate);
+    }
 
-		return recoveryValue;
-	},
+    return recoveryValue;
+  },
 
-	_enabledSkill: function (unit, skill, isFastAttack) {
-		if (!skill) {
-			return false;
-		} else if (!validateRecoveryHpAfterBattleSkill(skill)) {
-			return false;
-		} else if (unit.getAliveState() !== AliveType.ALIVE) {
-			return false;
-		} else if (!this._enabledRecovery(unit)) {
-			return false;
-		}
+  _enabledSkill: function (unit, skill, isFastAttack) {
+    if (!skill) {
+      return false;
+    } else if (!validateRecoveryHpAfterBattleSkill(skill)) {
+      return false;
+    } else if (unit.getAliveState() !== AliveType.ALIVE) {
+      return false;
+    } else if (!this._enabledRecovery(unit)) {
+      return false;
+    }
 
-		if (skill.custom.recoveryHpAfterBattle.hasOwnProperty("isFastAttack")) {
-			return skill.custom.recoveryHpAfterBattle.isFastAttack === isFastAttack;
-		} else {
-			return true;
-		}
-	},
+    if (skill.custom.recoveryHpAfterBattle.hasOwnProperty("isFastAttack")) {
+      return skill.custom.recoveryHpAfterBattle.isFastAttack === isFastAttack;
+    } else {
+      return true;
+    }
+  },
 
-	_enabledRecovery: function (unit) {
-		return unit.getHp() < ParamBonus.getMhp(unit);
-	}
+  _enabledRecovery: function (unit) {
+    return unit.getHp() < ParamBonus.getMhp(unit);
+  }
 });
 
 var PursuitFlowEntry = defineObject(BaseFlowEntry, {
-	_dynamicEvent: null,
+  _dynamicEvent: null,
 
-	enterFlowEntry: function (preAttack) {
-		this._prepareMemberData(preAttack);
-		return this._completeMemberData(preAttack);
-	},
+  enterFlowEntry: function (preAttack) {
+    this._prepareMemberData(preAttack);
+    return this._completeMemberData(preAttack);
+  },
 
-	moveFlowEntry: function () {
-		return this._dynamicEvent.moveDynamicEvent();
-	},
+  moveFlowEntry: function () {
+    return this._dynamicEvent.moveDynamicEvent();
+  },
 
-	_prepareMemberData: function (preAttack) {
-		this._dynamicEvent = createObject(DynamicEvent);
-	},
+  _prepareMemberData: function (preAttack) {
+    this._dynamicEvent = createObject(DynamicEvent);
+  },
 
-	_completeMemberData: function (preAttack) {
-		var attackUnit = preAttack.getAttackParam().unit;
-		var defenseUnit = preAttack.getAttackParam().targetUnit;
-		var generator = this._dynamicEvent.acquireEventGenerator();
+  _completeMemberData: function (preAttack) {
+    var attackUnit = preAttack.getAttackParam().unit;
+    var defenseUnit = preAttack.getAttackParam().targetUnit;
+    var generator = this._dynamicEvent.acquireEventGenerator();
 
-		this._setDynamicEvent(attackUnit, defenseUnit, generator, true);
-		this._setDynamicEvent(defenseUnit, attackUnit, generator, false);
+    this._setDynamicEvent(attackUnit, defenseUnit, generator, true);
+    this._setDynamicEvent(defenseUnit, attackUnit, generator, false);
 
-		return this._dynamicEvent.executeDynamicEvent();
-	},
+    return this._dynamicEvent.executeDynamicEvent();
+  },
 
-	_setDynamicEvent: function (unit, targetUnit, generator, isFastAttack) {
-		var effect, damage, enabledEvent;
-		var skill = SkillControl.getPossessionCustomSkill(unit, "Pursuit");
-		var enabledSkill = this._enabledSkill(unit, targetUnit, skill, isFastAttack);
+  _setDynamicEvent: function (unit, targetUnit, generator, isFastAttack) {
+    var effect, damage, enabledEvent;
+    var skill = SkillControl.getPossessionCustomSkill(unit, "Pursuit");
+    var enabledSkill = this._enabledSkill(unit, targetUnit, skill, isFastAttack);
 
-		if (enabledSkill) {
-			damage = this._getDamageValue(targetUnit, skill);
-			enabledEvent = damage > 0;
+    if (enabledSkill) {
+      damage = this._getDamageValue(targetUnit, skill);
+      enabledEvent = damage > 0;
 
-			if (enabledEvent) {
-				effect = this._getDamageEffect(skill);
-				generator.locationFocus(targetUnit.getMapX(), targetUnit.getMapY(), true);
-				generator.damageHit(targetUnit, effect, damage, DamageType.FIXED, unit, false);
-			}
-		}
-	},
+      if (enabledEvent) {
+        effect = this._getDamageEffect(skill);
+        generator.locationFocus(targetUnit.getMapX(), targetUnit.getMapY(), true);
+        generator.damageHit(targetUnit, effect, damage, DamageType.FIXED, unit, false);
+      }
+    }
+  },
 
-	_getDamageEffect: function (skill) {
-		var isRuntime = skill.custom.pursuit.effect.isRuntime;
-		var id = skill.custom.pursuit.effect.id;
+  _getDamageEffect: function (skill) {
+    var isRuntime = skill.custom.pursuit.effect.isRuntime;
+    var id = skill.custom.pursuit.effect.id;
 
-		return root.getBaseData().getEffectAnimationList(isRuntime).getDataFromId(id);
-	},
+    return root.getBaseData().getEffectAnimationList(isRuntime).getDataFromId(id);
+  },
 
-	_getDamageValue: function (targetUnit, skill) {
-		var maxHp, rate;
-		var enabledFinish = skill.custom.pursuit.isFinish;
-		var currentHp = targetUnit.getHp();
-		var damage = 0;
+  _getDamageValue: function (targetUnit, skill) {
+    var maxHp, rate;
+    var enabledFinish = skill.custom.pursuit.isFinish;
+    var currentHp = targetUnit.getHp();
+    var damage = 0;
 
-		if (skill.custom.pursuit.type === PursuitDamageType.FIXED) {
-			damage = skill.custom.pursuit.value;
-		} else if (skill.custom.pursuit.type === PursuitDamageType.RATE) {
-			maxHp = ParamBonus.getMhp(targetUnit);
-			rate = skill.custom.pursuit.value;
-			damage = Math.floor(maxHp * rate);
+    if (skill.custom.pursuit.type === PursuitDamageType.FIXED) {
+      damage = skill.custom.pursuit.value;
+    } else if (skill.custom.pursuit.type === PursuitDamageType.RATE) {
+      maxHp = ParamBonus.getMhp(targetUnit);
+      rate = skill.custom.pursuit.value;
+      damage = Math.floor(maxHp * rate);
 
-			if (skill.custom.pursuit.hasOwnProperty("max") && skill.custom.pursuit.max < damage) {
-				damage = skill.custom.pursuit.max;
-			}
-		}
+      if (skill.custom.pursuit.hasOwnProperty("max") && skill.custom.pursuit.max < damage) {
+        damage = skill.custom.pursuit.max;
+      }
+    }
 
-		if (!enabledFinish && currentHp - damage <= 0) {
-			damage = currentHp - 1;
-		}
+    if (!enabledFinish && currentHp - damage <= 0) {
+      damage = currentHp - 1;
+    }
 
-		return damage;
-	},
+    return damage;
+  },
 
-	_enabledSkill: function (unit, targetUnit, skill, isFastAttack) {
-		if (!skill) {
-			return false;
-		} else if (!validatePursuitSkill(skill)) {
-			return false;
-		} else if (unit.getAliveState() !== AliveType.ALIVE) {
-			return false;
-		} else if (targetUnit.getAliveState() !== AliveType.ALIVE) {
-			return false;
-		}
+  _enabledSkill: function (unit, targetUnit, skill, isFastAttack) {
+    if (!skill) {
+      return false;
+    } else if (!validatePursuitSkill(skill)) {
+      return false;
+    } else if (unit.getAliveState() !== AliveType.ALIVE) {
+      return false;
+    } else if (targetUnit.getAliveState() !== AliveType.ALIVE) {
+      return false;
+    }
 
-		if (skill.custom.pursuit.hasOwnProperty("isFastAttack")) {
-			return skill.custom.pursuit.isFastAttack === isFastAttack;
-		} else {
-			return true;
-		}
-	}
+    if (skill.custom.pursuit.hasOwnProperty("isFastAttack")) {
+      return skill.custom.pursuit.isFastAttack === isFastAttack;
+    } else {
+      return true;
+    }
+  }
 });
 
 var PerimeterAttackFlowEntry = defineObject(BaseFlowEntry, {
-	_showDamageCycleCounter: null,
-	_dynamicAnimationEvent: null,
-	_damageEvents: null,
+  _showDamageCycleCounter: null,
+  _dynamicAnimationEvent: null,
+  _damageEvents: null,
 
-	enterFlowEntry: function (preAttack) {
-		this._prepareMemberData(preAttack);
-		return this._completeMemberData(preAttack);
-	},
+  enterFlowEntry: function (preAttack) {
+    this._prepareMemberData(preAttack);
+    return this._completeMemberData(preAttack);
+  },
 
-	moveFlowEntry: function () {
-		// 実際のHP減少はイベント終了時に行う
-		if (this._dynamicAnimationEvent.moveDynamicAnime() !== MoveResult.CONTINUE) {
-			this._damageEvents.forEach(function (event) {
-				event.unit.setHp(event.restHp);
-			});
-			return MoveResult.END;
-		}
+  moveFlowEntry: function () {
+    // 実際のHP減少はイベント終了時に行う
+    if (this._dynamicAnimationEvent.moveDynamicAnime() !== MoveResult.CONTINUE) {
+      this._damageEvents.forEach(function (event) {
+        event.unit.setHp(event.restHp);
+      });
+      return MoveResult.END;
+    }
 
-		// ダメージ数値の動きは1度ループが終わったら全体フレームを-1にしてストップさせる
-		if (this._showDamageCycleCounter.moveCycleCounter() !== MoveResult.CONTINUE) {
-			this._showDamageCycleCounter.setCounterInfo(-1);
-		}
+    // ダメージ数値の動きは1度ループが終わったら全体フレームを-1にしてストップさせる
+    if (this._showDamageCycleCounter.moveCycleCounter() !== MoveResult.CONTINUE) {
+      this._showDamageCycleCounter.setCounterInfo(-1);
+    }
 
-		return MoveResult.CONTINUE;
-	},
+    return MoveResult.CONTINUE;
+  },
 
-	drawFlowEntry: function () {
-		var moveAmount = 0;
-		var showCounter = this._showDamageCycleCounter.getCounter();
-		if (showCounter <= 10) {
-			moveAmount = showCounter * 3;
-		} else {
-			moveAmount = (20 - showCounter) * 3;
-		}
-		this._dynamicAnimationEvent.drawDynamicAnime();
-		// ダメージ値はイベントを介さず、直接描画する
-		this._damageEvents.forEach(function (event) {
-			var x = event.unit.getMapX() * GraphicsFormat.MAPCHIP_WIDTH;
-			var y = event.unit.getMapY() * GraphicsFormat.MAPCHIP_HEIGHT - moveAmount;
-			NumberRenderer.drawAttackNumberColor(x, y, event.damage, 3, 255);
-		});
-	},
+  drawFlowEntry: function () {
+    var moveAmount = 0;
+    var showCounter = this._showDamageCycleCounter.getCounter();
+    if (showCounter <= 10) {
+      moveAmount = showCounter * 3;
+    } else {
+      moveAmount = (20 - showCounter) * 3;
+    }
+    this._dynamicAnimationEvent.drawDynamicAnime();
+    // ダメージ値はイベントを介さず、直接描画する
+    this._damageEvents.forEach(function (event) {
+      var x = event.unit.getMapX() * GraphicsFormat.MAPCHIP_WIDTH;
+      var y = event.unit.getMapY() * GraphicsFormat.MAPCHIP_HEIGHT - moveAmount;
+      NumberRenderer.drawAttackNumberColor(x, y, event.damage, 3, 255);
+    });
+  },
 
-	_prepareMemberData: function (preAttack) {
-		this._dynamicAnimationEvent = createObject(DynamicAnime);
-		this._showDamageCycleCounter = createObject(CycleCounter);
-		this._showDamageCycleCounter.disableGameAcceleration();
-		this._showDamageCycleCounter.setCounterInfo(20);
-	},
+  _prepareMemberData: function (preAttack) {
+    this._dynamicAnimationEvent = createObject(DynamicAnime);
+    this._showDamageCycleCounter = createObject(CycleCounter);
+    this._showDamageCycleCounter.disableGameAcceleration();
+    this._showDamageCycleCounter.setCounterInfo(20);
+  },
 
-	_completeMemberData: function (preAttack) {
-		var unit = preAttack.getAttackParam().unit;
-		this._damageEvents = [];
-		this._setDynamicEvent(unit);
-		return this._damageEvents.length > 0;
-	},
+  _completeMemberData: function (preAttack) {
+    var unit = preAttack.getAttackParam().unit;
+    this._damageEvents = [];
+    this._setDynamicEvent(unit);
+    return this._damageEvents.length > 0;
+  },
 
-	_setDynamicEvent: function (unit) {
-		var effect, x, y, animePosition, generator;
-		var skill = SkillControl.getPossessionCustomSkill(unit, "PerimeterAttack");
-		var reverseUnits = this._getSurroundingReverseUnits(unit, skill);
-		var enabledSkill = this._enabledSkill(unit, skill);
-		var that = this;
+  _setDynamicEvent: function (unit) {
+    var effect, x, y, animePosition, generator;
+    var skill = SkillControl.getPossessionCustomSkill(unit, "PerimeterAttack");
+    var reverseUnits = this._getSurroundingReverseUnits(unit, skill);
+    var enabledSkill = this._enabledSkill(unit, skill);
+    var that = this;
 
-		if (enabledSkill && reverseUnits.length > 0) {
-			effect = this._getDamageEffect(skill);
-			x = unit.getMapX();
-			y = unit.getMapY();
-			// 発動時は即時スキル使用者に視点を移動させておく
-			generator = root.getEventGenerator();
-			generator.locationFocus(x, y, true);
-			generator.execute();
-			// 発動エフェクトの設定
-			animePosition = LayoutControl.getMapAnimationPos(
-				LayoutControl.getPixelX(x),
-				LayoutControl.getPixelY(y),
-				effect
-			);
-			this._dynamicAnimationEvent.startDynamicAnime(effect, animePosition.x, animePosition.y);
-			this._damageEvents = reverseUnits.map(function (reverseUnit) {
-				var info = that._getEventInfo(reverseUnit, skill);
-				return {
-					unit: reverseUnit,
-					damage: info.damage,
-					restHp: info.restHp
-				};
-			});
-		}
-	},
+    if (enabledSkill && reverseUnits.length > 0) {
+      effect = this._getDamageEffect(skill);
+      x = unit.getMapX();
+      y = unit.getMapY();
+      // 発動時は即時スキル使用者に視点を移動させておく
+      generator = root.getEventGenerator();
+      generator.locationFocus(x, y, true);
+      generator.execute();
+      // 発動エフェクトの設定
+      animePosition = LayoutControl.getMapAnimationPos(
+        LayoutControl.getPixelX(x),
+        LayoutControl.getPixelY(y),
+        effect
+      );
+      this._dynamicAnimationEvent.startDynamicAnime(effect, animePosition.x, animePosition.y);
+      this._damageEvents = reverseUnits.map(function (reverseUnit) {
+        var info = that._getEventInfo(reverseUnit, skill);
+        return {
+          unit: reverseUnit,
+          damage: info.damage,
+          restHp: info.restHp
+        };
+      });
+    }
+  },
 
-	_getSurroundingReverseUnits: function (unit, skill) {
-		var range, enabledIndexs, reverseUnits;
+  _getSurroundingReverseUnits: function (unit, skill) {
+    var range, enabledIndexs, reverseUnits;
 
-		if (!skill) {
-			return [];
-		}
-		reverseUnits = [];
-		range = skill.custom.perimeterAttack.range;
-		enabledIndexs = IndexArray.getBestIndexArray(unit.getMapX(), unit.getMapY(), 1, range);
+    if (!skill) {
+      return [];
+    }
+    reverseUnits = [];
+    range = skill.custom.perimeterAttack.range;
+    enabledIndexs = IndexArray.getBestIndexArray(unit.getMapX(), unit.getMapY(), 1, range);
 
-		enabledIndexs.forEach(function (index) {
-			var isReverseType;
-			var x = CurrentMap.getX(index);
-			var y = CurrentMap.getY(index);
-			var surroundingUnit = PosChecker.getUnitFromPos(x, y);
+    enabledIndexs.forEach(function (index) {
+      var isReverseType;
+      var x = CurrentMap.getX(index);
+      var y = CurrentMap.getY(index);
+      var surroundingUnit = PosChecker.getUnitFromPos(x, y);
 
-			if (surroundingUnit) {
-				isReverseType = FilterControl.isReverseUnitTypeAllowed(unit, surroundingUnit);
-				if (isReverseType) {
-					reverseUnits.push(surroundingUnit);
-				}
-			}
-		});
+      if (surroundingUnit) {
+        isReverseType = FilterControl.isReverseUnitTypeAllowed(unit, surroundingUnit);
+        if (isReverseType) {
+          reverseUnits.push(surroundingUnit);
+        }
+      }
+    });
 
-		return reverseUnits;
-	},
+    return reverseUnits;
+  },
 
-	_getDamageEffect: function (skill) {
-		var isRuntime = skill.custom.perimeterAttack.effect.isRuntime;
-		var id = skill.custom.perimeterAttack.effect.id;
+  _getDamageEffect: function (skill) {
+    var isRuntime = skill.custom.perimeterAttack.effect.isRuntime;
+    var id = skill.custom.perimeterAttack.effect.id;
 
-		return root.getBaseData().getEffectAnimationList(isRuntime).getDataFromId(id);
-	},
+    return root.getBaseData().getEffectAnimationList(isRuntime).getDataFromId(id);
+  },
 
-	_getEventInfo: function (targetUnit, skill) {
-		var maxHp, rate;
-		var currentHp = targetUnit.getHp();
-		var damage = 0;
-		var restHp = 0;
+  _getEventInfo: function (targetUnit, skill) {
+    var maxHp, rate;
+    var currentHp = targetUnit.getHp();
+    var damage = 0;
+    var restHp = 0;
 
-		if (skill.custom.perimeterAttack.type === PerimeterAttackDamageType.FIXED) {
-			damage = skill.custom.perimeterAttack.value;
-		} else if (skill.custom.perimeterAttack.type === PerimeterAttackDamageType.RATE) {
-			maxHp = ParamBonus.getMhp(targetUnit);
-			rate = skill.custom.perimeterAttack.value;
-			damage = Math.floor(maxHp * rate);
-			if (
-				skill.custom.perimeterAttack.hasOwnProperty("max") &&
-				skill.custom.perimeterAttack.max < damage
-			) {
-				damage = skill.custom.perimeterAttack.max;
-			}
-		}
+    if (skill.custom.perimeterAttack.type === PerimeterAttackDamageType.FIXED) {
+      damage = skill.custom.perimeterAttack.value;
+    } else if (skill.custom.perimeterAttack.type === PerimeterAttackDamageType.RATE) {
+      maxHp = ParamBonus.getMhp(targetUnit);
+      rate = skill.custom.perimeterAttack.value;
+      damage = Math.floor(maxHp * rate);
+      if (
+        skill.custom.perimeterAttack.hasOwnProperty("max") &&
+        skill.custom.perimeterAttack.max < damage
+      ) {
+        damage = skill.custom.perimeterAttack.max;
+      }
+    }
 
-		restHp = currentHp - damage;
-		if (restHp <= 0) {
-			damage = currentHp - 1;
-			restHp = 1;
-		}
+    restHp = currentHp - damage;
+    if (restHp <= 0) {
+      damage = currentHp - 1;
+      restHp = 1;
+    }
 
-		return {
-			damage: damage,
-			restHp: restHp
-		};
-	},
+    return {
+      damage: damage,
+      restHp: restHp
+    };
+  },
 
-	_enabledSkill: function (unit, skill) {
-		if (!skill) {
-			return false;
-		} else if (!validatePerimeterAttackSkill(skill)) {
-			return false;
-		} else if (unit.getAliveState() !== AliveType.ALIVE) {
-			return false;
-		}
+  _enabledSkill: function (unit, skill) {
+    if (!skill) {
+      return false;
+    } else if (!validatePerimeterAttackSkill(skill)) {
+      return false;
+    } else if (unit.getAliveState() !== AliveType.ALIVE) {
+      return false;
+    }
 
-		return true;
-	}
+    return true;
+  }
 });
 
 var validateRecoveryHpAfterBattleSkill = function (skill) {
-	if (typeof skill.custom.recoveryHpAfterBattle !== "object") {
-		return false;
-	}
-	if (
-		!skill.custom.recoveryHpAfterBattle.hasOwnProperty("type") ||
-		!skill.custom.recoveryHpAfterBattle.hasOwnProperty("value") ||
-		!skill.custom.recoveryHpAfterBattle.hasOwnProperty("effect")
-	) {
-		root.log("invalid recoveryHpAfterBattle parameter");
-		return false;
-	}
-	if (
-		typeof skill.custom.recoveryHpAfterBattle.type !== "number" ||
-		typeof skill.custom.recoveryHpAfterBattle.value !== "number" ||
-		typeof skill.custom.recoveryHpAfterBattle.effect !== "object"
-	) {
-		root.log("invalid recoveryHpAfterBattle parameter");
-		return false;
-	}
-	if (
-		!skill.custom.recoveryHpAfterBattle.effect.hasOwnProperty("isRuntime") ||
-		!skill.custom.recoveryHpAfterBattle.effect.hasOwnProperty("id")
-	) {
-		root.log("invalid recoveryHpAfterBattle parameter");
-		return false;
-	}
-	if (
-		typeof skill.custom.recoveryHpAfterBattle.effect.isRuntime !== "boolean" ||
-		typeof skill.custom.recoveryHpAfterBattle.effect.id !== "number"
-	) {
-		root.log("invalid recoveryHpAfterBattle parameter");
-		return false;
-	}
-	return true;
+  if (typeof skill.custom.recoveryHpAfterBattle !== "object") {
+    return false;
+  }
+  if (
+    !skill.custom.recoveryHpAfterBattle.hasOwnProperty("type") ||
+    !skill.custom.recoveryHpAfterBattle.hasOwnProperty("value") ||
+    !skill.custom.recoveryHpAfterBattle.hasOwnProperty("effect")
+  ) {
+    root.log("invalid recoveryHpAfterBattle parameter");
+    return false;
+  }
+  if (
+    typeof skill.custom.recoveryHpAfterBattle.type !== "number" ||
+    typeof skill.custom.recoveryHpAfterBattle.value !== "number" ||
+    typeof skill.custom.recoveryHpAfterBattle.effect !== "object"
+  ) {
+    root.log("invalid recoveryHpAfterBattle parameter");
+    return false;
+  }
+  if (
+    !skill.custom.recoveryHpAfterBattle.effect.hasOwnProperty("isRuntime") ||
+    !skill.custom.recoveryHpAfterBattle.effect.hasOwnProperty("id")
+  ) {
+    root.log("invalid recoveryHpAfterBattle parameter");
+    return false;
+  }
+  if (
+    typeof skill.custom.recoveryHpAfterBattle.effect.isRuntime !== "boolean" ||
+    typeof skill.custom.recoveryHpAfterBattle.effect.id !== "number"
+  ) {
+    root.log("invalid recoveryHpAfterBattle parameter");
+    return false;
+  }
+  return true;
 };
 
 var validatePursuitSkill = function (skill) {
-	if (typeof skill.custom.pursuit !== "object") {
-		return false;
-	}
-	if (
-		!skill.custom.pursuit.hasOwnProperty("type") ||
-		!skill.custom.pursuit.hasOwnProperty("value") ||
-		!skill.custom.pursuit.hasOwnProperty("effect") ||
-		!skill.custom.pursuit.hasOwnProperty("isFinish")
-	) {
-		root.log("invalid pursuit parameter");
-		return false;
-	}
-	if (
-		typeof skill.custom.pursuit.type !== "number" ||
-		typeof skill.custom.pursuit.value !== "number" ||
-		typeof skill.custom.pursuit.effect !== "object" ||
-		typeof skill.custom.pursuit.isFinish !== "boolean"
-	) {
-		root.log("invalid pursuit parameter");
-		return false;
-	}
-	if (
-		!skill.custom.pursuit.effect.hasOwnProperty("isRuntime") ||
-		!skill.custom.pursuit.effect.hasOwnProperty("id")
-	) {
-		root.log("invalid pursuit parameter");
-		return false;
-	}
-	if (
-		typeof skill.custom.pursuit.effect.isRuntime !== "boolean" ||
-		typeof skill.custom.pursuit.effect.id !== "number"
-	) {
-		root.log("invalid pursuit parameter");
-		return false;
-	}
-	return true;
+  if (typeof skill.custom.pursuit !== "object") {
+    return false;
+  }
+  if (
+    !skill.custom.pursuit.hasOwnProperty("type") ||
+    !skill.custom.pursuit.hasOwnProperty("value") ||
+    !skill.custom.pursuit.hasOwnProperty("effect") ||
+    !skill.custom.pursuit.hasOwnProperty("isFinish")
+  ) {
+    root.log("invalid pursuit parameter");
+    return false;
+  }
+  if (
+    typeof skill.custom.pursuit.type !== "number" ||
+    typeof skill.custom.pursuit.value !== "number" ||
+    typeof skill.custom.pursuit.effect !== "object" ||
+    typeof skill.custom.pursuit.isFinish !== "boolean"
+  ) {
+    root.log("invalid pursuit parameter");
+    return false;
+  }
+  if (
+    !skill.custom.pursuit.effect.hasOwnProperty("isRuntime") ||
+    !skill.custom.pursuit.effect.hasOwnProperty("id")
+  ) {
+    root.log("invalid pursuit parameter");
+    return false;
+  }
+  if (
+    typeof skill.custom.pursuit.effect.isRuntime !== "boolean" ||
+    typeof skill.custom.pursuit.effect.id !== "number"
+  ) {
+    root.log("invalid pursuit parameter");
+    return false;
+  }
+  return true;
 };
 
 var validatePerimeterAttackSkill = function (skill) {
-	if (typeof skill.custom.perimeterAttack !== "object") {
-		return false;
-	}
-	if (
-		!skill.custom.perimeterAttack.hasOwnProperty("type") ||
-		!skill.custom.perimeterAttack.hasOwnProperty("value") ||
-		!skill.custom.perimeterAttack.hasOwnProperty("effect") ||
-		!skill.custom.perimeterAttack.hasOwnProperty("range")
-	) {
-		root.log("invalid perimeterAttack parameter");
-		return false;
-	}
-	if (
-		typeof skill.custom.perimeterAttack.type !== "number" ||
-		typeof skill.custom.perimeterAttack.value !== "number" ||
-		typeof skill.custom.perimeterAttack.effect !== "object" ||
-		typeof skill.custom.perimeterAttack.range !== "number"
-	) {
-		root.log("invalid perimeterAttack parameter");
-		return false;
-	}
-	if (
-		!skill.custom.perimeterAttack.effect.hasOwnProperty("isRuntime") ||
-		!skill.custom.perimeterAttack.effect.hasOwnProperty("id")
-	) {
-		root.log("invalid perimeterAttack parameter");
-		return false;
-	}
-	if (
-		typeof skill.custom.perimeterAttack.effect.isRuntime !== "boolean" ||
-		typeof skill.custom.perimeterAttack.effect.id !== "number"
-	) {
-		root.log("invalid perimeterAttack parameter");
-		return false;
-	}
-	return true;
+  if (typeof skill.custom.perimeterAttack !== "object") {
+    return false;
+  }
+  if (
+    !skill.custom.perimeterAttack.hasOwnProperty("type") ||
+    !skill.custom.perimeterAttack.hasOwnProperty("value") ||
+    !skill.custom.perimeterAttack.hasOwnProperty("effect") ||
+    !skill.custom.perimeterAttack.hasOwnProperty("range")
+  ) {
+    root.log("invalid perimeterAttack parameter");
+    return false;
+  }
+  if (
+    typeof skill.custom.perimeterAttack.type !== "number" ||
+    typeof skill.custom.perimeterAttack.value !== "number" ||
+    typeof skill.custom.perimeterAttack.effect !== "object" ||
+    typeof skill.custom.perimeterAttack.range !== "number"
+  ) {
+    root.log("invalid perimeterAttack parameter");
+    return false;
+  }
+  if (
+    !skill.custom.perimeterAttack.effect.hasOwnProperty("isRuntime") ||
+    !skill.custom.perimeterAttack.effect.hasOwnProperty("id")
+  ) {
+    root.log("invalid perimeterAttack parameter");
+    return false;
+  }
+  if (
+    typeof skill.custom.perimeterAttack.effect.isRuntime !== "boolean" ||
+    typeof skill.custom.perimeterAttack.effect.id !== "number"
+  ) {
+    root.log("invalid perimeterAttack parameter");
+    return false;
+  }
+  return true;
 };
 
 // Production steps of ECMA-262, Edition 5, 15.4.4.18
 // Reference: http://es5.github.io/#x15.4.4.18
 if (!Array.prototype["forEach"]) {
-	Array.prototype.forEach = function (callback, thisArg) {
-		if (this == null) {
-			throw new TypeError("Array.prototype.forEach called on null or undefined");
-		}
+  Array.prototype.forEach = function (callback, thisArg) {
+    if (this == null) {
+      throw new TypeError("Array.prototype.forEach called on null or undefined");
+    }
 
-		var T, k;
-		// 1. Let O be the result of calling toObject() passing the
-		// |this| value as the argument.
-		var O = Object(this);
+    var T, k;
+    // 1. Let O be the result of calling toObject() passing the
+    // |this| value as the argument.
+    var O = Object(this);
 
-		// 2. Let lenValue be the result of calling the Get() internal
-		// method of O with the argument "length".
-		// 3. Let len be toUint32(lenValue).
-		var len = O.length >>> 0;
+    // 2. Let lenValue be the result of calling the Get() internal
+    // method of O with the argument "length".
+    // 3. Let len be toUint32(lenValue).
+    var len = O.length >>> 0;
 
-		// 4. If isCallable(callback) is false, throw a TypeError exception.
-		// See: http://es5.github.com/#x9.11
-		if (typeof callback !== "function") {
-			throw new TypeError(callback + " is not a function");
-		}
+    // 4. If isCallable(callback) is false, throw a TypeError exception.
+    // See: http://es5.github.com/#x9.11
+    if (typeof callback !== "function") {
+      throw new TypeError(callback + " is not a function");
+    }
 
-		// 5. If thisArg was supplied, let T be thisArg; else let
-		// T be undefined.
-		if (arguments.length > 1) {
-			T = thisArg;
-		}
+    // 5. If thisArg was supplied, let T be thisArg; else let
+    // T be undefined.
+    if (arguments.length > 1) {
+      T = thisArg;
+    }
 
-		// 6. Let k be 0
-		k = 0;
+    // 6. Let k be 0
+    k = 0;
 
-		// 7. Repeat, while k < len
-		while (k < len) {
-			var kValue;
+    // 7. Repeat, while k < len
+    while (k < len) {
+      var kValue;
 
-			// a. Let Pk be ToString(k).
-			//    This is implicit for LHS operands of the in operator
-			// b. Let kPresent be the result of calling the HasProperty
-			//    internal method of O with argument Pk.
-			//    This step can be combined with c
-			// c. If kPresent is true, then
-			if (k in O) {
-				// i. Let kValue be the result of calling the Get internal
-				// method of O with argument Pk.
-				kValue = O[k];
+      // a. Let Pk be ToString(k).
+      //    This is implicit for LHS operands of the in operator
+      // b. Let kPresent be the result of calling the HasProperty
+      //    internal method of O with argument Pk.
+      //    This step can be combined with c
+      // c. If kPresent is true, then
+      if (k in O) {
+        // i. Let kValue be the result of calling the Get internal
+        // method of O with argument Pk.
+        kValue = O[k];
 
-				// ii. Call the Call internal method of callback with T as
-				// the this value and argument list containing kValue, k, and O.
-				callback.call(T, kValue, k, O);
-			}
-			// d. Increase k by 1.
-			k++;
-		}
-		// 8. return undefined
-	};
+        // ii. Call the Call internal method of callback with T as
+        // the this value and argument list containing kValue, k, and O.
+        callback.call(T, kValue, k, O);
+      }
+      // d. Increase k by 1.
+      k++;
+    }
+    // 8. return undefined
+  };
 }
 
 // Production steps of ECMA-262, Edition 5, 15.4.4.19
 // Reference: http://es5.github.io/#x15.4.4.19
 if (!Array.prototype.map) {
-	Array.prototype.map = function (callback /*, thisArg*/) {
-		var T, A, k;
+  Array.prototype.map = function (callback /*, thisArg*/) {
+    var T, A, k;
 
-		if (this == null) {
-			throw new TypeError("this is null or not defined");
-		}
+    if (this == null) {
+      throw new TypeError("this is null or not defined");
+    }
 
-		// 1. Let O be the result of calling ToObject passing the |this|
-		//    value as the argument.
-		var O = Object(this);
+    // 1. Let O be the result of calling ToObject passing the |this|
+    //    value as the argument.
+    var O = Object(this);
 
-		// 2. Let lenValue be the result of calling the Get internal
-		//    method of O with the argument "length".
-		// 3. Let len be ToUint32(lenValue).
-		var len = O.length >>> 0;
+    // 2. Let lenValue be the result of calling the Get internal
+    //    method of O with the argument "length".
+    // 3. Let len be ToUint32(lenValue).
+    var len = O.length >>> 0;
 
-		// 4. If IsCallable(callback) is false, throw a TypeError exception.
-		// See: http://es5.github.com/#x9.11
-		if (typeof callback !== "function") {
-			throw new TypeError(callback + " is not a function");
-		}
+    // 4. If IsCallable(callback) is false, throw a TypeError exception.
+    // See: http://es5.github.com/#x9.11
+    if (typeof callback !== "function") {
+      throw new TypeError(callback + " is not a function");
+    }
 
-		// 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
-		if (arguments.length > 1) {
-			T = arguments[1];
-		}
+    // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
+    if (arguments.length > 1) {
+      T = arguments[1];
+    }
 
-		// 6. Let A be a new array created as if by the expression new Array(len)
-		//    where Array is the standard built-in constructor with that name and
-		//    len is the value of len.
-		A = new Array(len);
+    // 6. Let A be a new array created as if by the expression new Array(len)
+    //    where Array is the standard built-in constructor with that name and
+    //    len is the value of len.
+    A = new Array(len);
 
-		// 7. Let k be 0
-		k = 0;
+    // 7. Let k be 0
+    k = 0;
 
-		// 8. Repeat, while k < len
-		while (k < len) {
-			var kValue, mappedValue;
+    // 8. Repeat, while k < len
+    while (k < len) {
+      var kValue, mappedValue;
 
-			// a. Let Pk be ToString(k).
-			//   This is implicit for LHS operands of the in operator
-			// b. Let kPresent be the result of calling the HasProperty internal
-			//    method of O with argument Pk.
-			//   This step can be combined with c
-			// c. If kPresent is true, then
-			if (k in O) {
-				// i. Let kValue be the result of calling the Get internal
-				//    method of O with argument Pk.
-				kValue = O[k];
+      // a. Let Pk be ToString(k).
+      //   This is implicit for LHS operands of the in operator
+      // b. Let kPresent be the result of calling the HasProperty internal
+      //    method of O with argument Pk.
+      //   This step can be combined with c
+      // c. If kPresent is true, then
+      if (k in O) {
+        // i. Let kValue be the result of calling the Get internal
+        //    method of O with argument Pk.
+        kValue = O[k];
 
-				// ii. Let mappedValue be the result of calling the Call internal
-				//     method of callback with T as the this value and argument
-				//     list containing kValue, k, and O.
-				mappedValue = callback.call(T, kValue, k, O);
+        // ii. Let mappedValue be the result of calling the Call internal
+        //     method of callback with T as the this value and argument
+        //     list containing kValue, k, and O.
+        mappedValue = callback.call(T, kValue, k, O);
 
-				// iii. Call the DefineOwnProperty internal method of A with arguments
-				// Pk, Property Descriptor
-				// { Value: mappedValue,
-				//   Writable: true,
-				//   Enumerable: true,
-				//   Configurable: true },
-				// and false.
+        // iii. Call the DefineOwnProperty internal method of A with arguments
+        // Pk, Property Descriptor
+        // { Value: mappedValue,
+        //   Writable: true,
+        //   Enumerable: true,
+        //   Configurable: true },
+        // and false.
 
-				// In browsers that support Object.defineProperty, use the following:
-				// Object.defineProperty(A, k, {
-				//   value: mappedValue,
-				//   writable: true,
-				//   enumerable: true,
-				//   configurable: true
-				// });
+        // In browsers that support Object.defineProperty, use the following:
+        // Object.defineProperty(A, k, {
+        //   value: mappedValue,
+        //   writable: true,
+        //   enumerable: true,
+        //   configurable: true
+        // });
 
-				// For best browser support, use the following:
-				A[k] = mappedValue;
-			}
-			// d. Increase k by 1.
-			k++;
-		}
+        // For best browser support, use the following:
+        A[k] = mappedValue;
+      }
+      // d. Increase k by 1.
+      k++;
+    }
 
-		// 9. return A
-		return A;
-	};
+    // 9. return A
+    return A;
+  };
 }
