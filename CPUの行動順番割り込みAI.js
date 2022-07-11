@@ -1,5 +1,5 @@
 /*
- CPUの行動順番割り込みAI ver1.0
+ CPUの行動順番割り込みAI ver1.1
 
  ■作成者
 キュウブ
@@ -13,7 +13,7 @@ CPUが何らかのアクションが起こせるようになったタイミン�
 後続の誰かが負傷したときに、行動を開始するようになります。
 
 ■使い方
-1.対象ユニットのAIを行動型にします（ヒーラーで無い場合は範囲内行動にチェックを入れる事を推奨）
+1.対象ユニットのAIを行動型か待機型にします（行動型AIでヒーラーで無い場合は範囲内行動にチェックを入れる事を推奨）
 2.対象ユニットに以下のカスタムパラメータを付与します
 enabledInterruptOrder:true
 
@@ -22,6 +22,9 @@ enabledInterruptOrder:true
 この設定を付与するユニットにアクティブイベントを設定する事は推奨しません。
 
 ■更新履歴
+ver1.1 2022/07/11
+待機型にも対応
+
 ver1.0 2022/07/11
 初版
 
@@ -47,7 +50,7 @@ SRPG Studio Version:1.161
 
     for (var index = 0; index < count; index++) {
       unit = list.getData(index);
-      if (this._interruptOrder(unit)) {
+      if (this._shouldInterruptOrder(unit)) {
         unit.setOrderMark(OrderMarkType.EXECUTED);
         return unit;
       }
@@ -56,13 +59,22 @@ SRPG Studio Version:1.161
     return _EnemyTurn__checkNextOrderUnit.apply(this, arguments);
   };
 
-  EnemyTurn._interruptOrder = function (unit) {
-    var combination;
+  EnemyTurn._shouldInterruptOrder = function (unit) {
+    var isWaitOnly;
+    var combination = null;
     var patternType = unit.getAIPattern().getPatternType();
     var isOrderAllowed = this._isOrderAllowed(unit);
     var isInterruptOrderAI = !!unit.custom.enabledInterruptOrder;
-    if (isOrderAllowed && isInterruptOrderAI && patternType === PatternType.APPROACH) {
-      combination = CombinationManager.getApproachCombination(unit, true);
+
+    if (isOrderAllowed && isInterruptOrderAI) {
+      if (patternType === PatternType.APPROACH) {
+        combination = CombinationManager.getApproachCombination(unit, true);
+      } else if (patternType === PatternType.WAIT) {
+        isWaitOnly = unit.getAIPattern().getWaitPatternInfo().isWaitOnly();
+        if (!isWaitOnly) {
+          combination = CombinationManager.getWaitCombination(unit);
+        }
+      }
       return combination !== null;
     }
     return false;
