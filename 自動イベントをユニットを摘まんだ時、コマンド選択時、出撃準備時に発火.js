@@ -95,524 +95,524 @@ SRPG Studio Version:1.161
 
 --------------------------------------------------------------------------*/
 (function(){
-	MapSequenceAreaMode.AUTOEVENTCHECK = 200;
-	MapSequenceArea._eventChecker = null;
-
-	var alias1 = MapSequenceArea._prepareSequenceMemberData;
-	MapSequenceArea._prepareSequenceMemberData = function(parentTurnObject) {
-		alias1.call(this, parentTurnObject);
-		this._eventChecker = createObject(UnitSelectEventChecker);
-	};
-
-	var alias2 = MapSequenceArea._completeSequenceMemberData;
-	MapSequenceArea._completeSequenceMemberData = function(parentTurnObject) {
-		alias2.call(this, parentTurnObject);
-		this._changeEventMode();
-	};
-
-	var alias3 = MapSequenceArea.moveSequence;
-	MapSequenceArea.moveSequence = function() {
-		var result;
-		var mode = this.getCycleMode();
-		
-		if (mode === MapSequenceAreaMode.AUTOEVENTCHECK) {
-			result = this._moveAutoEventCheck();
-		}
-		else {
-			result = alias3.call(this);
-		}
-		return result;
-	};
-
-	var alias4 = MapSequenceArea.drawSequence;
-	MapSequenceArea.drawSequence = function() {
-		var mode = this.getCycleMode();
-		
-		if (mode === MapSequenceAreaMode.AUTOEVENTCHECK) {
-			this._drawAutoEventCheck();
-		}
-		else {
-			alias4.call(this);
-		}
-	};
-
-	MapSequenceArea._drawAutoEventCheck = function() {
-		this._drawArea();
-	};
-
-	MapSequenceArea._moveAutoEventCheck = function() {
-		if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
-			this._doEventEndAction();
-			MapLayer.getMarkingPanel().updateMarkingPanel();
-			this.changeCycleMode(MapSequenceAreaMode.AREA);
-		}
-		
-		return MoveResult.CONTINUE;
-	};
-
-	// スクリプトエラー対策のセーブはここで行ってはならない
-	// よって、parentTurnObjectの_doEventEndActionは呼び出さずに独自で定義する
-	MapSequenceArea._doEventEndAction = function() {
-		if (GameOverChecker.isGameOver()) {
-			GameOverChecker.startGameOver();
-		}
-	};
-
-	MapSequenceArea._changeEventMode = function() {
-		var result;
-
-		if (this._targetUnit.getUnitType() !== UnitType.PLAYER) {
-			this.changeCycleMode(MapSequenceAreaMode.AREA);
-			return;
-		}
-		result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
-		if (result === EnterResult.NOTENTER) {
-			this._doEventEndAction();
-			this.changeCycleMode(MapSequenceAreaMode.AREA);
-		}
-		else {
-			this.changeCycleMode(MapSequenceAreaMode.AUTOEVENTCHECK);
-		}
-	};
-
-	MapSequenceCommandMode.AUTOEVENTCHECK = 200;
-	MapSequenceCommand._eventChecker = null;
-
-	var alias5 = MapSequenceCommand._prepareSequenceMemberData;
-	MapSequenceCommand._prepareSequenceMemberData = function(parentTurnObject) {
-		alias5.call(this, parentTurnObject);
-		this._eventChecker = createObject(UnitCommandEventChecker);
-	};
-
-	var alias6 = MapSequenceCommand._completeSequenceMemberData;
-	MapSequenceCommand._completeSequenceMemberData = function(parentTurnObject) {
-		alias6.call(this, parentTurnObject);
-		this._changeEventMode();
-	};
-
-	var alias7 = MapSequenceCommand.moveSequence;
-	MapSequenceCommand.moveSequence = function() {
-		var result;
-		var mode = this.getCycleMode();
-		
-		if (mode === MapSequenceAreaMode.AUTOEVENTCHECK) {
-			result = this._moveAutoEventCheck();
-		}
-		else {
-			result = alias7.call(this);
-		}
-		return result;
-	};
-
-	var alias8 = MapSequenceCommand.drawSequence;
-	MapSequenceCommand.drawSequence = function() {
-		var mode = this.getCycleMode();
-		if (mode === MapSequenceAreaMode.AUTOEVENTCHECK) {
-			this._unitCommandManager.drawListCommandManager();
-		}
-		else {
-			alias8.call(this);
-		}
-	};
-
-	MapSequenceCommand._moveAutoEventCheck = function() {
-		if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
-			this._doEventEndAction();
-			MapLayer.getMarkingPanel().updateMarkingPanel();
-			this.changeCycleMode(MapSequenceCommandMode.COMMAND);
-		}
-		
-		return MoveResult.CONTINUE;
-	};
-
-	// スクリプトエラー対策のセーブはここで行ってはならない
-	MapSequenceCommand._doEventEndAction = function() {
-		if (GameOverChecker.isGameOver()) {
-			GameOverChecker.startGameOver();
-		}
-	};
-
-	MapSequenceCommand._changeEventMode = function() {
-		var result;
-
-		result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
-		if (result === EnterResult.NOTENTER) {
-			this._doEventEndAction();
-			this.changeCycleMode(MapSequenceCommandMode.COMMAND);
-		}
-		else {
-			this.changeCycleMode(MapSequenceCommandMode.AUTOEVENTCHECK);
-		}
-	};
-
-	ListCommandManagerMode.AUTOEVENTCHECK = 200;
-	SetupCommand._eventChecker = null;
-	var alias9 = SetupCommand.openListCommandManager;
-	SetupCommand.openListCommandManager = function() {
-		alias9.call(this);
-		this._eventChecker = createObject(SetupCommandEventChecker);
-		this._changeEventMode();
-	};
-
-	var alias10 = SetupCommand.moveListCommandManager;
-	SetupCommand.moveListCommandManager = function() {
-		var result;
-		var mode = this.getCycleMode();
-
-		if (mode === ListCommandManagerMode.AUTOEVENTCHECK) {
-			result = this._moveAutoEventCheck();
-		}
-		else {
-			result = alias10.call(this);
-		}
-		
-		return result;
-	};
-
-	var alias11 = SetupCommand.drawListCommandManager;
-	SetupCommand.drawListCommandManager = function() {
-		var mode = this.getCycleMode();
-		
-		if (mode === ListCommandManagerMode.AUTOEVENTCHECK) {
-			this._drawAutoEventCheck();
-		}
-		else {
-			alias11.call(this);
-		}
-	};
-
-	SetupCommand._moveAutoEventCheck = function() {
-		if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
-			this._doEventEndAction();
-			MapLayer.getMarkingPanel().updateMarkingPanel();
-			this.changeCycleMode(ListCommandManagerMode.TITLE);
-
-		}
-
-		return MoveResult.CONTINUE;
-	};
-
-	SetupCommand._drawAutoEventCheck = function() {
-		this._drawTitle();
-	};
-
-	SetupCommand._changeEventMode = function() {
-		var result;
-
-		result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
-
-		if (result === EnterResult.NOTENTER) {
-			this._doEventEndAction();
-			this.changeCycleMode(ListCommandManagerMode.TITLE);
-		}
-		else {
-			this.changeCycleMode(ListCommandManagerMode.AUTOEVENTCHECK);
-		}
-	};
-
-	// レアケースだと思われるが、出撃準備でユニットを全滅させるような特殊なイベントを起こす人のためにここも定義しておく
-	SetupCommand._doEventEndAction = function() {
-		if (GameOverChecker.isGameOver()) {
-			GameOverChecker.startGameOver();
-		}
-	};
-
-	MapCommand._eventChecker = null;
-	var alias12 = MapCommand.openListCommandManager;
-	MapCommand.openListCommandManager = function() {
-		alias12.call(this);
-		this._eventChecker = createObject(MapCommandEventChecker);
-		this._changeEventMode();
-	};
-
-	var alias13 = MapCommand.moveListCommandManager;
-	MapCommand.moveListCommandManager = function() {
-		var result;
-		var mode = this.getCycleMode();
-
-		if (mode === ListCommandManagerMode.AUTOEVENTCHECK) {
-			result = this._moveAutoEventCheck();
-		}
-		else {
-			result = alias13.call(this);
-		}
-		
-		return result;
-	};
-
-	var alias14 = SetupCommand.drawListCommandManager;
-	MapCommand.drawListCommandManager = function() {
-		var mode = this.getCycleMode();
-		
-		if (mode === ListCommandManagerMode.AUTOEVENTCHECK) {
-			this._drawAutoEventCheck();
-		}
-		else {
-			alias14.call(this);
-		}
-	};
-
-	MapCommand._moveAutoEventCheck = function() {
-		if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
-			this._doEventEndAction();
-			MapLayer.getMarkingPanel().updateMarkingPanel();
-			this.changeCycleMode(ListCommandManagerMode.TITLE);
-
-		}
-
-		return MoveResult.CONTINUE;
-	};
-
-	MapCommand._drawAutoEventCheck = function() {
-		this._drawTitle();
-	};
-
-	MapCommand._changeEventMode = function() {
-		var result;
-
-		result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
-
-		if (result === EnterResult.NOTENTER) {
-			this._doEventEndAction();
-			this.changeCycleMode(ListCommandManagerMode.TITLE);
-		}
-		else {
-			this.changeCycleMode(ListCommandManagerMode.AUTOEVENTCHECK);
-		}
-	};
-
-	// スクリプトエラー対策のセーブはここで行ってはならない
-	MapCommand._doEventEndAction = function() {
-		if (GameOverChecker.isGameOver()) {
-			GameOverChecker.startGameOver();
-		}
-	};
-
-	EventChecker._checkEvent = function() {
-		var i, count, event, result;
-		
-		count = this._eventArray.length;
-		for (i = this._eventIndex; i < count; i++) {
-			this._eventIndex++;
-			event = this._eventArray[i];
-			
-			if (
-				event !== null &&
-				this._isTargetAutoEventType(event) &&
-				event.isEvent() &&
-				event.getExecutedMark() === EventExecutedType.FREE
-			) {
-				if (this._isAllSkipEnabled) {
-					root.setEventSkipMode(true);
-				}
-
-				// 1.161より後のいずれかのバージョンから_isSessionEnabledが加わっているので一応こう書いておく
-				// ここでエラー起きてたらこのif文全部消しといてください
-				if (root.getScriptVersion() > 1161 && !this._isSessionEnabled()) {
-					continue;
-				}
-				
-				result = this._capsuleEvent.enterCapsuleEvent(event, true);
-				if (result === EnterResult.OK) {
-					return EnterResult.OK;
-				}
-			}
-		}
-		
-		return EnterResult.NOTENTER;
-	};
-
-	UnitMenuMode.AUTOEVENTCHECK = 200;
-	UnitMenuScreen._eventChecker = null;
-	var alias15 = UnitMenuScreen._prepareScreenMemberData;
-	UnitMenuScreen._prepareScreenMemberData = function(screenParam) {
-		this._eventChecker = createObject(UnitMenuEventChecker);
-		alias15.call(this, screenParam);
-	};
-
-	var alias16 = UnitMenuScreen._completeScreenMemberData;
-	UnitMenuScreen._completeScreenMemberData = function(screenParam) {
-		alias16.call(this, screenParam);
-		this._changeEventMode();
-	};
-
-	var alias17 = UnitMenuScreen.moveScreenCycle;
-	UnitMenuScreen.moveScreenCycle = function() {
-		var mode = this.getCycleMode();
-		var result = MoveResult.CONTINUE;
-
-		if (mode === UnitMenuMode.AUTOEVENTCHECK) {
-			this._moveAnimation();
-			result = this._moveAutoEventCheck();
-		}
-		else {
-			result = alias17.call(this);
-		}
-		
-		return result;
-	};
-
-	var alias18 = UnitMenuScreen._setNewTarget;
-	UnitMenuScreen._setNewTarget = function(unit) {
-		alias18.call(this, unit);
-		this._changeEventMode();
-	};
-
-	UnitMenuScreen._moveAutoEventCheck = function() {
-		if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
-			MapLayer.getMarkingPanel().updateMarkingPanel();
-			this.changeCycleMode(UnitMenuMode.TOP);
-		}
-
-		return MoveResult.CONTINUE;
-	};
-
-	UnitMenuScreen._changeEventMode = function() {
-		var result;
-
-		this._eventChecker.setTargetUnit(this._unit);
-		result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
-
-		if (result === EnterResult.NOTENTER) {
-			this.changeCycleMode(UnitMenuMode.TOP);
-		}
-		else {
-			this.changeCycleMode(UnitMenuMode.AUTOEVENTCHECK);
-		}
-	};
-
-	var UnitWaitFlowMode = {
-		WAITEVENT: 0,
-		AUTOEVENTCHECK: 1
-	};
-
-	UnitWaitFlowEntry._eventChecker = null;
-	var alias19 = UnitWaitFlowEntry._prepareMemberData;
-	UnitWaitFlowEntry._prepareMemberData = function(playerTurn) {
-		alias19.call(this, playerTurn);
-		this.changeCycleMode(UnitWaitFlowMode.WAITEVENT);
-		this._eventChecker = createObject(PlayerUnitWaitEventChecker);
-	};
-
-	var alias20 = UnitWaitFlowEntry._completeMemberData;
-	UnitWaitFlowEntry._completeMemberData = function(playerTurn) {
-		var result = alias20.call(this, playerTurn);
-		if (result === EnterResult.NOTENTER) {
-			result = this._changeAutoEventMode();
-		}
-		else {
-			this.changeCycleMode(UnitWaitFlowMode.WAITEVENT);
-		}
-
-		return result;
-	};
-
-	UnitWaitFlowEntry._changeAutoEventMode = function() {
-		var result;
-
-		result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
-
-		if (result !== EnterResult.NOTENTER) {
-			this.changeCycleMode(UnitWaitFlowMode.AUTOEVENTCHECK);
-		}
-
-		return result;
-	};
-
-	UnitWaitFlowEntry._moveAutoEventCheck = function() {
-		if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
-			MapLayer.getMarkingPanel().updateMarkingPanel();
-			return MoveResult.END;
-		}
-		return MoveResult.CONTINUE;
-	};
-
-	var alias21 = UnitWaitFlowEntry.moveFlowEntry;
-	UnitWaitFlowEntry.moveFlowEntry = function() {
-		var mode = this.getCycleMode();
-		var result = MoveResult.CONTINUE;
-		if (mode === UnitWaitFlowMode.WAITEVENT) {
-			if (alias21.call(this) === MoveResult.END) {
-				result = this._changeAutoEventMode();
-			}
-		}
-		else if (mode === UnitWaitFlowMode.AUTOEVENTCHECK) {
-			result = this._moveAutoEventCheck();
-		}
-		
-		return result;
-	};
+  MapSequenceAreaMode.AUTOEVENTCHECK = 200;
+  MapSequenceArea._eventChecker = null;
+
+  var alias1 = MapSequenceArea._prepareSequenceMemberData;
+  MapSequenceArea._prepareSequenceMemberData = function(parentTurnObject) {
+    alias1.call(this, parentTurnObject);
+    this._eventChecker = createObject(UnitSelectEventChecker);
+  };
+
+  var alias2 = MapSequenceArea._completeSequenceMemberData;
+  MapSequenceArea._completeSequenceMemberData = function(parentTurnObject) {
+    alias2.call(this, parentTurnObject);
+    this._changeEventMode();
+  };
+
+  var alias3 = MapSequenceArea.moveSequence;
+  MapSequenceArea.moveSequence = function() {
+    var result;
+    var mode = this.getCycleMode();
+    
+    if (mode === MapSequenceAreaMode.AUTOEVENTCHECK) {
+      result = this._moveAutoEventCheck();
+    }
+    else {
+      result = alias3.call(this);
+    }
+    return result;
+  };
+
+  var alias4 = MapSequenceArea.drawSequence;
+  MapSequenceArea.drawSequence = function() {
+    var mode = this.getCycleMode();
+    
+    if (mode === MapSequenceAreaMode.AUTOEVENTCHECK) {
+      this._drawAutoEventCheck();
+    }
+    else {
+      alias4.call(this);
+    }
+  };
+
+  MapSequenceArea._drawAutoEventCheck = function() {
+    this._drawArea();
+  };
+
+  MapSequenceArea._moveAutoEventCheck = function() {
+    if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
+      this._doEventEndAction();
+      MapLayer.getMarkingPanel().updateMarkingPanel();
+      this.changeCycleMode(MapSequenceAreaMode.AREA);
+    }
+    
+    return MoveResult.CONTINUE;
+  };
+
+  // スクリプトエラー対策のセーブはここで行ってはならない
+  // よって、parentTurnObjectの_doEventEndActionは呼び出さずに独自で定義する
+  MapSequenceArea._doEventEndAction = function() {
+    if (GameOverChecker.isGameOver()) {
+      GameOverChecker.startGameOver();
+    }
+  };
+
+  MapSequenceArea._changeEventMode = function() {
+    var result;
+
+    if (this._targetUnit.getUnitType() !== UnitType.PLAYER) {
+      this.changeCycleMode(MapSequenceAreaMode.AREA);
+      return;
+    }
+    result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
+    if (result === EnterResult.NOTENTER) {
+      this._doEventEndAction();
+      this.changeCycleMode(MapSequenceAreaMode.AREA);
+    }
+    else {
+      this.changeCycleMode(MapSequenceAreaMode.AUTOEVENTCHECK);
+    }
+  };
+
+  MapSequenceCommandMode.AUTOEVENTCHECK = 200;
+  MapSequenceCommand._eventChecker = null;
+
+  var alias5 = MapSequenceCommand._prepareSequenceMemberData;
+  MapSequenceCommand._prepareSequenceMemberData = function(parentTurnObject) {
+    alias5.call(this, parentTurnObject);
+    this._eventChecker = createObject(UnitCommandEventChecker);
+  };
+
+  var alias6 = MapSequenceCommand._completeSequenceMemberData;
+  MapSequenceCommand._completeSequenceMemberData = function(parentTurnObject) {
+    alias6.call(this, parentTurnObject);
+    this._changeEventMode();
+  };
+
+  var alias7 = MapSequenceCommand.moveSequence;
+  MapSequenceCommand.moveSequence = function() {
+    var result;
+    var mode = this.getCycleMode();
+    
+    if (mode === MapSequenceAreaMode.AUTOEVENTCHECK) {
+      result = this._moveAutoEventCheck();
+    }
+    else {
+      result = alias7.call(this);
+    }
+    return result;
+  };
+
+  var alias8 = MapSequenceCommand.drawSequence;
+  MapSequenceCommand.drawSequence = function() {
+    var mode = this.getCycleMode();
+    if (mode === MapSequenceAreaMode.AUTOEVENTCHECK) {
+      this._unitCommandManager.drawListCommandManager();
+    }
+    else {
+      alias8.call(this);
+    }
+  };
+
+  MapSequenceCommand._moveAutoEventCheck = function() {
+    if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
+      this._doEventEndAction();
+      MapLayer.getMarkingPanel().updateMarkingPanel();
+      this.changeCycleMode(MapSequenceCommandMode.COMMAND);
+    }
+    
+    return MoveResult.CONTINUE;
+  };
+
+  // スクリプトエラー対策のセーブはここで行ってはならない
+  MapSequenceCommand._doEventEndAction = function() {
+    if (GameOverChecker.isGameOver()) {
+      GameOverChecker.startGameOver();
+    }
+  };
+
+  MapSequenceCommand._changeEventMode = function() {
+    var result;
+
+    result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
+    if (result === EnterResult.NOTENTER) {
+      this._doEventEndAction();
+      this.changeCycleMode(MapSequenceCommandMode.COMMAND);
+    }
+    else {
+      this.changeCycleMode(MapSequenceCommandMode.AUTOEVENTCHECK);
+    }
+  };
+
+  ListCommandManagerMode.AUTOEVENTCHECK = 200;
+  SetupCommand._eventChecker = null;
+  var alias9 = SetupCommand.openListCommandManager;
+  SetupCommand.openListCommandManager = function() {
+    alias9.call(this);
+    this._eventChecker = createObject(SetupCommandEventChecker);
+    this._changeEventMode();
+  };
+
+  var alias10 = SetupCommand.moveListCommandManager;
+  SetupCommand.moveListCommandManager = function() {
+    var result;
+    var mode = this.getCycleMode();
+
+    if (mode === ListCommandManagerMode.AUTOEVENTCHECK) {
+      result = this._moveAutoEventCheck();
+    }
+    else {
+      result = alias10.call(this);
+    }
+    
+    return result;
+  };
+
+  var alias11 = SetupCommand.drawListCommandManager;
+  SetupCommand.drawListCommandManager = function() {
+    var mode = this.getCycleMode();
+    
+    if (mode === ListCommandManagerMode.AUTOEVENTCHECK) {
+      this._drawAutoEventCheck();
+    }
+    else {
+      alias11.call(this);
+    }
+  };
+
+  SetupCommand._moveAutoEventCheck = function() {
+    if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
+      this._doEventEndAction();
+      MapLayer.getMarkingPanel().updateMarkingPanel();
+      this.changeCycleMode(ListCommandManagerMode.TITLE);
+
+    }
+
+    return MoveResult.CONTINUE;
+  };
+
+  SetupCommand._drawAutoEventCheck = function() {
+    this._drawTitle();
+  };
+
+  SetupCommand._changeEventMode = function() {
+    var result;
+
+    result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
+
+    if (result === EnterResult.NOTENTER) {
+      this._doEventEndAction();
+      this.changeCycleMode(ListCommandManagerMode.TITLE);
+    }
+    else {
+      this.changeCycleMode(ListCommandManagerMode.AUTOEVENTCHECK);
+    }
+  };
+
+  // レアケースだと思われるが、出撃準備でユニットを全滅させるような特殊なイベントを起こす人のためにここも定義しておく
+  SetupCommand._doEventEndAction = function() {
+    if (GameOverChecker.isGameOver()) {
+      GameOverChecker.startGameOver();
+    }
+  };
+
+  MapCommand._eventChecker = null;
+  var alias12 = MapCommand.openListCommandManager;
+  MapCommand.openListCommandManager = function() {
+    alias12.call(this);
+    this._eventChecker = createObject(MapCommandEventChecker);
+    this._changeEventMode();
+  };
+
+  var alias13 = MapCommand.moveListCommandManager;
+  MapCommand.moveListCommandManager = function() {
+    var result;
+    var mode = this.getCycleMode();
+
+    if (mode === ListCommandManagerMode.AUTOEVENTCHECK) {
+      result = this._moveAutoEventCheck();
+    }
+    else {
+      result = alias13.call(this);
+    }
+    
+    return result;
+  };
+
+  var alias14 = SetupCommand.drawListCommandManager;
+  MapCommand.drawListCommandManager = function() {
+    var mode = this.getCycleMode();
+    
+    if (mode === ListCommandManagerMode.AUTOEVENTCHECK) {
+      this._drawAutoEventCheck();
+    }
+    else {
+      alias14.call(this);
+    }
+  };
+
+  MapCommand._moveAutoEventCheck = function() {
+    if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
+      this._doEventEndAction();
+      MapLayer.getMarkingPanel().updateMarkingPanel();
+      this.changeCycleMode(ListCommandManagerMode.TITLE);
+
+    }
+
+    return MoveResult.CONTINUE;
+  };
+
+  MapCommand._drawAutoEventCheck = function() {
+    this._drawTitle();
+  };
+
+  MapCommand._changeEventMode = function() {
+    var result;
+
+    result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
+
+    if (result === EnterResult.NOTENTER) {
+      this._doEventEndAction();
+      this.changeCycleMode(ListCommandManagerMode.TITLE);
+    }
+    else {
+      this.changeCycleMode(ListCommandManagerMode.AUTOEVENTCHECK);
+    }
+  };
+
+  // スクリプトエラー対策のセーブはここで行ってはならない
+  MapCommand._doEventEndAction = function() {
+    if (GameOverChecker.isGameOver()) {
+      GameOverChecker.startGameOver();
+    }
+  };
+
+  EventChecker._checkEvent = function() {
+    var i, count, event, result;
+    
+    count = this._eventArray.length;
+    for (i = this._eventIndex; i < count; i++) {
+      this._eventIndex++;
+      event = this._eventArray[i];
+      
+      if (
+        event !== null &&
+        this._isTargetAutoEventType(event) &&
+        event.isEvent() &&
+        event.getExecutedMark() === EventExecutedType.FREE
+      ) {
+        if (this._isAllSkipEnabled) {
+          root.setEventSkipMode(true);
+        }
+
+        // 1.161より後のいずれかのバージョンから_isSessionEnabledが加わっているので一応こう書いておく
+        // ここでエラー起きてたらこのif文全部消しといてください
+        if (root.getScriptVersion() > 1161 && !this._isSessionEnabled()) {
+          continue;
+        }
+        
+        result = this._capsuleEvent.enterCapsuleEvent(event, true);
+        if (result === EnterResult.OK) {
+          return EnterResult.OK;
+        }
+      }
+    }
+    
+    return EnterResult.NOTENTER;
+  };
+
+  UnitMenuMode.AUTOEVENTCHECK = 200;
+  UnitMenuScreen._eventChecker = null;
+  var alias15 = UnitMenuScreen._prepareScreenMemberData;
+  UnitMenuScreen._prepareScreenMemberData = function(screenParam) {
+    this._eventChecker = createObject(UnitMenuEventChecker);
+    alias15.call(this, screenParam);
+  };
+
+  var alias16 = UnitMenuScreen._completeScreenMemberData;
+  UnitMenuScreen._completeScreenMemberData = function(screenParam) {
+    alias16.call(this, screenParam);
+    this._changeEventMode();
+  };
+
+  var alias17 = UnitMenuScreen.moveScreenCycle;
+  UnitMenuScreen.moveScreenCycle = function() {
+    var mode = this.getCycleMode();
+    var result = MoveResult.CONTINUE;
+
+    if (mode === UnitMenuMode.AUTOEVENTCHECK) {
+      this._moveAnimation();
+      result = this._moveAutoEventCheck();
+    }
+    else {
+      result = alias17.call(this);
+    }
+    
+    return result;
+  };
+
+  var alias18 = UnitMenuScreen._setNewTarget;
+  UnitMenuScreen._setNewTarget = function(unit) {
+    alias18.call(this, unit);
+    this._changeEventMode();
+  };
+
+  UnitMenuScreen._moveAutoEventCheck = function() {
+    if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
+      MapLayer.getMarkingPanel().updateMarkingPanel();
+      this.changeCycleMode(UnitMenuMode.TOP);
+    }
+
+    return MoveResult.CONTINUE;
+  };
+
+  UnitMenuScreen._changeEventMode = function() {
+    var result;
+
+    this._eventChecker.setTargetUnit(this._unit);
+    result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
+
+    if (result === EnterResult.NOTENTER) {
+      this.changeCycleMode(UnitMenuMode.TOP);
+    }
+    else {
+      this.changeCycleMode(UnitMenuMode.AUTOEVENTCHECK);
+    }
+  };
+
+  var UnitWaitFlowMode = {
+    WAITEVENT: 0,
+    AUTOEVENTCHECK: 1
+  };
+
+  UnitWaitFlowEntry._eventChecker = null;
+  var alias19 = UnitWaitFlowEntry._prepareMemberData;
+  UnitWaitFlowEntry._prepareMemberData = function(playerTurn) {
+    alias19.call(this, playerTurn);
+    this.changeCycleMode(UnitWaitFlowMode.WAITEVENT);
+    this._eventChecker = createObject(PlayerUnitWaitEventChecker);
+  };
+
+  var alias20 = UnitWaitFlowEntry._completeMemberData;
+  UnitWaitFlowEntry._completeMemberData = function(playerTurn) {
+    var result = alias20.call(this, playerTurn);
+    if (result === EnterResult.NOTENTER) {
+      result = this._changeAutoEventMode();
+    }
+    else {
+      this.changeCycleMode(UnitWaitFlowMode.WAITEVENT);
+    }
+
+    return result;
+  };
+
+  UnitWaitFlowEntry._changeAutoEventMode = function() {
+    var result;
+
+    result = this._eventChecker.enterEventChecker(root.getCurrentSession().getAutoEventList(), EventType.AUTO);
+
+    if (result !== EnterResult.NOTENTER) {
+      this.changeCycleMode(UnitWaitFlowMode.AUTOEVENTCHECK);
+    }
+
+    return result;
+  };
+
+  UnitWaitFlowEntry._moveAutoEventCheck = function() {
+    if (this._eventChecker.moveEventChecker() !== MoveResult.CONTINUE) {
+      MapLayer.getMarkingPanel().updateMarkingPanel();
+      return MoveResult.END;
+    }
+    return MoveResult.CONTINUE;
+  };
+
+  var alias21 = UnitWaitFlowEntry.moveFlowEntry;
+  UnitWaitFlowEntry.moveFlowEntry = function() {
+    var mode = this.getCycleMode();
+    var result = MoveResult.CONTINUE;
+    if (mode === UnitWaitFlowMode.WAITEVENT) {
+      if (alias21.call(this) === MoveResult.END) {
+        result = this._changeAutoEventMode();
+      }
+    }
+    else if (mode === UnitWaitFlowMode.AUTOEVENTCHECK) {
+      result = this._moveAutoEventCheck();
+    }
+    
+    return result;
+  };
 })();
 
 var AutoEventType = {
-	UNIT_SELECT: 0,
-	UNIT_COMMAND: 1,
-	SETUP_COMMAND: 2,
-	MAP_COMMAND: 3,
-	UNITMENU_COMMAND: 4,
-	PLAYER_UNIT_WAIT: 5
+  UNIT_SELECT: 0,
+  UNIT_COMMAND: 1,
+  SETUP_COMMAND: 2,
+  MAP_COMMAND: 3,
+  UNITMENU_COMMAND: 4,
+  PLAYER_UNIT_WAIT: 5
 };
 
 EventChecker._isTargetAutoEventType = function(event) {
-	return !('autoEventType' in event.custom);
+  return !('autoEventType' in event.custom);
 };
 
 var UnitSelectEventChecker = defineObject(EventChecker,
 {
-	_isTargetAutoEventType: function(event) {
-		return event.custom.autoEventType === AutoEventType.UNIT_SELECT;
-	}
+  _isTargetAutoEventType: function(event) {
+    return event.custom.autoEventType === AutoEventType.UNIT_SELECT;
+  }
 }
 );
 
 var UnitCommandEventChecker = defineObject(EventChecker,
 {
-	_isTargetAutoEventType: function(event) {
-		return event.custom.autoEventType === AutoEventType.UNIT_COMMAND;
-	}
+  _isTargetAutoEventType: function(event) {
+    return event.custom.autoEventType === AutoEventType.UNIT_COMMAND;
+  }
 }
 );
 
 var SetupCommandEventChecker = defineObject(EventChecker,
 {
-	_isTargetAutoEventType: function(event) {
-		return event.custom.autoEventType === AutoEventType.SETUP_COMMAND;
-	}
+  _isTargetAutoEventType: function(event) {
+    return event.custom.autoEventType === AutoEventType.SETUP_COMMAND;
+  }
 }
 );
 
 var MapCommandEventChecker = defineObject(EventChecker,
 {
-	_isTargetAutoEventType: function(event) {
-		return event.custom.autoEventType === AutoEventType.MAP_COMMAND;
-	}
+  _isTargetAutoEventType: function(event) {
+    return event.custom.autoEventType === AutoEventType.MAP_COMMAND;
+  }
 }
 );
 
 var UnitMenuEventChecker = defineObject(EventChecker,
 {
-	_targetUnit: null,
+  _targetUnit: null,
 
-	setTargetUnit: function(unit) {
-		this._targetUnit = unit;
-	},
+  setTargetUnit: function(unit) {
+    this._targetUnit = unit;
+  },
 
-	_isTargetAutoEventType: function(event) {
-		var isTargetUnit = true;
+  _isTargetAutoEventType: function(event) {
+    var isTargetUnit = true;
 
-		if (typeof event.custom.targetUnitId === 'number' && this._targetUnit) {
-			isTargetUnit = this._targetUnit.getId() === event.custom.targetUnitId;
-		}
+    if (typeof event.custom.targetUnitId === 'number' && this._targetUnit) {
+      isTargetUnit = this._targetUnit.getId() === event.custom.targetUnitId;
+    }
 
-		return isTargetUnit && event.custom.autoEventType === AutoEventType.UNITMENU_COMMAND;
-	}
+    return isTargetUnit && event.custom.autoEventType === AutoEventType.UNITMENU_COMMAND;
+  }
 }
 );
 
 var PlayerUnitWaitEventChecker = defineObject(EventChecker,
 {
-	_isTargetAutoEventType: function(event) {
-		return event.custom.autoEventType === AutoEventType.PLAYER_UNIT_WAIT;
-	}
+  _isTargetAutoEventType: function(event) {
+    return event.custom.autoEventType === AutoEventType.PLAYER_UNIT_WAIT;
+  }
 }
 );
