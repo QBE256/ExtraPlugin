@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ユニット選択、コマンド選択、出撃準備で自動イベント発火 ver 1.5
+　ユニット選択、コマンド選択、出撃準備で自動イベント発火 ver 1.6
 
 ■作成者
 キュウブ
@@ -55,6 +55,9 @@ autoEventType: 5 で設定可能です。
 ※通常の自動開始イベントはユニット待機だけでなく、マップコマンドの開閉だけでも起きてしまいますが後者によるイベント発生を防ぐ事ができます。
 
 ■更新履歴
+ver 1.6 (2022/7/20)
+場所イベント(待機)を起こした時に進行不能になるバグを修正
+
 ver 1.5 (2022/3/24)
 プレイヤーユニットが待機する度に自動開始イベントが起こせるように対応
 
@@ -495,14 +498,13 @@ SRPG Studio Version:1.161
 	UnitWaitFlowEntry._completeMemberData = function(playerTurn) {
 		var result = alias20.call(this, playerTurn);
 		if (result === EnterResult.NOTENTER) {
-			this._changeAutoEventMode();
-			this.changeCycleMode(UnitWaitFlowMode.AUTOEVENTCHECK);
+			result = this._changeAutoEventMode();
 		}
 		else {
 			this.changeCycleMode(UnitWaitFlowMode.WAITEVENT);
 		}
 
-		return EnterResult.OK;
+		return result;
 	};
 
 	UnitWaitFlowEntry._changeAutoEventMode = function() {
@@ -513,6 +515,8 @@ SRPG Studio Version:1.161
 		if (result !== EnterResult.NOTENTER) {
 			this.changeCycleMode(UnitWaitFlowMode.AUTOEVENTCHECK);
 		}
+
+		return result;
 	};
 
 	UnitWaitFlowEntry._moveAutoEventCheck = function() {
@@ -529,7 +533,7 @@ SRPG Studio Version:1.161
 		var result = MoveResult.CONTINUE;
 		if (mode === UnitWaitFlowMode.WAITEVENT) {
 			if (alias21.call(this) === MoveResult.END) {
-				this._changeAutoEventMode();
+				result = this._changeAutoEventMode();
 			}
 		}
 		else if (mode === UnitWaitFlowMode.AUTOEVENTCHECK) {
