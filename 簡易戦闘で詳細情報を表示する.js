@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　簡易戦闘で詳細情報を表示する ver 1.0
+　簡易戦闘で詳細情報を表示する ver 1.1
 
 ■作成者
 キュウブ
@@ -9,6 +9,9 @@
 相手に与えるダメージ、命中率、必殺率が表示されるようになります。
 
 ■更新履歴
+ver 1.1 2022/09/05
+敵から攻撃を受けた時に味方ステータスと敵ステータスの表示が逆転しているバグを修正
+
 ver 1.0 2022/04/09
 
 ■対応バージョン
@@ -25,8 +28,6 @@ SRPG Studio Version:1.161
 
 --------------------------------------------------------------------------*/
 
-
-
 var EasyAttackInfoWindow = defineObject(BaseWindow, {
 	_leftInfo: null,
 	_rightInfo: null,
@@ -35,13 +36,15 @@ var EasyAttackInfoWindow = defineObject(BaseWindow, {
 		var attackInfo = this.getParentInstance().getAttackInfo();
 		var leftWeapon = BattlerChecker.getRealBattleWeapon(leftUnit);
 		var rightWeapon = BattlerChecker.getRealBattleWeapon(rightUnit);
-		var leftStatuses = AttackChecker.getAttackStatusInternal(leftUnit, leftWeapon, rightUnit);
-		var rightStatuses;
-		if (attackInfo.isCounterattack) {
-			rightStatuses = AttackChecker.getAttackStatusInternal(rightUnit, rightWeapon, leftUnit);
-		} else {
-			rightStatuses = AttackChecker.getNonStatus();
-		}
+		var isUnitSrcPriority = Miscellaneous.isUnitSrcPriority(leftUnit, rightUnit);
+		var enabledLeftAttack = isUnitSrcPriority || attackInfo.isCounterattack;
+		var enabledRightAttack = !isUnitSrcPriority || attackInfo.isCounterattack;
+		var leftStatuses = enabledLeftAttack
+			? AttackChecker.getAttackStatusInternal(leftUnit, leftWeapon, rightUnit)
+			: AttackChecker.getNonStatus();
+		var rightStatuses = enabledRightAttack
+			? AttackChecker.getAttackStatusInternal(rightUnit, rightWeapon, leftUnit)
+			: AttackChecker.getNonStatus();
 
 		this._leftInfo = {
 			unit: leftUnit,
@@ -111,12 +114,18 @@ var EasyAttackInfoWindow = defineObject(BaseWindow, {
 	},
 
 	_drawStatusValue: function (x, y, value, color, font, isLeft) {
-		if (value < 0) {
-			TextRenderer.drawText(x + 5, y + 10, StringTable.SignWord_Limitless, -1, color, font);
-		} else if (isLeft) {
-			NumberRenderer.drawNumberColor(x, y + 5, value, 0, 255);
+		if (isLeft) {
+			if (value < 0) {
+				TextRenderer.drawText(x - 5, y + 10, StringTable.SignWord_Limitless, -1, color, font);
+			} else {
+				NumberRenderer.drawNumberColor(x, y + 5, value, 0, 255);
+			}
 		} else {
-			NumberRenderer.drawRightNumberColor(x, y + 5, value, 0, 255);
+			if (value < 0) {
+				TextRenderer.drawText(x + 5, y + 10, StringTable.SignWord_Limitless, -1, color, font);
+			} else {
+				NumberRenderer.drawRightNumberColor(x, y + 5, value, 0, 255);
+			}
 		}
 	}
 });
@@ -138,20 +147,14 @@ var EasyAttackInfoWindow = defineObject(BaseWindow, {
 		_EasyAttackMenu_setMenuUnit.apply(this, arguments);
 		this._attackInfo = easyBattle.getAttackInfo();
 		this._infoWindow = createWindowObject(EasyAttackInfoWindow, this);
-		if (Miscellaneous.isUnitSrcPriority(unitSrc, unitDest)) {
-			this._infoWindow.setInfo(unitSrc, unitDest);
-		} else {
-			this._infoWindow.setInfo(unitDest, unitSrc);
-		}
+		this._infoWindow.setInfo(unitSrc, unitDest);
 	};
 
 	EasyAttackMenu.drawWindowManager = function () {
 		var leftWindowX = this.getPositionWindowX();
 		var windowY = this.getPositionWindowY();
-		var infoWindowX =
-			leftWindowX + this._leftWindow.getWindowWidth() + this._getWindowInterval();
-		var rightWindowX =
-			infoWindowX + this._infoWindow.getWindowWidth() + this._getWindowInterval();
+		var infoWindowX = leftWindowX + this._leftWindow.getWindowWidth() + this._getWindowInterval();
+		var rightWindowX = infoWindowX + this._infoWindow.getWindowWidth() + this._getWindowInterval();
 
 		this._leftWindow.drawWindow(leftWindowX, windowY);
 		this._infoWindow.drawWindow(infoWindowX, windowY);
@@ -161,8 +164,7 @@ var EasyAttackInfoWindow = defineObject(BaseWindow, {
 	var _EasyAttackMenu_getTotalWindowWidth = EasyAttackMenu.getTotalWindowWidth;
 	EasyAttackMenu.getTotalWindowWidth = function () {
 		return (
-			_EasyAttackMenu_getTotalWindowWidth.apply(this, arguments) +
-			this._infoWindow.getWindowWidth()
+			_EasyAttackMenu_getTotalWindowWidth.apply(this, arguments) + this._infoWindow.getWindowWidth()
 		);
 	};
 })();
