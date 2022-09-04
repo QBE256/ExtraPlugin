@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　パラメータ補正の表記をグルーピングする ver 1.0
+　パラメータ補正の表記をグルーピングする ver 1.1
 
 ■作成者
 キュウブ
@@ -24,10 +24,11 @@
 デフォルトではHP,移動,熟練度,体格を除いたパラメータに同等の補正が入っている場合に
 全能力 + <補正値>
 という表記が発生するようになっています。
-この定義を変更したい場合は、50行目のAllSameBonusConditionの中を変更する必要があります。
+この定義を変更したい場合は、51行目のAllSameBonusConditionの中を変更する必要があります。
 
 
 ■更新履歴
+ver 1.1 2022/09/04 バグ修正
 ver 1.0 2022/09/04
 
 ■対応バージョン
@@ -102,10 +103,6 @@ var ALL_BONUS_TEXT = '全能力';
     } else {
       this._bonusType = BonusType.NOMAL;
     }
-  };
-
-  BaseUnitParameter.isAllSameBonusCondtion = function () {
-    return false;
   };
 
   ItemSentence.Bonus._isAllSameBonus = function () {
@@ -362,4 +359,47 @@ if (!Array.prototype["forEach"]) {
     }
     // 8. return undefined
   };
+}
+
+// Object.keys poliyfil
+// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+if (!Object.keys) {
+  Object.keys = (function() {
+    var hasOwnProperty = Object.prototype.hasOwnProperty,
+      hasDontEnumBug = !({ toString: null }).propertyIsEnumerable('toString'),
+      dontEnums = [
+        'toString',
+        'toLocaleString',
+        'valueOf',
+        'hasOwnProperty',
+        'isPrototypeOf',
+        'propertyIsEnumerable',
+        'constructor'
+      ],
+      dontEnumsLength = dontEnums.length;
+
+    return function(obj) {
+      if (typeof obj !== 'function' && (typeof obj !== 'object' || obj === null)) {
+        throw new TypeError('Object.keys called on non-object');
+        return;
+      }
+
+      var result = [], prop, i;
+
+      for (prop in obj) {
+        if (hasOwnProperty.call(obj, prop)) {
+          result.push(prop);
+        }
+      }
+
+      if (hasDontEnumBug) {
+        for (i = 0; i < dontEnumsLength; i++) {
+          if (hasOwnProperty.call(obj, dontEnums[i])) {
+            result.push(dontEnums[i]);
+          }
+        }
+      }
+      return result;
+    };
+  }());
 }
