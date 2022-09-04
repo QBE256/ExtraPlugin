@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　熟練度をアルファベット表記に変更する ver 1.0
+　熟練度をアルファベット表記に変更する ver 1.1
 
 ■作成者
 キュウブ
@@ -30,7 +30,10 @@
 isStarMarkDisplayable: true
 
 ■更新履歴
-ver 1.0 2021/08/16
+ver 1.1 2022/09/02
+ステータスの数値の表示位置がバグる不具合を修正
+
+ver 1.0 2022/08/16
 
 ■対応バージョン
 SRPG Studio Version:1.161
@@ -73,7 +76,7 @@ SRPG Studio Version:1.161
       if (!!item.custom.isStarMarkDisplayable) {
         NumberRenderer.drawRightUnlimitColor(x, y, 0, 255);
       } else {
-        NumberRenderer.drawRightAlphabetColor(x, y, item.getWeaponLevel(), 0, 255);
+        NumberRenderer.drawAlphabetColor(x, y, item.getWeaponLevel(), 0, 255);
       }
       x += 42;
     }
@@ -95,16 +98,16 @@ SRPG Studio Version:1.161
     }
   };
 
-  NumberRenderer.drawRightNumberColor = function (x, y, number, colorIndex, alpha, colorAlpha) {
+  NumberRenderer.drawNumberColor = function (x, y, number, colorIndex, alpha, colorAlpha) {
     var pic = root.queryUI("number");
     var width = UIFormat.NUMBER_WIDTH / 10;
     var height = UIFormat.NUMBER_HEIGHT / 5;
     var ySrc = height * colorIndex;
 
-    this._drawRightNumberInternal(x, y, number, pic, ySrc, width, height, alpha, colorAlpha);
+    this._drawNumberInternal(x, y, number, pic, ySrc, width, height, alpha, colorAlpha);
   };
 
-  NumberRenderer.drawRightAlphabetColor = function (x, y, number, colorIndex, alpha, colorAlpha) {
+  NumberRenderer.drawAlphabetColor = function (x, y, number, colorIndex, alpha, colorAlpha) {
     var UIResources = root.getBaseData().getUIResourceList(UIType.NUMBER, true);
     var pic = UIResources.getDataFromId(ALPHABET_RESOURCE_ID);
     var width = UIFormat.NUMBER_WIDTH / 10;
@@ -113,7 +116,7 @@ SRPG Studio Version:1.161
     var alphabet = this.translateFromNumberToAlphabet(number);
     var drawnValue = AlphabetResourceIndex[alphabet];
 
-    this._drawRightNumberInternal(x, y, drawnValue, pic, ySrc, width, height, alpha, colorAlpha);
+    this._drawNumberInternal(x, y, drawnValue, pic, ySrc, width, height, alpha, colorAlpha);
   };
 
   NumberRenderer.drawRightUnlimitColor = function (x, y, colorIndex, alpha, colorAlpha) {
@@ -136,7 +139,7 @@ SRPG Studio Version:1.161
     );
   };
 
-  NumberRenderer._drawRightNumberInternal = function (
+  NumberRenderer._drawNumberInternal = function (
     x,
     y,
     number,
@@ -150,30 +153,30 @@ SRPG Studio Version:1.161
     var i, n;
     var count = 0;
     var digitArray = [];
-
+    
     if (pic === null || number < 0) {
       return;
     }
-
+    
     if (number === 0) {
       pic.drawParts(x, y, 0, ySrc, width, height);
       return;
     }
-
+    
     while (number > 0) {
       n = Math.floor(number % 10);
       number = Math.floor(number / 10);
       digitArray[count] = n;
       count++;
     }
-
-    for (i = count - 1; i >= 0; i--) {
+    
+    for (i = 0; i < count; i++) {
       pic.setAlpha(alpha);
       if (colorAlpha) {
         pic.setColor(colorAlpha.color, colorAlpha.alpha);
       }
       pic.drawParts(x, y, digitArray[i] * width, ySrc, width, height);
-      x += 9;
+      x -= 9;
     }
   };
 
@@ -205,7 +208,7 @@ SRPG Studio Version:1.161
       n = 0;
     }
     if (statusEntry.index === ParamType.WLV) {
-      NumberRenderer.drawRightAlphabetColor(x, y, n, 0, 255);
+      NumberRenderer.drawAlphabetColor(x, y, n, 0, 255);
     } else {
       NumberRenderer.drawNumber(x, y, n);
     }
@@ -292,9 +295,9 @@ SRPG Studio Version:1.161
       alpha: statusEntry.isFlashRendering ? this._getFlashAlpha() : 0
     };
     if (statusEntry.index === ParamType.WLV) {
-      NumberRenderer.drawRightAlphabetColor(x, y, n, 0, 255, flashAlpha);
+      NumberRenderer.drawAlphabetColor(x, y, n, 0, 255, flashAlpha);
     } else {
-      NumberRenderer.drawRightNumberColor(x, y, n, 0, 255, flashAlpha);
+      NumberRenderer.drawNumberColor(x, y, n, 0, 255, flashAlpha);
     }
 
     if (statusEntry.bonus !== 0) {
