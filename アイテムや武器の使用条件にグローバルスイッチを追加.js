@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　アイテムや武器の使用条件にグローバルスイッチを追加 ver 1.0
+　アイテムや武器の使用条件にグローバルスイッチを追加 ver 1.1
 
 ■作成者
 キュウブ
@@ -15,6 +15,8 @@ conditionGlobalSwitchId: <グローバルスイッチのID>
 conditionGlobalSwitchId: 1
 
 ■更新履歴
+ver 1.1 2022/09/11
+アイテムで使用条件が設定されないバグを修正
 ver 1.0 2022/09/10
 
 ■対応バージョン
@@ -41,5 +43,16 @@ SRPG Studio Version:1.161
       return globalSwitchTable.isSwitchOn(switchIndex);
     }
     return isWeaponAvailable;
+  };
+
+  var _ItemControl_isItemUsable = ItemControl.isItemUsable;
+  ItemControl.isItemUsable = function(unit, item) {
+    var isItemUsable = _ItemControl_isItemUsable.apply(this, arguments);
+    if (isItemUsable && typeof item.custom.conditionGlobalSwitchId === 'number') {
+      var globalSwitchTable = root.getMetaSession().getGlobalSwitchTable();
+      var switchIndex = globalSwitchTable.getSwitchIndexFromId(item.custom.conditionGlobalSwitchId);
+      return globalSwitchTable.isSwitchOn(switchIndex);
+    }
+    return isItemUsable;
   };
 })();
