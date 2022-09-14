@@ -1,15 +1,15 @@
-/*--------------------------------------------------------------------------
-ƒ^[ƒ“I—¹‚É¬—ƒ†ƒjƒbƒg‚ğs“®‚³‚¹‚é ver1.2
+ï»¿/*--------------------------------------------------------------------------
+ã‚¿ãƒ¼ãƒ³çµ‚äº†æ™‚ã«æ··ä¹±ãƒ¦ãƒ‹ãƒƒãƒˆã‚’è¡Œå‹•ã•ã›ã‚‹ ver1.2
 
-¡ŠT—v
-¬—ƒ†ƒjƒbƒg‚ªƒ^[ƒ“ŠJn‚És“®‚·‚éd—l‚ğ•ÏX‚·‚é
+â– æ¦‚è¦
+æ··ä¹±ãƒ¦ãƒ‹ãƒƒãƒˆãŒã‚¿ãƒ¼ãƒ³é–‹å§‹æ™‚ã«è¡Œå‹•ã™ã‚‹ä»•æ§˜ã‚’å¤‰æ›´ã™ã‚‹
 
-¦recovery_support.js‚ğ“ü‚ê‚éê‡‚Í‚±‚¿‚ç‚ÌTurnChangeStart.pushFlowEntries‚ğÁ‚µA
-¦recovery_support.js‘¤‚ÌTurnChangeStart.pushFlowEntries‚Ì’†‚ğˆÈ‰º‚Ì‚æ‚¤‚É•ÏX‚·‚é–
+â€»recovery_support.jsã‚’å…¥ã‚Œã‚‹å ´åˆã¯ã“ã¡ã‚‰ã®TurnChangeStart.pushFlowEntriesã‚’æ¶ˆã—ã€
+â€»recovery_support.jså´ã®TurnChangeStart.pushFlowEntriesã®ä¸­ã‚’ä»¥ä¸‹ã®ã‚ˆã†ã«å¤‰æ›´ã™ã‚‹äº‹
 //////////////////////////////////////////////////////////////////
 TurnChangeStart.pushFlowEntries = function(straightFlow) {
 
-	// ƒ^[ƒ“•\¦‚ğæs‚³‚¹‚é
+	// ã‚¿ãƒ¼ãƒ³è¡¨ç¤ºã‚’å…ˆè¡Œã•ã›ã‚‹
 	if (this._isTurnAnimeEnabled()) {
 		straightFlow.pushFlowEntry(TurnAnimeFlowEntry);
 	}
@@ -23,34 +23,34 @@ TurnChangeStart.pushFlowEntries = function(straightFlow) {
 };
 /////////////////////////////////////////////////////////////////
 
-¡XV—š—ğ
+â– æ›´æ–°å±¥æ­´
 ver 1.2 2022/09/15
-ÅV”Å‚É‘Î‰
+æœ€æ–°ç‰ˆã«å¯¾å¿œ
 
 ver 1.1 2017/06/26
-TurnChangeStart.pushFlowEntries‚Ìˆ—‚ª•Ï‚í‚Á‚½‚Ì‚ÅC³
+TurnChangeStart.pushFlowEntriesã®å‡¦ç†ãŒå¤‰ã‚ã£ãŸã®ã§ä¿®æ­£
 
 ver 1.0 2017/06/06
 
 
-¡‘Î‰ƒo[ƒWƒ‡ƒ“
-@SRPG Studio Version:1.267
+â– å¯¾å¿œãƒãƒ¼ã‚¸ãƒ§ãƒ³
+ã€€SRPG Studio Version:1.267
 
 
-¡‹K–ñ
-E—˜—p‚ÍSRPG Studio‚ğg‚Á‚½ƒQ[ƒ€‚ÉŒÀ‚è‚Ü‚·B
-E¤—pE”ñ¤—p–â‚¢‚Ü‚¹‚ñBƒtƒŠ[‚Å‚·B
-E‰ÁH“™A–â‘è‚ ‚è‚Ü‚¹‚ñB‚Ç‚ñ‚Ç‚ñ‰ü‘¢‚µ‚Ä‚­‚¾‚³‚¢B
-EƒNƒŒƒWƒbƒg–¾‹L–³‚µ@OK
-EÄ”z•zA“]Ú@OK
-ESRPG Studio—˜—p‹K–ñ‚Í…ç‚µ‚Ä‚­‚¾‚³‚¢B
+â– è¦ç´„
+ãƒ»åˆ©ç”¨ã¯SRPG Studioã‚’ä½¿ã£ãŸã‚²ãƒ¼ãƒ ã«é™ã‚Šã¾ã™ã€‚
+ãƒ»å•†ç”¨ãƒ»éå•†ç”¨å•ã„ã¾ã›ã‚“ã€‚ãƒ•ãƒªãƒ¼ã§ã™ã€‚
+ãƒ»åŠ å·¥ç­‰ã€å•é¡Œã‚ã‚Šã¾ã›ã‚“ã€‚ã©ã‚“ã©ã‚“æ”¹é€ ã—ã¦ãã ã•ã„ã€‚
+ãƒ»ã‚¯ãƒ¬ã‚¸ãƒƒãƒˆæ˜è¨˜ç„¡ã—ã€€OK
+ãƒ»å†é…å¸ƒã€è»¢è¼‰ã€€OK
+ãƒ»SRPG Studioåˆ©ç”¨è¦ç´„ã¯éµå®ˆã—ã¦ãã ã•ã„ã€‚
   
 --------------------------------------------------------------------------*/
 
 (function () {
-	// ƒ^[ƒ“ŠJn‚ÌƒCƒxƒ“ƒgˆ—‚ÅBerserkFlowEntry‚ğ“ü—Í‚·‚éˆ—‚ğ–³Œø‰»‚·‚é•K—v‚ª‚ ‚é
+	// ã‚¿ãƒ¼ãƒ³é–‹å§‹æ™‚ã®ã‚¤ãƒ™ãƒ³ãƒˆå‡¦ç†ã§BerserkFlowEntryã‚’å…¥åŠ›ã™ã‚‹å‡¦ç†ã‚’ç„¡åŠ¹åŒ–ã™ã‚‹å¿…è¦ãŒã‚ã‚‹
 	TurnChangeStart.pushFlowEntries = function (straightFlow) {
-		// ƒ^[ƒ“•\¦‚ğæs‚³‚¹‚é
+		// ã‚¿ãƒ¼ãƒ³è¡¨ç¤ºã‚’å…ˆè¡Œã•ã›ã‚‹
 		if (this._isTurnAnimeEnabled()) {
 			straightFlow.pushFlowEntry(TurnAnimeFlowEntry);
 		} else {
