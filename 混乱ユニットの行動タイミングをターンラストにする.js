@@ -9,17 +9,17 @@
 //////////////////////////////////////////////////////////////////
 TurnChangeStart.pushFlowEntries = function(straightFlow) {
 
-	// ターン表示を先行させる
-	if (this._isTurnAnimeEnabled()) {
-		straightFlow.pushFlowEntry(TurnAnimeFlowEntry);
-	}
-	else {
-		straightFlow.pushFlowEntry(TurnMarkFlowEntry);
-	}
-	straightFlow.pushFlowEntry(RecoveryAllFlowEntry);
-	straightFlow.pushFlowEntry(MetamorphozeCancelFlowEntry);
-	straightFlow.pushFlowEntry(StateTurnFlowEntry);
-	straightFlow.insertFlowEntry(EntireRecoveryFlowEntry,1);
+  // ターン表示を先行させる
+  if (this._isTurnAnimeEnabled()) {
+    straightFlow.pushFlowEntry(TurnAnimeFlowEntry);
+  }
+  else {
+    straightFlow.pushFlowEntry(TurnMarkFlowEntry);
+  }
+  straightFlow.pushFlowEntry(RecoveryAllFlowEntry);
+  straightFlow.pushFlowEntry(MetamorphozeCancelFlowEntry);
+  straightFlow.pushFlowEntry(StateTurnFlowEntry);
+  straightFlow.insertFlowEntry(EntireRecoveryFlowEntry,1);
 };
 /////////////////////////////////////////////////////////////////
 
@@ -48,23 +48,23 @@ ver 1.0 2017/06/06
 --------------------------------------------------------------------------*/
 
 (function () {
-	// ターン開始時のイベント処理でBerserkFlowEntryを入力する処理を無効化する必要がある
-	TurnChangeStart.pushFlowEntries = function (straightFlow) {
-		// ターン表示を先行させる
-		if (this._isTurnAnimeEnabled()) {
-			straightFlow.pushFlowEntry(TurnAnimeFlowEntry);
-		} else {
-			straightFlow.pushFlowEntry(TurnMarkFlowEntry);
-		}
-		straightFlow.pushFlowEntry(RecoveryAllFlowEntry);
-		straightFlow.pushFlowEntry(MetamorphozeCancelFlowEntry);
-		//straightFlow.pushFlowEntry(BerserkFlowEntry);
-		straightFlow.pushFlowEntry(StateTurnFlowEntry);
-	};
+  // ターン開始時のイベント処理でBerserkFlowEntryを入力する処理を無効化する必要がある
+  TurnChangeStart.pushFlowEntries = function (straightFlow) {
+    // ターン表示を先行させる
+    if (this._isTurnAnimeEnabled()) {
+      straightFlow.pushFlowEntry(TurnAnimeFlowEntry);
+    } else {
+      straightFlow.pushFlowEntry(TurnMarkFlowEntry);
+    }
+    straightFlow.pushFlowEntry(RecoveryAllFlowEntry);
+    straightFlow.pushFlowEntry(MetamorphozeCancelFlowEntry);
+    //straightFlow.pushFlowEntry(BerserkFlowEntry);
+    straightFlow.pushFlowEntry(StateTurnFlowEntry);
+  };
 
-	var _TurnChangeEnd_pushFlowEntries = TurnChangeEnd.pushFlowEntries;
-	TurnChangeEnd.pushFlowEntries = function (straightFlow) 
-		straightFlow.pushFlowEntry(BerserkFlowEntry);
-		_TurnChangeEnd_pushFlowEntries.apply(this, arguments);
-	};
+  var _TurnChangeEnd_pushFlowEntries = TurnChangeEnd.pushFlowEntries;
+  TurnChangeEnd.pushFlowEntries = function (straightFlow) 
+    straightFlow.pushFlowEntry(BerserkFlowEntry);
+    _TurnChangeEnd_pushFlowEntries.apply(this, arguments);
+  };
 })();
