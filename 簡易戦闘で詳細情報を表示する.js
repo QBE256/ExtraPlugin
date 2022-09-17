@@ -33,17 +33,31 @@ var EasyAttackInfoWindow = defineObject(BaseWindow, {
 	_rightInfo: null,
 
 	setInfo: function (leftUnit, rightUnit) {
+		// leftUnit　攻撃する側　rightUnit：攻撃される側
 		var attackInfo = this.getParentInstance().getAttackInfo();
 		var leftWeapon = BattlerChecker.getRealBattleWeapon(leftUnit);
 		var rightWeapon = BattlerChecker.getRealBattleWeapon(rightUnit);
+		// isUnitSrcPriority…優先位置表示対象(ウインドウ左側に出す)か否か
+		// 左側表示の優先順位は下記の法則に従う(singleton-system.js参照)
+		// 自軍 > 敵軍
+		// 自軍 > 同盟軍
+		// 同盟軍 > 敵軍
 		var isUnitSrcPriority = Miscellaneous.isUnitSrcPriority(leftUnit, rightUnit);
 		var enabledLeftAttack = isUnitSrcPriority || attackInfo.isCounterattack;
 		var enabledRightAttack = !isUnitSrcPriority || attackInfo.isCounterattack;
+		// 攻撃可能なら、攻撃する側が優先表示対象(Priority:true)かを判定する。
+		// 優先表示対象の場合、攻撃する側の戦闘情報を表示し、
+		// 優先表示対象でない場合、攻撃される側の戦闘情報を表示する。
 		var leftStatuses = enabledLeftAttack
-			? AttackChecker.getAttackStatusInternal(leftUnit, leftWeapon, rightUnit)
+			? (isUnitSrcPriority 
+				? AttackChecker.getAttackStatusInternal(leftUnit, leftWeapon, rightUnit)
+				: AttackChecker.getAttackStatusInternal(rightUnit, rightWeapon, leftUnit))
 			: AttackChecker.getNonStatus();
+		// 右側表示の場合は、優先位置である左側とは逆の条件で判定する。
 		var rightStatuses = enabledRightAttack
-			? AttackChecker.getAttackStatusInternal(rightUnit, rightWeapon, leftUnit)
+			? (!isUnitSrcPriority
+				? AttackChecker.getAttackStatusInternal(leftUnit, leftWeapon, rightUnit)
+				: AttackChecker.getAttackStatusInternal(rightUnit, rightWeapon, leftUnit))
 			: AttackChecker.getNonStatus();
 
 		this._leftInfo = {
