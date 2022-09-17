@@ -168,7 +168,7 @@ var PreMultipleAttack = defineObject(PreAttack, {
   },
 
   getAttackParam: function () {
-    return this._attackParam[this._currentAttackIndex];
+    return this._attackParam;
   },
 
   isPosMenuDraw: function () {
@@ -237,7 +237,6 @@ var PreMultipleAttack = defineObject(PreAttack, {
         MediaControl.musicStop(MusicStopType.BACK);
         MediaControl.resetSoundList();
       }
-      this._currentAttackIndex = 0;
       return MoveResult.END;
     }
     return MoveResult.CONTINUE;
