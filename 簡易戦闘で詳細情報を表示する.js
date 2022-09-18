@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　簡易戦闘で詳細情報を表示する ver 1.1
+　簡易戦闘で詳細情報を表示する ver 1.2
 
 ■作成者
 キュウブ
@@ -9,6 +9,9 @@
 相手に与えるダメージ、命中率、必殺率が表示されるようになります。
 
 ■更新履歴
+ver 1.2 2022/09/18
+下記に加え、味方ステータスと敵ステータスの表示が逆転するケースが残っていたので修正
+
 ver 1.1 2022/09/05
 敵から攻撃を受けた時に味方ステータスと敵ステータスの表示が逆転しているバグを修正
 
@@ -32,8 +35,8 @@ var EasyAttackInfoWindow = defineObject(BaseWindow, {
 	_leftInfo: null,
 	_rightInfo: null,
 
+	// attackUnit　攻撃する側　targetUnit：攻撃される側
 	setInfo: function (attackUnit, targetUnit) {
-		// attackUnit　攻撃する側　targetUnit：攻撃される側
 		var attackInfo = this.getParentInstance().getAttackInfo();
 		var attackWeapon = BattlerChecker.getRealBattleWeapon(attackUnit);
 		var targetWeapon = BattlerChecker.getRealBattleWeapon(targetUnit);
@@ -49,15 +52,15 @@ var EasyAttackInfoWindow = defineObject(BaseWindow, {
 		// 優先表示対象の場合、攻撃する側の戦闘情報を表示し、
 		// 優先表示対象でない場合、攻撃される側の戦闘情報を表示する。
 		var leftStatuses = enabledLeftAttack
-			? (isUnitSrcPriority 
+			? isUnitSrcPriority
 				? AttackChecker.getAttackStatusInternal(attackUnit, attackWeapon, targetUnit)
-				: AttackChecker.getAttackStatusInternal(targetUnit, targetWeapon, attackUnit))
+				: AttackChecker.getAttackStatusInternal(targetUnit, targetWeapon, attackUnit)
 			: AttackChecker.getNonStatus();
 		// 右側表示の場合は、優先位置である左側とは逆の条件で判定する。
 		var rightStatuses = enabledRightAttack
-			? (!isUnitSrcPriority
+			? !isUnitSrcPriority
 				? AttackChecker.getAttackStatusInternal(attackUnit, attackWeapon, targetUnit)
-				: AttackChecker.getAttackStatusInternal(targetUnit, targetWeapon, attackUnit))
+				: AttackChecker.getAttackStatusInternal(targetUnit, targetWeapon, attackUnit)
 			: AttackChecker.getNonStatus();
 
 		this._leftInfo = {
