@@ -32,26 +32,40 @@ var EasyAttackInfoWindow = defineObject(BaseWindow, {
 	_leftInfo: null,
 	_rightInfo: null,
 
-	setInfo: function (leftUnit, rightUnit) {
+	setInfo: function (attackUnit, targetUnit) {
+		// attackUnit　攻撃する側　targetUnit：攻撃される側
 		var attackInfo = this.getParentInstance().getAttackInfo();
-		var leftWeapon = BattlerChecker.getRealBattleWeapon(leftUnit);
-		var rightWeapon = BattlerChecker.getRealBattleWeapon(rightUnit);
-		var isUnitSrcPriority = Miscellaneous.isUnitSrcPriority(leftUnit, rightUnit);
+		var attackWeapon = BattlerChecker.getRealBattleWeapon(attackUnit);
+		var targetWeapon = BattlerChecker.getRealBattleWeapon(targetUnit);
+		// isUnitSrcPriority…優先位置表示対象(ウインドウ左側に出す)か否か
+		// 左側表示の優先順位は下記の法則に従う(singleton-system.js参照)
+		// 自軍 > 敵軍
+		// 自軍 > 同盟軍
+		// 同盟軍 > 敵軍
+		var isUnitSrcPriority = Miscellaneous.isUnitSrcPriority(attackUnit, targetUnit);
 		var enabledLeftAttack = isUnitSrcPriority || attackInfo.isCounterattack;
 		var enabledRightAttack = !isUnitSrcPriority || attackInfo.isCounterattack;
+		// 攻撃可能なら、攻撃する側が優先表示対象(Priority:true)かを判定する。
+		// 優先表示対象の場合、攻撃する側の戦闘情報を表示し、
+		// 優先表示対象でない場合、攻撃される側の戦闘情報を表示する。
 		var leftStatuses = enabledLeftAttack
-			? AttackChecker.getAttackStatusInternal(leftUnit, leftWeapon, rightUnit)
+			? (isUnitSrcPriority 
+				? AttackChecker.getAttackStatusInternal(attackUnit, attackWeapon, targetUnit)
+				: AttackChecker.getAttackStatusInternal(targetUnit, targetWeapon, attackUnit))
 			: AttackChecker.getNonStatus();
+		// 右側表示の場合は、優先位置である左側とは逆の条件で判定する。
 		var rightStatuses = enabledRightAttack
-			? AttackChecker.getAttackStatusInternal(rightUnit, rightWeapon, leftUnit)
+			? (!isUnitSrcPriority
+				? AttackChecker.getAttackStatusInternal(attackUnit, attackWeapon, targetUnit)
+				: AttackChecker.getAttackStatusInternal(targetUnit, targetWeapon, attackUnit))
 			: AttackChecker.getNonStatus();
 
 		this._leftInfo = {
-			unit: leftUnit,
+			unit: attackUnit,
 			statuses: leftStatuses
 		};
 		this._rightInfo = {
-			unit: rightUnit,
+			unit: targetUnit,
 			statuses: rightStatuses
 		};
 	},
