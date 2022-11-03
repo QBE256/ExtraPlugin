@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　自傷ダメージスキル、反射ダメージスキル ver 1.0
+　自傷ダメージスキル、反射ダメージスキル ver 1.1
 
 ■作成者
 キュウブ
@@ -20,6 +20,9 @@ reflectRate:<反射率>
 2.3.有効相手を設定する
 
 ■更新履歴
+ver 1.1 (2022/11/03)
+有効相手が正常に反映されないバグを修正
+
 ver 1.0 (2022/11/03)
 公開 
 
@@ -107,7 +110,7 @@ SRPG Studio Version:1.161
     if (keyword === "recoil") {
       return this._isSkillInvokedInternal(active, passive, skill);
     } else if (keyword === "reflect") {
-      return this._isSkillInvokedInternal(passive, active, skill);
+      return this._isSkillInvokedInternal(active, passive, skill);
     }
 
     return tempFunctions.SkillRandomizer.isCustomSkillInvokedInternal.apply(
