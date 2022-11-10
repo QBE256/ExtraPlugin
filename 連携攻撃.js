@@ -88,173 +88,173 @@ SRPG Studio Version:1.161
 --------------------------------------------------------------------------*/
 
 (function () {
-	var _PosMenu_createPosMenuWindow = PosMenu.createPosMenuWindow;
-	PosMenu.createPosMenuWindow = function (unit, item, type) {
-		var fusionUnit = FusionControl.getFusionChild(unit);
+  var _PosMenu_createPosMenuWindow = PosMenu.createPosMenuWindow;
+  PosMenu.createPosMenuWindow = function (unit, item, type) {
+    var fusionUnit = FusionControl.getFusionChild(unit);
 
-		if (CooperateAttackControl.isEnabledCooperateAttack(unit, fusionUnit) && type === PosMenuType.Attack) {
-			this._cooperateUnit = fusionUnit;
-			this._cooperateItem = ItemControl.getEquippedWeapon(fusionUnit);
-			this._posWindowChangeLeft = createWindowObject(this._getObjectFromType(type), this);
-			this._posWindowChangeRight = createWindowObject(this._getObjectFromType(type), this);
-			this._posWindowTopLeft = createWindowObject(PosCooperateWindow, this);
-		}
-		_PosMenu_createPosMenuWindow.apply(this, arguments);
-	};
+    if (CooperateAttackControl.isEnabledCooperateAttack(unit, fusionUnit) && type === PosMenuType.Attack) {
+      this._cooperateUnit = fusionUnit;
+      this._cooperateItem = ItemControl.getEquippedWeapon(fusionUnit);
+      this._posWindowChangeLeft = createWindowObject(this._getObjectFromType(type), this);
+      this._posWindowChangeRight = createWindowObject(this._getObjectFromType(type), this);
+      this._posWindowTopLeft = createWindowObject(PosCooperateWindow, this);
+    }
+    _PosMenu_createPosMenuWindow.apply(this, arguments);
+  };
 
-	var _PosMenu_moveWindowManager = PosMenu.moveWindowManager;
-	PosMenu.moveWindowManager = function () {
-		var result = _PosMenu_moveWindowManager.apply(this, arguments);
-		if (this._cooperateUnit) {
-			return (
-				result &&
-				this._posWindowChangeLeft.moveWindow() &&
-				this._posWindowTopLeft.moveWindow() &&
-				this._posWindowChangeRight.moveWindow()
-			);
-		}
-	};
+  var _PosMenu_moveWindowManager = PosMenu.moveWindowManager;
+  PosMenu.moveWindowManager = function () {
+    var result = _PosMenu_moveWindowManager.apply(this, arguments);
+    if (this._cooperateUnit) {
+      return (
+        result &&
+        this._posWindowChangeLeft.moveWindow() &&
+        this._posWindowTopLeft.moveWindow() &&
+        this._posWindowChangeRight.moveWindow()
+      );
+    }
+  };
 
-	var _PosMenu_drawWindowManager = PosMenu.drawWindowManager;
-	PosMenu.drawWindowManager = function () {
-		var x, y;
+  var _PosMenu_drawWindowManager = PosMenu.drawWindowManager;
+  PosMenu.drawWindowManager = function () {
+    var x, y;
 
-		if (this._currentTarget === null) {
-			_PosMenu_drawWindowManager.apply(this, arguments);
-			return;
-		}
+    if (this._currentTarget === null) {
+      _PosMenu_drawWindowManager.apply(this, arguments);
+      return;
+    }
 
-		x = this.getPositionWindowX();
-		y = this.getPositionWindowY();
-		if (this._posWindowTopLeft) {
-			this._posWindowTopLeft.drawWindow(x, y - this._posWindowTopLeft.getWindowHeight());
-		}
-		if (this._posWindowChangeLeft && root.isInputState(InputType.BTN4)) {
-			this._posWindowChangeLeft.drawWindow(x, y);
-			this._posWindowChangeRight.drawWindow(x + this._posWindowLeft.getWindowWidth() + this._getWindowInterval(), y);
-		} else {
-			_PosMenu_drawWindowManager.apply(this, arguments);
-		}
-	};
+    x = this.getPositionWindowX();
+    y = this.getPositionWindowY();
+    if (this._posWindowTopLeft) {
+      this._posWindowTopLeft.drawWindow(x, y - this._posWindowTopLeft.getWindowHeight());
+    }
+    if (this._posWindowChangeLeft && root.isInputState(InputType.BTN4)) {
+      this._posWindowChangeLeft.drawWindow(x, y);
+      this._posWindowChangeRight.drawWindow(x + this._posWindowLeft.getWindowWidth() + this._getWindowInterval(), y);
+    } else {
+      _PosMenu_drawWindowManager.apply(this, arguments);
+    }
+  };
 
-	var _PosMenu_changePosTarget = PosMenu.changePosTarget;
-	PosMenu.changePosTarget = function (targetUnit) {
-		var targetItem, cooperateAttackRate;
+  var _PosMenu_changePosTarget = PosMenu.changePosTarget;
+  PosMenu.changePosTarget = function (targetUnit) {
+    var targetItem, cooperateAttackRate;
 
-		_PosMenu_changePosTarget.apply(this, arguments);
-		if (this._unit === null || !this._isTargetAllowed(targetUnit)) {
-			return;
-		}
+    _PosMenu_changePosTarget.apply(this, arguments);
+    if (this._unit === null || !this._isTargetAllowed(targetUnit)) {
+      return;
+    }
 
-		if (this._cooperateUnit) {
-			targetItem = ItemControl.getEquippedWeapon(targetUnit);
-			cooperateAttackRate = AbilityCalculator.getCooperateAttack(this._unit, this._cooperateUnit);
-			this._posWindowChangeLeft.setPosTarget(this._cooperateUnit, this._cooperateItem, targetUnit, targetItem, true);
-			this._posWindowChangeRight.setPosTarget(targetUnit, targetItem, this._cooperateUnit, this._cooperateItem, false);
-			this._posWindowTopLeft.setPosInfo(this._cooperateUnit, cooperateAttackRate);
-		}
-	};
+    if (this._cooperateUnit) {
+      targetItem = ItemControl.getEquippedWeapon(targetUnit);
+      cooperateAttackRate = AbilityCalculator.getCooperateAttack(this._unit, this._cooperateUnit);
+      this._posWindowChangeLeft.setPosTarget(this._cooperateUnit, this._cooperateItem, targetUnit, targetItem, true);
+      this._posWindowChangeRight.setPosTarget(targetUnit, targetItem, this._cooperateUnit, this._cooperateItem, false);
+      this._posWindowTopLeft.setPosInfo(this._cooperateUnit, cooperateAttackRate);
+    }
+  };
 
-	var _UnitCommand_Attack__moveSelection = UnitCommand.Attack._moveSelection;
-	UnitCommand.Attack._moveSelection = function () {
-		var multipleAttackParam, result;
-		var weapon = this._weaponSelectMenu.getSelectWeapon();
-		this._cooperateAttackUnit = this._getCooperateAttackUnit();
-		if (!this._cooperateAttackUnit) {
-			return _UnitCommand_Attack__moveSelection.apply(this, arguments);
-		}
-		result = this._posSelector.movePosSelector();
-		if (result === PosSelectorResult.SELECT) {
-			if (this._isPosSelectable()) {
-				this._posSelector.endPosSelector();
-				multipleAttackParam = this._createCooperateAttackParam();
-				this._preAttack = createObject(PreMultipleAttack);
-				result = this._preAttack.enterPreAttackCycle(multipleAttackParam);
-				if (result === EnterResult.NOTENTER) {
-					this.endCommandAction();
-					return MoveResult.END;
-				}
+  var _UnitCommand_Attack__moveSelection = UnitCommand.Attack._moveSelection;
+  UnitCommand.Attack._moveSelection = function () {
+    var multipleAttackParam, result;
+    var weapon = this._weaponSelectMenu.getSelectWeapon();
+    this._cooperateAttackUnit = this._getCooperateAttackUnit();
+    if (!this._cooperateAttackUnit) {
+      return _UnitCommand_Attack__moveSelection.apply(this, arguments);
+    }
+    result = this._posSelector.movePosSelector();
+    if (result === PosSelectorResult.SELECT) {
+      if (this._isPosSelectable()) {
+        this._posSelector.endPosSelector();
+        multipleAttackParam = this._createCooperateAttackParam();
+        this._preAttack = createObject(PreMultipleAttack);
+        result = this._preAttack.enterPreAttackCycle(multipleAttackParam);
+        if (result === EnterResult.NOTENTER) {
+          this.endCommandAction();
+          return MoveResult.END;
+        }
 
-				this.changeCycleMode(AttackCommandMode.RESULT);
-			}
-		} else if (result === PosSelectorResult.CANCEL) {
-			this._posSelector.endPosSelector();
-			this._weaponSelectMenu.setMenuTarget(this.getCommandTarget());
-			this.changeCycleMode(AttackCommandMode.TOP);
-		}
+        this.changeCycleMode(AttackCommandMode.RESULT);
+      }
+    } else if (result === PosSelectorResult.CANCEL) {
+      this._posSelector.endPosSelector();
+      this._weaponSelectMenu.setMenuTarget(this.getCommandTarget());
+      this.changeCycleMode(AttackCommandMode.TOP);
+    }
 
-		return MoveResult.CONTINUE;
-	};
+    return MoveResult.CONTINUE;
+  };
 
-	// このスクリプトを導入している場合、連携状態のフュージョンユニットには反撃できなくなる
-	// フュージョンユニットに攻撃するようなスクリプトを導入している場合は注意
-	var _AttackChecker_isCounterattack = AttackChecker.isCounterattack;
-	AttackChecker.isCounterattack = function (unit, targetUnit) {
-		var fusionData;
-		var fusionUnit = FusionControl.getFusionParent(unit);
-		if (fusionUnit) {
-			fusionData = FusionControl.getFusionData(fusionUnit);
-			if (fusionData && !!fusionData.custom.isCooperateAttack) {
-				return false;
-			}
-		}
-		return _AttackChecker_isCounterattack.apply(this, arguments);
-	};
+  // このスクリプトを導入している場合、連携状態のフュージョンユニットには反撃できなくなる
+  // フュージョンユニットに攻撃するようなスクリプトを導入している場合は注意
+  var _AttackChecker_isCounterattack = AttackChecker.isCounterattack;
+  AttackChecker.isCounterattack = function (unit, targetUnit) {
+    var fusionData;
+    var fusionUnit = FusionControl.getFusionParent(unit);
+    if (fusionUnit) {
+      fusionData = FusionControl.getFusionData(fusionUnit);
+      if (fusionData && !!fusionData.custom.isCooperateAttack) {
+        return false;
+      }
+    }
+    return _AttackChecker_isCounterattack.apply(this, arguments);
+  };
 
-	// 連携カスタムパラメータを持ったフュージョンデータの場合、
-	// UnitCommand.FusionRideクラスやUnitCommand.FusionUnitChangeを適用させる必要がある
-	UnitCommand._appendFusionCommand = function (groupArray) {
-		var i, count, arr;
-		var unit = this.getListCommandUnit();
-		var fusionData = FusionControl.getFusionData(unit);
+  // 連携カスタムパラメータを持ったフュージョンデータの場合、
+  // UnitCommand.FusionRideクラスやUnitCommand.FusionUnitChangeを適用させる必要がある
+  UnitCommand._appendFusionCommand = function (groupArray) {
+    var i, count, arr;
+    var unit = this.getListCommandUnit();
+    var fusionData = FusionControl.getFusionData(unit);
 
-		if (fusionData === null) {
-			arr = FusionControl.getFusionArray(unit);
-			count = arr.length;
-			for (i = 0; i < count; i++) {
-				fusionData = arr[i];
-				if (fusionData.getFusionType() === FusionType.ATTACK) {
-					groupArray.appendObject(UnitCommand.FusionAttack);
-					groupArray[groupArray.length - 1].setFusionData(fusionData);
-				} else if (!!fusionData.custom.isCooperateAttack) {
-					groupArray.appendObject(UnitCommand.FusionRide);
-					groupArray[groupArray.length - 1].setFusionData(fusionData);
-				} else {
-					groupArray.appendObject(UnitCommand.FusionCatch);
-					groupArray[groupArray.length - 1].setFusionData(fusionData);
-				}
-			}
+    if (fusionData === null) {
+      arr = FusionControl.getFusionArray(unit);
+      count = arr.length;
+      for (i = 0; i < count; i++) {
+        fusionData = arr[i];
+        if (fusionData.getFusionType() === FusionType.ATTACK) {
+          groupArray.appendObject(UnitCommand.FusionAttack);
+          groupArray[groupArray.length - 1].setFusionData(fusionData);
+        } else if (!!fusionData.custom.isCooperateAttack) {
+          groupArray.appendObject(UnitCommand.FusionRide);
+          groupArray[groupArray.length - 1].setFusionData(fusionData);
+        } else {
+          groupArray.appendObject(UnitCommand.FusionCatch);
+          groupArray[groupArray.length - 1].setFusionData(fusionData);
+        }
+      }
 
-			for (i = 0; i < count; i++) {
-				fusionData = arr[i];
-				groupArray.appendObject(UnitCommand.FusionUnitTrade);
-				groupArray[groupArray.length - 1].setFusionData(fusionData);
-			}
-		} else {
-			groupArray.appendObject(UnitCommand.FusionRelease);
-			groupArray[groupArray.length - 1].setFusionData(fusionData);
+      for (i = 0; i < count; i++) {
+        fusionData = arr[i];
+        groupArray.appendObject(UnitCommand.FusionUnitTrade);
+        groupArray[groupArray.length - 1].setFusionData(fusionData);
+      }
+    } else {
+      groupArray.appendObject(UnitCommand.FusionRelease);
+      groupArray[groupArray.length - 1].setFusionData(fusionData);
 
-			groupArray.appendObject(UnitCommand.FusionUnitTrade);
-			groupArray[groupArray.length - 1].setFusionData(fusionData);
+      groupArray.appendObject(UnitCommand.FusionUnitTrade);
+      groupArray[groupArray.length - 1].setFusionData(fusionData);
 
-			if (fusionData.custom.isCooperateAttack === true) {
-				groupArray.appendObject(UnitCommand.FusionUnitChange);
-				groupArray[groupArray.length - 1].setFusionData(fusionData);
-			}
-		}
-	};
+      if (fusionData.custom.isCooperateAttack === true) {
+        groupArray.appendObject(UnitCommand.FusionUnitChange);
+        groupArray[groupArray.length - 1].setFusionData(fusionData);
+      }
+    }
+  };
 
-	var _PlayerTurn__moveUnitCommand = PlayerTurn._moveUnitCommand;
-	PlayerTurn._moveUnitCommand = function () {
-		this._targetUnit = this._mapSequenceCommand.getTargetUnit();
-		return _PlayerTurn__moveUnitCommand.apply(this, arguments);
-	};
+  var _PlayerTurn__moveUnitCommand = PlayerTurn._moveUnitCommand;
+  PlayerTurn._moveUnitCommand = function () {
+    this._targetUnit = this._mapSequenceCommand.getTargetUnit();
+    return _PlayerTurn__moveUnitCommand.apply(this, arguments);
+  };
 
-	var _MapSequenceCommand__moveCommand = MapSequenceCommand._moveCommand;
-	MapSequenceCommand._moveCommand = function () {
-		this._targetUnit = this._unitCommandManager.getListCommandUnit();
-		return _MapSequenceCommand__moveCommand.apply(this, arguments);
-	};
+  var _MapSequenceCommand__moveCommand = MapSequenceCommand._moveCommand;
+  MapSequenceCommand._moveCommand = function () {
+    this._targetUnit = this._unitCommandManager.getListCommandUnit();
+    return _MapSequenceCommand__moveCommand.apply(this, arguments);
+  };
 })();
 
 PosMenu._cooperateUnit = null;
@@ -263,207 +263,207 @@ PosMenu._posWindowChangeLeft = null;
 PosMenu._posWindowChangeRight = null;
 PosMenu._posWindowTopLeft = null;
 var PosCooperateWindow = defineObject(BaseWindow, {
-	_cooperateAttackRate: 0,
-	_unit: null,
+  _cooperateAttackRate: 0,
+  _unit: null,
 
-	moveWindowContent: function () {
-		return MoveResult.CONTINUE;
-	},
+  moveWindowContent: function () {
+    return MoveResult.CONTINUE;
+  },
 
-	drawWindowContent: function (x, y) {
-		this.drawNotice(x, y);
-	},
+  drawWindowContent: function (x, y) {
+    this.drawNotice(x, y);
+  },
 
-	drawNotice: function (xBase, yBase) {
-		var adjustRatePositionX = 4;
-		var x = xBase;
-		var y = yBase - 6;
-		var length = this._getTextLength();
-		var textui = this.getWindowTextUI();
-		var color = textui.getColor();
-		var font = textui.getFont();
-		var frontText = "連携率";
-		var rearText = "% Vキーで情報切替";
-		var frontTextWidth = root.getGraphicsManager().getTextWidth(frontText, font);
+  drawNotice: function (xBase, yBase) {
+    var adjustRatePositionX = 4;
+    var x = xBase;
+    var y = yBase - 6;
+    var length = this._getTextLength();
+    var textui = this.getWindowTextUI();
+    var color = textui.getColor();
+    var font = textui.getFont();
+    var frontText = "連携率";
+    var rearText = "% Vキーで情報切替";
+    var frontTextWidth = root.getGraphicsManager().getTextWidth(frontText, font);
 
-		TextRenderer.drawText(x, y, frontText, length, color, font);
-		if (this._cooperateAttackRate < 10) {
-			adjustRatePositionX += 16;
-		} else if (this._cooperateAttackRate < 100) {
-			adjustRatePositionX += 8;
-		}
-		NumberRenderer.drawRightNumber(x + frontTextWidth + adjustRatePositionX, y - 5, this._cooperateAttackRate);
-		TextRenderer.drawText(x + frontTextWidth + 32, y, rearText, length, color, font);
-	},
+    TextRenderer.drawText(x, y, frontText, length, color, font);
+    if (this._cooperateAttackRate < 10) {
+      adjustRatePositionX += 16;
+    } else if (this._cooperateAttackRate < 100) {
+      adjustRatePositionX += 8;
+    }
+    NumberRenderer.drawRightNumber(x + frontTextWidth + adjustRatePositionX, y - 5, this._cooperateAttackRate);
+    TextRenderer.drawText(x + frontTextWidth + 32, y, rearText, length, color, font);
+  },
 
-	setPosInfo: function (unit, cooperateAttackRate) {
-		this._unit = unit;
-		this._cooperateAttackRate = cooperateAttackRate;
-	},
+  setPosInfo: function (unit, cooperateAttackRate) {
+    this._unit = unit;
+    this._cooperateAttackRate = cooperateAttackRate;
+  },
 
-	getWindowHeight: function () {
-		return 30;
-	},
+  getWindowHeight: function () {
+    return 30;
+  },
 
-	getWindowWidth: function () {
-		return 230;
-	},
+  getWindowWidth: function () {
+    return 230;
+  },
 
-	getWindowTextUI: function () {
-		return Miscellaneous.getColorWindowTextUI(this._unit);
-	},
+  getWindowTextUI: function () {
+    return Miscellaneous.getColorWindowTextUI(this._unit);
+  },
 
-	_getTextLength: function () {
-		return 190;
-	}
+  _getTextLength: function () {
+    return 190;
+  }
 });
 
 MapSequenceCommand.getTargetUnit = function () {
-	return this._targetUnit;
+  return this._targetUnit;
 };
 
 UnitCommand.Attack._cooperateAttackUnit = null;
 UnitCommand.Attack._getCooperateAttackUnit = function () {
-	var skills, fusionData, cooperateType;
-	var unit = this.getCommandTarget();
-	var fusionUnit = FusionControl.getFusionChild(unit);
+  var skills, fusionData, cooperateType;
+  var unit = this.getCommandTarget();
+  var fusionUnit = FusionControl.getFusionChild(unit);
 
-	if (!CooperateAttackControl.isEnabledCooperateAttack(unit, fusionUnit)) {
-		return null;
-	}
-	return CooperateAttackControl.isActivated(unit, fusionUnit) ? fusionUnit : null;
+  if (!CooperateAttackControl.isEnabledCooperateAttack(unit, fusionUnit)) {
+    return null;
+  }
+  return CooperateAttackControl.isActivated(unit, fusionUnit) ? fusionUnit : null;
 };
 
 UnitCommand.Attack._createCooperateAttackParam = function () {
-	var originalUnitAttackParam = this._createAttackParam();
-	var cooperateUnitAttackParam = StructureBuilder.buildAttackParam();
+  var originalUnitAttackParam = this._createAttackParam();
+  var cooperateUnitAttackParam = StructureBuilder.buildAttackParam();
 
-	originalUnitAttackParam.weapon = ItemControl.getEquippedWeapon(originalUnitAttackParam.unit);
-	cooperateUnitAttackParam.unit = this._cooperateAttackUnit;
-	cooperateUnitAttackParam.targetUnit = originalUnitAttackParam.targetUnit;
-	cooperateUnitAttackParam.attackStartType = AttackStartType.NORMAL;
-	cooperateUnitAttackParam.weapon = ItemControl.getEquippedWeapon(this._cooperateAttackUnit);
+  originalUnitAttackParam.weapon = ItemControl.getEquippedWeapon(originalUnitAttackParam.unit);
+  cooperateUnitAttackParam.unit = this._cooperateAttackUnit;
+  cooperateUnitAttackParam.targetUnit = originalUnitAttackParam.targetUnit;
+  cooperateUnitAttackParam.attackStartType = AttackStartType.NORMAL;
+  cooperateUnitAttackParam.weapon = ItemControl.getEquippedWeapon(this._cooperateAttackUnit);
 
-	return [originalUnitAttackParam, cooperateUnitAttackParam];
+  return [originalUnitAttackParam, cooperateUnitAttackParam];
 };
 
 AbilityCalculator.getCooperateAttack = function (unit, cooperateUnit) {
-	var skill;
-	var rate = Math.floor((RealBonus.getSki(unit) + RealBonus.getSki(cooperateUnit)) / 2);
-	var skills = SkillControl.getDirectSkillArray(cooperateUnit, SkillType.CUSTOM, "CooperateAttack");
-	for (var index = 0; index < skills.length; index++) {
-		skill = skills[index].skill;
-		if (skill.getTargetAggregation().isCondition(unit)) {
-			rate += skill.getInvocationValue();
-		}
-	}
-	if (rate > 100) {
-		return 100;
-	} else if (rate < 0) {
-		return 0;
-	}
-	return rate;
+  var skill;
+  var rate = Math.floor((RealBonus.getSki(unit) + RealBonus.getSki(cooperateUnit)) / 2);
+  var skills = SkillControl.getDirectSkillArray(cooperateUnit, SkillType.CUSTOM, "CooperateAttack");
+  for (var index = 0; index < skills.length; index++) {
+    skill = skills[index].skill;
+    if (skill.getTargetAggregation().isCondition(unit)) {
+      rate += skill.getInvocationValue();
+    }
+  }
+  if (rate > 100) {
+    return 100;
+  } else if (rate < 0) {
+    return 0;
+  }
+  return rate;
 };
 
 var CooperateAttackControl = {
-	isEnabledCooperateAttack: function (originalUnit, cooprateUnit) {
-		var fusionData;
-		// 協力ユニットが存在しない場合は攻撃禁止
-		if (!cooprateUnit) {
-			return false;
-		}
-		// 同じ勢力でない場合は攻撃禁止
-		if (cooprateUnit.getUnitType() !== originalUnit.getUnitType()) {
-			return false;
-		}
-		// 行動不能の場合は攻撃禁止
-		if (StateControl.isBadStateOption(cooprateUnit, BadStateOption.NOACTION)) {
-			return false;
-		}
-		// 装備武器が拾えない場合は禁止
-		if (!ItemControl.getEquippedWeapon(cooprateUnit)) {
-			return false;
-		}
-		// 連携フュージョン状態でないと禁止
-		fusionData = cooprateUnit.getUnitStyle().getFusionData();
-		return fusionData.custom.isCooperateAttack === true;
-	},
+  isEnabledCooperateAttack: function (originalUnit, cooprateUnit) {
+    var fusionData;
+    // 協力ユニットが存在しない場合は攻撃禁止
+    if (!cooprateUnit) {
+      return false;
+    }
+    // 同じ勢力でない場合は攻撃禁止
+    if (cooprateUnit.getUnitType() !== originalUnit.getUnitType()) {
+      return false;
+    }
+    // 行動不能の場合は攻撃禁止
+    if (StateControl.isBadStateOption(cooprateUnit, BadStateOption.NOACTION)) {
+      return false;
+    }
+    // 装備武器が拾えない場合は禁止
+    if (!ItemControl.getEquippedWeapon(cooprateUnit)) {
+      return false;
+    }
+    // 連携フュージョン状態でないと禁止
+    fusionData = cooprateUnit.getUnitStyle().getFusionData();
+    return fusionData.custom.isCooperateAttack === true;
+  },
 
-	isActivated: function (originalUnit, cooprateUnit) {
-		var rate = AbilityCalculator.getCooperateAttack(originalUnit, cooprateUnit);
-		return Probability.getProbability(rate);
-	}
+  isActivated: function (originalUnit, cooprateUnit) {
+    var rate = AbilityCalculator.getCooperateAttack(originalUnit, cooprateUnit);
+    return Probability.getProbability(rate);
+  }
 };
 
 UnitCommand.FusionRide = defineObject(UnitCommand.FusionCatch, {
-	_addFusionEvent: function (generator) {
-		var unit = this.getCommandTarget();
-		var targetUnit = this._posSelector.getSelectorTarget(true);
+  _addFusionEvent: function (generator) {
+    var unit = this.getCommandTarget();
+    var targetUnit = this._posSelector.getSelectorTarget(true);
 
-		generator.unitFusion(targetUnit, unit, this._fusionData, DirectionType.NULL, FusionActionType.CATCH, false);
-	},
+    generator.unitFusion(targetUnit, unit, this._fusionData, DirectionType.NULL, FusionActionType.CATCH, false);
+  },
 
-	_getFusionIndexArray: function (unit) {
-		var i, x, y, targetUnit;
-		var indexArray = [];
+  _getFusionIndexArray: function (unit) {
+    var i, x, y, targetUnit;
+    var indexArray = [];
 
-		for (i = 0; i < DirectionType.COUNT; i++) {
-			x = unit.getMapX() + XPoint[i];
-			y = unit.getMapY() + YPoint[i];
-			targetUnit = PosChecker.getUnitFromPos(x, y);
-			if (
-				targetUnit !== null &&
-				FusionControl.isCatchable(targetUnit, unit, this._fusionData) &&
-				!FusionControl.getFusionChild(targetUnit)
-			) {
-				indexArray.push(CurrentMap.getIndex(x, y));
-			}
-		}
+    for (i = 0; i < DirectionType.COUNT; i++) {
+      x = unit.getMapX() + XPoint[i];
+      y = unit.getMapY() + YPoint[i];
+      targetUnit = PosChecker.getUnitFromPos(x, y);
+      if (
+        targetUnit !== null &&
+        FusionControl.isCatchable(targetUnit, unit, this._fusionData) &&
+        !FusionControl.getFusionChild(targetUnit)
+      ) {
+        indexArray.push(CurrentMap.getIndex(x, y));
+      }
+    }
 
-		return indexArray;
-	},
+    return indexArray;
+  },
 
-	getDescription: function () {
-		return this._fusionData.custom.commandDescriptionText || "味方と連携します(一定確率で連携攻撃が可能になります)";
-	}
+  getDescription: function () {
+    return this._fusionData.custom.commandDescriptionText || "味方と連携します(一定確率で連携攻撃が可能になります)";
+  }
 });
 
 UnitCommand.FusionUnitChange = defineObject(BaseFusionCommand, {
-	_childUnit: null,
+  _childUnit: null,
 
-	getCommandName: function () {
-		return "交代";
-	},
+  getCommandName: function () {
+    return "交代";
+  },
 
-	_doEndAction: function () {
-		if (this._childUnit.isWait()) {
-			this._childUnit.setWait(false);
-		}
-		this.rebuildCommand();
-	},
+  _doEndAction: function () {
+    if (this._childUnit.isWait()) {
+      this._childUnit.setWait(false);
+    }
+    this.rebuildCommand();
+  },
 
-	_completeCommandMemberData: function () {
-		var parentUnit = this.getCommandTarget();
-		this._childUnit = FusionControl.getFusionChild(parentUnit);
-		this._changeAction();
-		this.changeCycleMode(FusionCommandMode.ACTION);
-	},
+  _completeCommandMemberData: function () {
+    var parentUnit = this.getCommandTarget();
+    this._childUnit = FusionControl.getFusionChild(parentUnit);
+    this._changeAction();
+    this.changeCycleMode(FusionCommandMode.ACTION);
+  },
 
-	_addFusionEvent: function (generator) {
-		var unit = this.getCommandTarget();
-		var targetUnit = FusionControl.getFusionChild(unit);
+  _addFusionEvent: function (generator) {
+    var unit = this.getCommandTarget();
+    var targetUnit = FusionControl.getFusionChild(unit);
 
-		generator.unitFusion(unit, {}, {}, DirectionType.NULL, FusionActionType.RELEASE, true);
-		generator.unitFusion(targetUnit, unit, this._fusionData, DirectionType.NULL, FusionActionType.CATCH, true);
+    generator.unitFusion(unit, {}, {}, DirectionType.NULL, FusionActionType.RELEASE, true);
+    generator.unitFusion(targetUnit, unit, this._fusionData, DirectionType.NULL, FusionActionType.CATCH, true);
 
-		this._listCommandManager.setListCommandUnit(targetUnit);
-	},
+    this._listCommandManager.setListCommandUnit(targetUnit);
+  },
 
-	_getFusionIndexArray: function (unit) {
-		return [CurrentMap.getIndex(unit.getMapX(), unit.getMapY())];
-	},
+  _getFusionIndexArray: function (unit) {
+    return [CurrentMap.getIndex(unit.getMapX(), unit.getMapY())];
+  },
 
-	getDescription: function () {
-		return "連携を交代します";
-	}
+  getDescription: function () {
+    return "連携を交代します";
+  }
 });
