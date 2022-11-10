@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　連携攻撃スクリプト ver 0.2
+　連携攻撃スクリプト ver 0.3
 
 ■作成者
 キュウブ
@@ -63,6 +63,10 @@ https://github.com/QBE256/ExtraPlugin/blob/master/%E5%85%A8%E4%BD%93%E6%94%BB%E6
 本スクリプト内のAbilityCalculator.getCooperateAttackの中を改変してください。
 
 ■更新履歴
+ver 0.3 (2022/11/11)
+連携先のユニットがフュージョン状態でも連携できてしまうバグを修正
+交代実行後にユニットが待機状態にならないように修正
+
 ver 0.2 (2022/04/25)
 ユニットコマンド説明スクリプトに対応
 
@@ -83,10 +87,9 @@ SRPG Studio Version:1.161
 
 --------------------------------------------------------------------------*/
 
-
 (function () {
 	var _PosMenu_createPosMenuWindow = PosMenu.createPosMenuWindow;
-	PosMenu.createPosMenuWindow = function(unit, item, type) {
+	PosMenu.createPosMenuWindow = function (unit, item, type) {
 		var fusionUnit = FusionControl.getFusionChild(unit);
 
 		if (CooperateAttackControl.isEnabledCooperateAttack(unit, fusionUnit) && type === PosMenuType.Attack) {
@@ -100,17 +103,22 @@ SRPG Studio Version:1.161
 	};
 
 	var _PosMenu_moveWindowManager = PosMenu.moveWindowManager;
-	PosMenu.moveWindowManager = function() {
+	PosMenu.moveWindowManager = function () {
 		var result = _PosMenu_moveWindowManager.apply(this, arguments);
 		if (this._cooperateUnit) {
-			return result && this._posWindowChangeLeft.moveWindow() && this._posWindowTopLeft.moveWindow() && this._posWindowChangeRight.moveWindow();
+			return (
+				result &&
+				this._posWindowChangeLeft.moveWindow() &&
+				this._posWindowTopLeft.moveWindow() &&
+				this._posWindowChangeRight.moveWindow()
+			);
 		}
 	};
 
 	var _PosMenu_drawWindowManager = PosMenu.drawWindowManager;
-	PosMenu.drawWindowManager = function() {
+	PosMenu.drawWindowManager = function () {
 		var x, y;
-		
+
 		if (this._currentTarget === null) {
 			_PosMenu_drawWindowManager.apply(this, arguments);
 			return;
@@ -130,14 +138,14 @@ SRPG Studio Version:1.161
 	};
 
 	var _PosMenu_changePosTarget = PosMenu.changePosTarget;
-	PosMenu.changePosTarget = function(targetUnit) {
+	PosMenu.changePosTarget = function (targetUnit) {
 		var targetItem, cooperateAttackRate;
-		
+
 		_PosMenu_changePosTarget.apply(this, arguments);
 		if (this._unit === null || !this._isTargetAllowed(targetUnit)) {
 			return;
 		}
-		
+
 		if (this._cooperateUnit) {
 			targetItem = ItemControl.getEquippedWeapon(targetUnit);
 			cooperateAttackRate = AbilityCalculator.getCooperateAttack(this._unit, this._cooperateUnit);
@@ -161,8 +169,7 @@ SRPG Studio Version:1.161
 				this._posSelector.endPosSelector();
 				multipleAttackParam = this._createCooperateAttackParam();
 				this._preAttack = createObject(PreMultipleAttack);
-				result =
-					this._preAttack.enterPreAttackCycle(multipleAttackParam);
+				result = this._preAttack.enterPreAttackCycle(multipleAttackParam);
 				if (result === EnterResult.NOTENTER) {
 					this.endCommandAction();
 					return MoveResult.END;
@@ -187,7 +194,7 @@ SRPG Studio Version:1.161
 		var fusionUnit = FusionControl.getFusionParent(unit);
 		if (fusionUnit) {
 			fusionData = FusionControl.getFusionData(fusionUnit);
-			if (fusionData && fusionData.custom.isCooperateAttack === true) {
+			if (fusionData && !!fusionData.custom.isCooperateAttack) {
 				return false;
 			}
 		}
@@ -209,7 +216,7 @@ SRPG Studio Version:1.161
 				if (fusionData.getFusionType() === FusionType.ATTACK) {
 					groupArray.appendObject(UnitCommand.FusionAttack);
 					groupArray[groupArray.length - 1].setFusionData(fusionData);
-				} else if (fusionData.custom.isCooperateAttack === true) {
+				} else if (!!fusionData.custom.isCooperateAttack) {
 					groupArray.appendObject(UnitCommand.FusionRide);
 					groupArray[groupArray.length - 1].setFusionData(fusionData);
 				} else {
@@ -238,13 +245,13 @@ SRPG Studio Version:1.161
 	};
 
 	var _PlayerTurn__moveUnitCommand = PlayerTurn._moveUnitCommand;
-	PlayerTurn._moveUnitCommand = function() {
+	PlayerTurn._moveUnitCommand = function () {
 		this._targetUnit = this._mapSequenceCommand.getTargetUnit();
 		return _PlayerTurn__moveUnitCommand.apply(this, arguments);
 	};
 
 	var _MapSequenceCommand__moveCommand = MapSequenceCommand._moveCommand;
-	MapSequenceCommand._moveCommand = function() {
+	MapSequenceCommand._moveCommand = function () {
 		this._targetUnit = this._unitCommandManager.getListCommandUnit();
 		return _MapSequenceCommand__moveCommand.apply(this, arguments);
 	};
@@ -255,20 +262,19 @@ PosMenu._cooperateItem = null;
 PosMenu._posWindowChangeLeft = null;
 PosMenu._posWindowChangeRight = null;
 PosMenu._posWindowTopLeft = null;
-var PosCooperateWindow = defineObject(BaseWindow,
-{
+var PosCooperateWindow = defineObject(BaseWindow, {
 	_cooperateAttackRate: 0,
 	_unit: null,
 
-	moveWindowContent: function() {
+	moveWindowContent: function () {
 		return MoveResult.CONTINUE;
 	},
 
-	drawWindowContent: function(x, y) {
+	drawWindowContent: function (x, y) {
 		this.drawNotice(x, y);
 	},
 
-	drawNotice: function(xBase, yBase) {
+	drawNotice: function (xBase, yBase) {
 		var adjustRatePositionX = 4;
 		var x = xBase;
 		var y = yBase - 6;
@@ -290,30 +296,29 @@ var PosCooperateWindow = defineObject(BaseWindow,
 		TextRenderer.drawText(x + frontTextWidth + 32, y, rearText, length, color, font);
 	},
 
-	setPosInfo: function(unit, cooperateAttackRate) {
+	setPosInfo: function (unit, cooperateAttackRate) {
 		this._unit = unit;
 		this._cooperateAttackRate = cooperateAttackRate;
 	},
 
-	getWindowHeight: function() {
+	getWindowHeight: function () {
 		return 30;
 	},
 
-	getWindowWidth: function() {
+	getWindowWidth: function () {
 		return 230;
 	},
 
-	getWindowTextUI: function() {
+	getWindowTextUI: function () {
 		return Miscellaneous.getColorWindowTextUI(this._unit);
 	},
-	
-	_getTextLength: function() {
+
+	_getTextLength: function () {
 		return 190;
 	}
-}
-);
+});
 
-MapSequenceCommand.getTargetUnit = function() {
+MapSequenceCommand.getTargetUnit = function () {
 	return this._targetUnit;
 };
 
@@ -333,20 +338,16 @@ UnitCommand.Attack._createCooperateAttackParam = function () {
 	var originalUnitAttackParam = this._createAttackParam();
 	var cooperateUnitAttackParam = StructureBuilder.buildAttackParam();
 
-	originalUnitAttackParam.weapon = ItemControl.getEquippedWeapon(
-		originalUnitAttackParam.unit
-	);
+	originalUnitAttackParam.weapon = ItemControl.getEquippedWeapon(originalUnitAttackParam.unit);
 	cooperateUnitAttackParam.unit = this._cooperateAttackUnit;
 	cooperateUnitAttackParam.targetUnit = originalUnitAttackParam.targetUnit;
 	cooperateUnitAttackParam.attackStartType = AttackStartType.NORMAL;
-	cooperateUnitAttackParam.weapon = ItemControl.getEquippedWeapon(
-		this._cooperateAttackUnit
-	);
+	cooperateUnitAttackParam.weapon = ItemControl.getEquippedWeapon(this._cooperateAttackUnit);
 
 	return [originalUnitAttackParam, cooperateUnitAttackParam];
 };
 
-AbilityCalculator.getCooperateAttack = function(unit, cooperateUnit) {
+AbilityCalculator.getCooperateAttack = function (unit, cooperateUnit) {
 	var skill;
 	var rate = Math.floor((RealBonus.getSki(unit) + RealBonus.getSki(cooperateUnit)) / 2);
 	var skills = SkillControl.getDirectSkillArray(cooperateUnit, SkillType.CUSTOM, "CooperateAttack");
@@ -365,7 +366,7 @@ AbilityCalculator.getCooperateAttack = function(unit, cooperateUnit) {
 };
 
 var CooperateAttackControl = {
-	isEnabledCooperateAttack: function(originalUnit, cooprateUnit) {
+	isEnabledCooperateAttack: function (originalUnit, cooprateUnit) {
 		var fusionData;
 		// 協力ユニットが存在しない場合は攻撃禁止
 		if (!cooprateUnit) {
@@ -388,7 +389,7 @@ var CooperateAttackControl = {
 		return fusionData.custom.isCooperateAttack === true;
 	},
 
-	isActivated: function(originalUnit, cooprateUnit) {
+	isActivated: function (originalUnit, cooprateUnit) {
 		var rate = AbilityCalculator.getCooperateAttack(originalUnit, cooprateUnit);
 		return Probability.getProbability(rate);
 	}
@@ -399,14 +400,7 @@ UnitCommand.FusionRide = defineObject(UnitCommand.FusionCatch, {
 		var unit = this.getCommandTarget();
 		var targetUnit = this._posSelector.getSelectorTarget(true);
 
-		generator.unitFusion(
-			targetUnit,
-			unit,
-			this._fusionData,
-			DirectionType.NULL,
-			FusionActionType.CATCH,
-			false
-		);
+		generator.unitFusion(targetUnit, unit, this._fusionData, DirectionType.NULL, FusionActionType.CATCH, false);
 	},
 
 	_getFusionIndexArray: function (unit) {
@@ -419,7 +413,8 @@ UnitCommand.FusionRide = defineObject(UnitCommand.FusionCatch, {
 			targetUnit = PosChecker.getUnitFromPos(x, y);
 			if (
 				targetUnit !== null &&
-				FusionControl.isCatchable(targetUnit, unit, this._fusionData)
+				FusionControl.isCatchable(targetUnit, unit, this._fusionData) &&
+				!FusionControl.getFusionChild(targetUnit)
 			) {
 				indexArray.push(CurrentMap.getIndex(x, y));
 			}
@@ -428,41 +423,47 @@ UnitCommand.FusionRide = defineObject(UnitCommand.FusionCatch, {
 		return indexArray;
 	},
 
-	getDescription: function() {
-		return this._fusionData.custom.commandDescriptionText || '味方と連携します(一定確率で連携攻撃が可能になります)';
+	getDescription: function () {
+		return this._fusionData.custom.commandDescriptionText || "味方と連携します(一定確率で連携攻撃が可能になります)";
 	}
 });
 
-UnitCommand.FusionUnitChange = defineObject(BaseFusionCommand,
-{
-	getCommandName: function() {
-		return '交代';
+UnitCommand.FusionUnitChange = defineObject(BaseFusionCommand, {
+	_childUnit: null,
+
+	getCommandName: function () {
+		return "交代";
 	},
-	
-	_doEndAction: function() {
+
+	_doEndAction: function () {
+		if (this._childUnit.isWait()) {
+			this._childUnit.setWait(false);
+		}
 		this.rebuildCommand();
 	},
 
-	_completeCommandMemberData: function() {
+	_completeCommandMemberData: function () {
+		var parentUnit = this.getCommandTarget();
+		this._childUnit = FusionControl.getFusionChild(parentUnit);
 		this._changeAction();
 		this.changeCycleMode(FusionCommandMode.ACTION);
 	},
-	
-	_addFusionEvent: function(generator) {
+
+	_addFusionEvent: function (generator) {
 		var unit = this.getCommandTarget();
 		var targetUnit = FusionControl.getFusionChild(unit);
 
 		generator.unitFusion(unit, {}, {}, DirectionType.NULL, FusionActionType.RELEASE, true);
 		generator.unitFusion(targetUnit, unit, this._fusionData, DirectionType.NULL, FusionActionType.CATCH, true);
+
 		this._listCommandManager.setListCommandUnit(targetUnit);
 	},
-	
-	_getFusionIndexArray: function(unit) {
+
+	_getFusionIndexArray: function (unit) {
 		return [CurrentMap.getIndex(unit.getMapX(), unit.getMapY())];
 	},
 
-	getDescription: function() {
-		return '連携を交代します';
+	getDescription: function () {
+		return "連携を交代します";
 	}
-}
-);
+});
