@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　最大HPが現在HPにまで抑制されるステート ver 1.0
+　最大HPが現在HPにまで抑制されるステート ver 1.1
 
 ■作成者
 キュウブ
@@ -15,6 +15,9 @@
 isHpRestrict:true
 
 ■更新履歴
+ver 1.1 2023/02/03
+コードリファクタリング
+
 ver 1.0 2023/02/03
 公開
 
@@ -32,7 +35,7 @@ SRPG Studio Version:1.161
 --------------------------------------------------------------------------*/
 
 (function () {
-  StateControl.isHpRestrictValue = function (unit) {
+  StateControl.hasHpRestrict = function (unit) {
     var state, currentHp, maxHp;
     var list = unit.getTurnStateList();
     var count = list.getCount();
@@ -47,11 +50,14 @@ SRPG Studio Version:1.161
 
   var _ParamGroup_getLastValue = ParamGroup.getLastValue;
   ParamGroup.getLastValue = function (unit, index, weapon) {
-    var currentHp = unit.getHp();
+    var currentHp, enableHpRestrict;
     var lastValue = _ParamGroup_getLastValue.apply(this, arguments);
-    var enableHpRestrict = lastValue > currentHp && currentHp >= 1;
-    if (index === ParamType.MHP && StateControl.isHpRestrictValue(unit) && enableHpRestrict) {
-      lastValue = currentHp;
+    if (index === ParamType.MHP && StateControl.hasHpRestrict(unit)) {
+      currentHp = unit.getHp();
+      enableHpRestrict = lastValue > currentHp && currentHp >= 1;
+      if (enableHpRestrict) {
+        lastValue = currentHp;
+      }
     }
     return lastValue;
   };
