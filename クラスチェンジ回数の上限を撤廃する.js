@@ -6,7 +6,7 @@
 
 ■概要
 カスタムパラメータで
-{isUnLimitClassChangeCount:true}
+{isUnlimitClassChangeCount:true}
 と設定したクラスチェンジアイテムではクラスチェンジ回数の上限がなくなる
 
 ■更新履歴
@@ -76,7 +76,7 @@ SRPG Studio Version:1.161
 
     classUpCount = unit.getClassUpCount();
     if (
-      !!item.custom.isUnLimitClassChangeCount &&
+      !item.custom.isUnlimitClassChangeCount &&
       classUpCount >= classUpMaxCount
     ) {
       // 既にクラスチェンジしているため、これ以上のクラスチェンジはできない
