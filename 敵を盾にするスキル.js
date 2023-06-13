@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　敵を盾にするスキル ver 1.0
+　敵を盾にするスキル ver 1.1
 
 ■作成者
 キュウブ
@@ -12,6 +12,11 @@
 カスタムキーワードを"scapegoat"と設定したカスタムスキルを設定すればOK
 
 ■更新履歴
+ver 1.1 2023/06/14
+わかりやすくなるようにスキル発動演出を追加
+有効相手や発動率の設定に対応
+※ただし、対象となるのは"盾にされるユニット"であり、"攻撃を行うユニット"ではありません。
+
 ver 1.0 2023/06/13
 公開
 
@@ -28,10 +33,163 @@ SRPG Studio Version:1.161
 
 --------------------------------------------------------------------------*/
 (function () {
+  var MessageSkillNameCommand = defineObject(MessageTitleEventCommand, {
+    _counter: 0,
+
+    enterEventCommandCycle: function (skill, unit) {
+      this._prepareEventCommandMemberData(skill, unit);
+      return this._completeEventCommandMemberData();
+    },
+
+    moveEventCommandCycle: function () {
+      if (this._counter.moveCycleCounter() !== MoveResult.CONTINUE) {
+        this._counter.setCounterInfo(-1);
+        return MoveResult.END;
+      }
+
+      return MoveResult.CONTINUE;
+    },
+
+    drawEventCommandCycle: function () {
+      var x, y, pos;
+      var textui = this._getTitleText();
+      var pic = textui.getUIImage();
+      var color = textui.getColor();
+      var font = textui.getFont();
+      TextRenderer.drawTitleText(
+        this._xStart,
+        this._yStart,
+        this._text,
+        color,
+        font,
+        TextFormat.CENTER,
+        pic
+      );
+    },
+
+    _prepareEventCommandMemberData: function (skill, unit) {
+      var textui = this._getTitleText();
+      var font = textui.getFont();
+      this._counter = createObject(CycleCounter);
+      this._text = skill.getName();
+      this._textWidth = TextRenderer.getTextWidth(this._text, font);
+      this._partsWidth = TitleRenderer.getTitlePartsWidth();
+      this._partsHeight = TitleRenderer.getTitlePartsHeight();
+      this._xStart =
+        unit.getMapX() * GraphicsFormat.MAPCHIP_WIDTH +
+        GraphicsFormat.MAPCHIP_WIDTH / 2 -
+        root.getCurrentSession().getScrollPixelX() -
+        ((TitleRenderer.getTitlePartsCount(skill.getName(), font) + 2) *
+          this._partsWidth) /
+          2;
+      this._yStart =
+        unit.getMapY() * GraphicsFormat.MAPCHIP_HEIGHT +
+        GraphicsFormat.MAPCHIP_HEIGHT / 2 -
+        root.getCurrentSession().getScrollPixelY();
+      root.getCurrentSession().setActiveEventUnit(unit);
+    },
+
+    _completeEventCommandMemberData: function () {
+      this._counter.setCounterInfo(36);
+      this._playTitleSound();
+
+      return EnterResult.OK;
+    },
+
+    _getTitleText: function () {
+      return root.queryTextUI("itemuse_title");
+    },
+
+    _playTitleSound: function () {
+      MediaControl.soundDirect("skillinvocation");
+    }
+  });
+
+  var _SkillRandomizer_isCustomSkillInvokedInternal =
+    SkillRandomizer.isCustomSkillInvokedInternal;
+  SkillRandomizer.isCustomSkillInvokedInternal = function (
+    active,
+    passive,
+    skill,
+    keyword
+  ) {
+    if (keyword === "scapegoat") {
+      return this._isSkillInvokedInternal(active, passive, skill);
+    } else {
+      return _SkillRandomizer_isCustomSkillInvokedInternal.apply(
+        this,
+        arguments
+      );
+    }
+  };
+
   AttackStartType.SCAPEGOAT = 233; // 他のスクリプトの定数と被らないように、中途半端な数値で設定しておく
+  WeaponAutoActionMode.INVOCATION_SKILL = 233;
+
   WeaponAutoAction._scapegoatUnit = null;
   WeaponAutoAction._scapegoatUnitPosX = -1;
   WeaponAutoAction._scapegoatUnitPosY = -1;
+  WeaponAutoAction._showInvocationSkillName = false;
+  WeaponAutoAction._skillNameMessage = null;
+
+  var _WeaponAutoAction_setAutoActionInfo = WeaponAutoAction.setAutoActionInfo;
+  WeaponAutoAction.setAutoActionInfo = function (unit, combination) {
+    _WeaponAutoAction_setAutoActionInfo.apply(this, arguments);
+    this._skillNameMessage = createObject(MessageSkillNameCommand);
+  };
+
+  var _WeaponAutoAction__moveCursorShow = WeaponAutoAction._moveCursorShow;
+  WeaponAutoAction._moveCursorShow = function () {
+    var isSkipMode = this.isSkipMode();
+    var moveResult = _WeaponAutoAction__moveCursorShow.apply(this, arguments);
+    var mode = this.getCycleMode();
+    if (
+      !isSkipMode &&
+      moveResult === MoveResult.CONTINUE &&
+      this._showInvocationSkillName &&
+      mode === WeaponAutoActionMode.PREATTACK
+    ) {
+      this.changeCycleMode(WeaponAutoActionMode.INVOCATION_SKILL);
+    }
+    return moveResult;
+  };
+
+  var _WeaponAutoAction_moveAutoAction = WeaponAutoAction.moveAutoAction;
+  WeaponAutoAction.moveAutoAction = function () {
+    var result;
+    var mode = this.getCycleMode();
+    if (mode === WeaponAutoActionMode.INVOCATION_SKILL) {
+      result = this._moveInvocationSkill();
+    } else {
+      result = _WeaponAutoAction_moveAutoAction.apply(this, arguments);
+    }
+    return result;
+  };
+
+  WeaponAutoAction._moveInvocationSkill = function () {
+    if (
+      this._skillNameMessage.moveEventCommandCycle() !== MoveResult.CONTINUE
+    ) {
+      this._showInvocationSkillName = false;
+      this.changeCycleMode(WeaponAutoActionMode.PREATTACK);
+    }
+    return MoveResult.CONTINUE;
+  };
+
+  var _WeaponAutoAction_drawAutoAction = WeaponAutoAction.drawAutoAction;
+  WeaponAutoAction.drawAutoAction = function () {
+    var mode = this.getCycleMode();
+    if (mode === WeaponAutoActionMode.INVOCATION_SKILL) {
+      this._drawInvocationSkill();
+    } else {
+      _WeaponAutoAction_drawAutoAction.apply(this, arguments);
+    }
+  };
+
+  WeaponAutoAction._drawInvocationSkill = function () {
+    this._skillNameMessage.drawEventCommandCycle();
+  };
+
   var _WeaponAutoAction__createAttackParam =
     WeaponAutoAction._createAttackParam;
   WeaponAutoAction._createAttackParam = function () {
@@ -40,15 +198,15 @@ SRPG Studio Version:1.161
       arguments
     );
     var unit = this._unit;
+    var targetUnit = this._targetUnit;
     var skill = SkillControl.getPossessionCustomSkill(
       this._targetUnit,
       "scapegoat"
     );
     if (skill) {
       var randomIndex;
-      var posX = this._targetUnit.getMapX();
-      var posY = this._targetUnit.getMapY();
-      var targetUnit = this._targetUnit;
+      var posX = targetUnit.getMapX();
+      var posY = targetUnit.getMapY();
       var scapegoatUnits = [
         PosChecker.getUnitFromPos(posX + 1, posY),
         PosChecker.getUnitFromPos(posX - 1, posY),
@@ -58,7 +216,13 @@ SRPG Studio Version:1.161
         return (
           adjacentUnit &&
           unit !== adjacentUnit &&
-          FilterControl.isReverseUnitTypeAllowed(targetUnit, adjacentUnit)
+          FilterControl.isReverseUnitTypeAllowed(targetUnit, adjacentUnit) &&
+          SkillRandomizer.isCustomSkillInvokedInternal(
+            targetUnit,
+            adjacentUnit,
+            skill,
+            "scapegoat"
+          )
         );
       });
       if (scapegoatUnits.length > 0) {
@@ -70,6 +234,10 @@ SRPG Studio Version:1.161
         this._scapegoatUnitPosY = this._scapegoatUnit.getMapY();
         this._scapegoatUnit.setMapX(posX);
         this._scapegoatUnit.setMapY(posY);
+        if (!skill.isHidden()) {
+          this._showInvocationSkillName = true;
+          this._skillNameMessage.enterEventCommandCycle(skill, targetUnit);
+        }
       } else {
         this._scapegoatUnit = null;
       }
@@ -90,6 +258,15 @@ SRPG Studio Version:1.161
   UnitCommand.Attack._scapegoatUnit = null;
   UnitCommand.Attack._scapegoatUnitPosX = -1;
   UnitCommand.Attack._scapegoatUnitPosY = -1;
+  UnitCommand.Attack._showInvocationSkillName = false;
+  UnitCommand.Attack._skillNameMessage = null;
+  var _UnitCommand_Attack__prepareCommandMemberData =
+    UnitCommand.Attack._prepareCommandMemberData;
+  UnitCommand.Attack._prepareCommandMemberData = function () {
+    this._skillNameMessage = createObject(MessageSkillNameCommand);
+    _UnitCommand_Attack__prepareCommandMemberData.apply(this, arguments);
+  };
+
   var _UnitCommand_Attack__createAttackParam =
     UnitCommand.Attack._createAttackParam;
   UnitCommand.Attack._createAttackParam = function () {
@@ -113,7 +290,13 @@ SRPG Studio Version:1.161
         return (
           adjacentUnit &&
           unit !== adjacentUnit &&
-          FilterControl.isReverseUnitTypeAllowed(targetUnit, adjacentUnit)
+          FilterControl.isReverseUnitTypeAllowed(targetUnit, adjacentUnit) &&
+          SkillRandomizer.isCustomSkillInvokedInternal(
+            targetUnit,
+            adjacentUnit,
+            skill,
+            "scapegoat"
+          )
         );
       });
       if (scapegoatUnits.length > 0) {
@@ -125,11 +308,43 @@ SRPG Studio Version:1.161
         this._scapegoatUnitPosY = this._scapegoatUnit.getMapY();
         this._scapegoatUnit.setMapX(posX);
         this._scapegoatUnit.setMapY(posY);
+        if (!skill.isHidden()) {
+          this._showInvocationSkillName = true;
+          this._skillNameMessage.enterEventCommandCycle(skill, targetUnit);
+        }
       } else {
         this._scapegoatUnit = null;
       }
     }
     return attackParam;
+  };
+
+  // 発動スキルの表示を行うための改変であるが、
+  // 本来であればAttackCommandMode.INVOCATIONといった定数を用意し、
+  // AttackCommandMode.SELECT->AttackCommandMode.INVOCATION->AttackCommandMode.RESULTと遷移させるのが適切である。
+  // しかし、AttackCommandMode.SELECTからAttackCommandMode.INVOCATIONに移行させようとする際の、
+  // 他スクリプトとの競合リスクを鑑みて、AttackCommandMode.RESULTの中に詰め込む事にした。
+  // そのため、見通しの悪いコードになっている。
+  var _UnitCommand_Attack__moveResult = UnitCommand.Attack._moveResult;
+  UnitCommand.Attack._moveResult = function () {
+    if (
+      this._showInvocationSkillName &&
+      this._skillNameMessage.moveEventCommandCycle() === MoveResult.CONTINUE
+    ) {
+      return MoveResult.CONTINUE;
+    } else {
+      this._showInvocationSkillName = false;
+      return _UnitCommand_Attack__moveResult.apply(this, arguments);
+    }
+  };
+
+  var _UnitCommand_Attack__drawResult = UnitCommand.Attack._drawResult;
+  UnitCommand.Attack._drawResult = function () {
+    if (this._showInvocationSkillName) {
+      this._skillNameMessage.drawEventCommandCycle();
+    } else {
+      _UnitCommand_Attack__drawResult.apply(this, arguments);
+    }
   };
 
   var _UnitCommand_Attack_endCommandAction =
