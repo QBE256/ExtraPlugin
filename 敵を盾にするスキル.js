@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　敵を盾にするスキル ver 1.1
+　敵を盾にするスキル ver 1.2
 
 ■作成者
 キュウブ
@@ -12,6 +12,9 @@
 カスタムキーワードを"scapegoat"と設定したカスタムスキルを設定すればOK
 
 ■更新履歴
+ver 1.2 2023/06/14
+発動率の仕様を修正
+
 ver 1.1 2023/06/14
 わかりやすくなるようにスキル発動演出を追加
 有効相手や発動率の設定に対応
@@ -114,7 +117,13 @@ SRPG Studio Version:1.161
     keyword
   ) {
     if (keyword === "scapegoat") {
-      return this._isSkillInvokedInternal(active, passive, skill);
+      if (!skill.getTargetAggregation().isCondition(passive)) {
+        return false;
+      }
+      if (SkillControl.getBattleSkillFromFlag(passive, active, SkillType.INVALID, InvalidFlag.SKILL) !== null) {
+        return false;
+      }
+      return true;
     } else {
       return _SkillRandomizer_isCustomSkillInvokedInternal.apply(
         this,
@@ -203,7 +212,7 @@ SRPG Studio Version:1.161
       this._targetUnit,
       "scapegoat"
     );
-    if (skill) {
+    if (skill && Probability.getInvocationProbabilityFromSkill(targetUnit, skill)) {
       var randomIndex;
       var posX = targetUnit.getMapX();
       var posY = targetUnit.getMapY();
@@ -234,7 +243,7 @@ SRPG Studio Version:1.161
         this._scapegoatUnitPosY = this._scapegoatUnit.getMapY();
         this._scapegoatUnit.setMapX(posX);
         this._scapegoatUnit.setMapY(posY);
-        if (!skill.isHidden()) {
+        if (skill.isSkillDisplayable()) {
           this._showInvocationSkillName = true;
           this._skillNameMessage.enterEventCommandCycle(skill, targetUnit);
         }
@@ -277,7 +286,7 @@ SRPG Studio Version:1.161
     var unit = this.getCommandTarget();
     var targetUnit = this._posSelector.getSelectorTarget(false);
     var skill = SkillControl.getPossessionCustomSkill(targetUnit, "scapegoat");
-    if (skill) {
+    if (skill && Probability.getInvocationProbabilityFromSkill(targetUnit, skill)) {
       var randomIndex;
       var posX = targetUnit.getMapX();
       var posY = targetUnit.getMapY();
@@ -308,7 +317,7 @@ SRPG Studio Version:1.161
         this._scapegoatUnitPosY = this._scapegoatUnit.getMapY();
         this._scapegoatUnit.setMapX(posX);
         this._scapegoatUnit.setMapY(posY);
-        if (!skill.isHidden()) {
+        if (skill.isSkillDisplayable()) {
           this._showInvocationSkillName = true;
           this._skillNameMessage.enterEventCommandCycle(skill, targetUnit);
         }
