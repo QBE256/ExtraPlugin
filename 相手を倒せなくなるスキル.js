@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　相手を倒せなくなるスキル ver 1.0
+　相手を倒せなくなるスキル ver 1.1
 
 ■作成者
 キュウブ
@@ -14,6 +14,9 @@
 ※従来の生き残りスキルと同様、HP1で相手が耐えるのか、倒されそうな場合確定回避するのか選択できます。
 
 ■更新履歴
+ver 1.1 (2023/08/23)
+生き残りスキル自体が発動条件を満たしてなくても発動してしまうバグを修正
+
 ver 1.0 (2020/06/25)
 初版公開
 
@@ -30,24 +33,32 @@ SRPG Studio Version:1.161
 ・SRPG Studio利用規約は遵守してください。
 
 --------------------------------------------------------------------------*/
-AttackEvaluator.PassiveAction._getSurvivalValue = function(virtualActive, virtualPassive, attackEntry) {
-	var skill;
+AttackEvaluator.PassiveAction._getSurvivalValue = function (
+	virtualActive,
+	virtualPassive,
+	attackEntry
+) {
+	var activeSkill, passiveSkill;
 	var active = virtualActive.unitSelf;
 	var passive = virtualPassive.unitSelf;
-		
+
 	if (passive.isImmortal()) {
 		return SurvivalValue.AVOID;
 	}
-		
-	skill = SkillControl.checkAndPushSkill(passive, active, attackEntry, false, SkillType.SURVIVAL);
-	if (skill !== null && skill.custom.isActive !== true) {
-		return skill.getSkillValue();
-	}
-	
-	skill = SkillControl.checkAndPushSkill(active, passive, attackEntry, true, SkillType.SURVIVAL);
-	if (skill !== null && skill.custom.isActive === true) {
-		return skill.getSkillValue();
-	}
 
+	passiveSkill = SkillControl.getPossessionSkill(passive, SkillType.SURVIVAL);
+	if (SkillRandomizer.isSkillInvoked(passive, active, passiveSkill)) {
+		if (passiveSkill.isSkillDisplayable() && !passiveSkill.custom.isActive) {
+			attackEntry.skillArrayPassive.push(passiveSkill);
+			return passiveSkill.getSkillValue();
+		}
+	}
+	activeSkill = SkillControl.getPossessionSkill(active, SkillType.SURVIVAL);
+	if (SkillRandomizer.isSkillInvoked(active, passive, activeSkill)) {
+		if (activeSkill.isSkillDisplayable() && !!activeSkill.custom.isActive) {
+			attackEntry.skillArrayActive.push(activeSkill);
+			return activeSkill.getSkillValue();
+		}
+	}
 	return -1;
 };
