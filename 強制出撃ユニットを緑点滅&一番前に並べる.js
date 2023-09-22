@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　出撃ユニット画面で強制出撃ユニットを前方に移動&緑色で点滅 ver 1.0
+　出撃ユニット画面で強制出撃ユニットを前方に移動&緑色で点滅 ver 1.1
 
 ■作成者
 キュウブ
@@ -27,6 +27,9 @@
 設定します。主人公の数値を準主人公よりも大きくしておけば問題ありません。
 
 ■更新履歴
+ver 1.1 2023/09/23
+エンディングイベントでエラーになるバグを修正
+
 ver 1.0 2021/04/12
 
 ■対応バージョン
@@ -155,6 +158,17 @@ SRPG Studio Version:1.161
 	};
 
 	UnitProvider._isForceSortie = function (unit) {
-		return SceneManager.getActiveScene().getSortieSetting().isForceSortie(unit);
+		var i, forceSortie;
+		var mapInfo = root.getCurrentSession().getCurrentMapInfo();
+		var count = mapInfo.getForceSortieCount();
+		
+		for (i = 0; i < count; i++) {
+			forceSortie = mapInfo.getForceSortie(i);
+			if (unit === forceSortie.getUnit()) {
+				return true;
+			}
+		}
+		
+		return false;
 	};
 })();
