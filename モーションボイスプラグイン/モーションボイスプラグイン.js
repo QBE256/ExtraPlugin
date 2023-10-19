@@ -1,14 +1,12 @@
 /*
-リアル戦闘時のボイスをつける ver1.0
+リアル戦闘時のボイスをつける ver1.2
 作成者:キュウブ
-
-※モーションボイス用CSVファイル読み込みプラグインと併用してください
 
 戦闘時の各種モーションにボイスをつけます。
 魔法攻撃に関しては魔法毎にボイスを分ける事も可能です。
 
 <設定方法>
-1.CSV形式のファイルを用意します。付属のfighterSample.csvかmageSample.csvをコピペしてください。
+1.CSV形式のファイルを用意します。付属のsample.csvをコピペしてください。
 ※CSVファイルはMaterialのUnitVoiceフォルダの中にいれること。
 
 2.CSVファイルに対象ユニットのボイス情報を入力する
@@ -51,6 +49,9 @@ voiceFile: '<対象ファイル名>.csv'
 ※とりあえず試したい場合は付属のfighterSample.csvやmageSample.csvにボイスファイルを設定して使用してみてください
 
 ■更新履歴
+ver 1.2 (2023/10/20)
+いくつかバグ修正
+
 ver 1.0 (2022/2/9)
 初版
 
@@ -103,11 +104,13 @@ SRPG Studio Version:1.161
     }
     voiceIndex = root.getRandomNumber() % voiceFiles.length;
     root.getMaterialManager().voiceStop(1, false);
-    root.getMaterialManager().voicePlay(
-      DataConfig.getVoiceCategoryName(),
-      voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
-      1
-    );
+    root
+      .getMaterialManager()
+      .voicePlay(
+        DataConfig.getVoiceCategoryName(),
+        voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
+        1
+      );
   };
 
   BaseBattler._attackCount = 0;
@@ -128,18 +131,25 @@ SRPG Studio Version:1.161
     }
     voiceIndex = this._attackCount % voiceFiles.length;
     root.getMaterialManager().voiceStop(1, false);
-    root.getMaterialManager().voicePlay(
-      DataConfig.getVoiceCategoryName(),
-      voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
-      1
-    );
+    root
+      .getMaterialManager()
+      .voicePlay(
+        DataConfig.getVoiceCategoryName(),
+        voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
+        1
+      );
   };
 
   var _MagicBattler__createMagicEffect = MagicBattler._createMagicEffect;
   MagicBattler._createMagicEffect = function () {
     var voiceFiles;
     var voiceIndex = 0;
-    var weaponId = BattlerChecker.getRealBattleWeapon(this._unit).getId();
+    var weapon = BattlerChecker.getRealBattleWeapon(this._unit);
+    if (!weapon) {
+      _MagicBattler__createMagicEffect.call(this);
+      return;
+    }
+    var weaponId = weapon.getId();
     var templateVoices = getVoices(this._unit, VoiceType.ATTACK_MAGIC);
     var weaponVoices = templateVoices.filter(getCorrespondingRows, { correspondingId: weaponId });
     _MagicBattler__createMagicEffect.call(this);
@@ -152,11 +162,13 @@ SRPG Studio Version:1.161
     }
     voiceIndex = this._attackCount % voiceFiles.length;
     root.getMaterialManager().voiceStop(1, false);
-    root.getMaterialManager().voicePlay(
-      DataConfig.getVoiceCategoryName(),
-      voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
-      1
-    );
+    root
+      .getMaterialManager()
+      .voicePlay(
+        DataConfig.getVoiceCategoryName(),
+        voiceFiles[voiceIndex] + "." + getVoiceExtension(DataConfig.getVoiceExtIndex()),
+        1
+      );
     this._attackCount++;
   };
 })();
