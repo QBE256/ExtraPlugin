@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　拠点クエスト一覧を階層化する ver 1.1
+　拠点クエスト一覧を階層化する ver 1.2
 
 ■作成者
 キュウブ
@@ -44,6 +44,9 @@ directory: {
 仕様上、"RootDirectory"というグループ名だけは設定できません。
 
 ■更新履歴
+ver 1.2 2023/11/01
+ポリフィルの漏れを修正
+
 ver 1.1 2023/02/13
 ポリフィルの漏れを修正
 
@@ -51,7 +54,7 @@ ver 1.0 2023/02/13
 公開
 
 ■対応バージョン
-SRPG Studio Version:1.161
+SRPG Studio Version:1.287
 
 ■規約
 ・利用はSRPG Studioを使ったゲームに限ります。
@@ -63,11 +66,11 @@ SRPG Studio Version:1.161
 
 --------------------------------------------------------------------------*/
 
-(function(){
+(function () {
   var ROOT_DIRECTORY_NAME = "RootDirectory";
 
   var _StructureBuilder_buildListEntry = StructureBuilder.buildListEntry;
-  StructureBuilder.buildListEntry = function() {
+  StructureBuilder.buildListEntry = function () {
     var buildList = _StructureBuilder_buildListEntry.apply(this, arguments);
     buildList.directory = {
       isDirectory: false,
@@ -79,12 +82,12 @@ SRPG Studio Version:1.161
 
   QuestScreen._groupingQuests = [];
   var _QuestScreen__prepareScreenMemberData = QuestScreen._prepareScreenMemberData;
-  QuestScreen._prepareScreenMemberData = function(screenParam) {
+  QuestScreen._prepareScreenMemberData = function (screenParam) {
     _QuestScreen__prepareScreenMemberData.apply(this, arguments);
     this._groupingQuests = [];
   };
 
-  QuestScreen._getQuestArray = function() {
+  QuestScreen._getQuestArray = function () {
     var groupingQuestkeys;
     var showQuests = [];
     var quests = root.getBaseData().getRestQuestList();
@@ -97,7 +100,7 @@ SRPG Studio Version:1.161
       if (!quest.isQuestDisplayable()) {
         continue;
       }
-      if (typeof quest.custom.directory !== 'object') {
+      if (typeof quest.custom.directory !== "object") {
         directoryName = ROOT_DIRECTORY_NAME;
       } else {
         directoryName = quest.custom.directory.name;
@@ -108,13 +111,13 @@ SRPG Studio Version:1.161
       this._groupingQuests[directoryName].push(quest);
     }
 
-    var groupingQuestkeys = Object.keys(this._groupingQuests).map(function(key){
+    var groupingQuestkeys = Object.keys(this._groupingQuests).map(function (key) {
       return key;
     });
-    
-    groupingQuestkeys.forEach(function(key){
+
+    groupingQuestkeys.forEach(function (key) {
       if (key === ROOT_DIRECTORY_NAME) {
-        that._groupingQuests[key].forEach(function(quest){
+        that._groupingQuests[key].forEach(function (quest) {
           var entry = StructureBuilder.buildListEntry();
           entry.isAvailable = quest.isQuestAvailable();
           entry.isVisible = entry.isAvailable || !quest.isPrivateQuest();
@@ -143,7 +146,7 @@ SRPG Studio Version:1.161
   QuestListScrollbar._directoryStatuses = [];
 
   var _QuestListScrollbar_drawScrollContent = QuestListScrollbar.drawScrollContent;
-  QuestListScrollbar.drawScrollContent = function(x, y, object, isSelect, index) {
+  QuestListScrollbar.drawScrollContent = function (x, y, object, isSelect, index) {
     if (object.directory.isDirectory) {
       var length = this._getTextLength();
       var textui = this.getParentTextUI();
@@ -156,39 +159,39 @@ SRPG Studio Version:1.161
     }
   };
 
-  QuestListScrollbar.drawScrollbar = function(xStart, yStart) {
+  QuestListScrollbar.drawScrollbar = function (xStart, yStart) {
     var i, j, x, y, isSelect, scrollableData, underDirectoryCorrection;
     var isLast = false;
     var objectCount = this.getObjectCount();
     var width = this._objectWidth + this.getSpaceX();
     var height = this._objectHeight + this.getSpaceY();
-    var index = (this._yScroll * this._col) + this._xScroll;
-    
+    var index = this._yScroll * this._col + this._xScroll;
+
     xStart += this.getScrollXPadding();
     yStart += this.getScrollYPadding();
-    
+
     this.xRendering = xStart;
     this.yRendering = yStart;
     MouseControl.saveRenderingPos(this);
-    
+
     for (i = 0; i < this._rowCount; i++) {
-      y = yStart + (i * height);
+      y = yStart + i * height;
       underDirectoryCorrection = this._objectArray[index].isUnderDirectory ? 12 : 0;
       this.drawDescriptionLine(xStart + underDirectoryCorrection, y);
-      
+
       for (j = 0; j < this._col; j++) {
-        x = xStart + (j * width);
-        
+        x = xStart + j * width;
+
         isSelect = index === this.getIndex();
         this.drawScrollContent(x + underDirectoryCorrection, y, this._objectArray[index], isSelect, index);
         if (isSelect && this._isActive) {
           this.drawCursor(x, y, true);
         }
-        
+
         if (index === this._forceSelectIndex) {
           this.drawCursor(x, y, false);
         }
-        
+
         if (++index === objectCount) {
           isLast = true;
           break;
@@ -198,16 +201,26 @@ SRPG Studio Version:1.161
         break;
       }
     }
-    
+
     if (this._isActive) {
       scrollableData = this.getScrollableData();
-      this._edgeCursor.drawHorzCursor(xStart - this.getScrollXPadding(), yStart - this.getScrollYPadding(), scrollableData.isLeft, scrollableData.isRight);
-      this._edgeCursor.drawVertCursor(xStart - this.getScrollXPadding(), yStart - this.getScrollYPadding(), scrollableData.isTop, scrollableData.isBottom);
+      this._edgeCursor.drawHorzCursor(
+        xStart - this.getScrollXPadding(),
+        yStart - this.getScrollYPadding(),
+        scrollableData.isLeft,
+        scrollableData.isRight
+      );
+      this._edgeCursor.drawVertCursor(
+        xStart - this.getScrollXPadding(),
+        yStart - this.getScrollYPadding(),
+        scrollableData.isTop,
+        scrollableData.isBottom
+      );
     }
   };
 
   var _QuestScreen__startQuestEvent = QuestScreen._startQuestEvent;
-  QuestScreen._startQuestEvent = function() {
+  QuestScreen._startQuestEvent = function () {
     var entry = this.getCurrentQuestEntry();
     if (entry.directory.isDirectory) {
       this._changeExpandQuests();
@@ -216,15 +229,15 @@ SRPG Studio Version:1.161
     }
   };
 
-  QuestScreen._changeExpandQuests = function() {
+  QuestScreen._changeExpandQuests = function () {
     var directoryEntry = this.getCurrentQuestEntry();
     var directoryIndex = this._questListWindow.getQuestListIndex();
-    var key =  directoryEntry.name;
+    var key = directoryEntry.name;
     var that = this;
     directoryEntry.directory.isExpand = !directoryEntry.directory.isExpand;
     if (directoryEntry.directory.isExpand) {
       var insertedIndex = directoryIndex + 1;
-      this._groupingQuests[key].forEach(function(quest){
+      this._groupingQuests[key].forEach(function (quest) {
         var entry = StructureBuilder.buildListEntry();
         entry.isAvailable = quest.isQuestAvailable();
         entry.isVisible = entry.isAvailable || !quest.isPrivateQuest();
@@ -239,7 +252,7 @@ SRPG Studio Version:1.161
         insertedIndex++;
       });
     } else {
-      var closedQuests = this._groupingQuests[key].filter(function(quest){
+      var closedQuests = this._groupingQuests[key].filter(function (quest) {
         return quest.isQuestDisplayable();
       });
       var deletedFrontIndex = directoryIndex + 1;
@@ -251,17 +264,17 @@ SRPG Studio Version:1.161
   };
 
   var _QuestScreen_drawScreenBottomText = QuestScreen.drawScreenBottomText;
-  QuestScreen.drawScreenBottomText = function(textui) {
+  QuestScreen.drawScreenBottomText = function (textui) {
     var entry = this.getCurrentQuestEntry();
     if (entry.directory.isDirectory) {
-      TextRenderer.drawScreenBottomText('', textui);
+      TextRenderer.drawScreenBottomText("", textui);
     } else {
       _QuestScreen_drawScreenBottomText.apply(this, arguments);
     }
   };
 
   var _QuestDetailWindow_setQuestData = QuestDetailWindow.setQuestData;
-  QuestDetailWindow.setQuestData = function(quest) {
+  QuestDetailWindow.setQuestData = function (quest) {
     if (!quest) {
       this._quest = null;
       this._picCache = null;
@@ -271,24 +284,22 @@ SRPG Studio Version:1.161
     }
   };
 
-  QuestDetailWindow.drawWindowContent = function(x, y) {
+  QuestDetailWindow.drawWindowContent = function (x, y) {
     var isPrivate = false;
-    
+
     if (this._quest === null) {
       // クエスト情報そのものが存在しない場合はunknownが表示されるが、何も表示しないように変更
       // このif文は元々は異常なクエストデータに対してエラーをはかないように処置したものであると考えられる。
       // したがって、この仕様変更は正しくデータが設定されている作品には影響が無いと思われる。
       return;
-    }
-    else if (!this._quest.isQuestAvailable()) {
+    } else if (!this._quest.isQuestAvailable()) {
       isPrivate = this._quest.isPrivateQuest();
     }
-    
+
     if (isPrivate) {
       this._drawEmptyMap(x, y);
       this._drawEmptySentence(x, y);
-    }
-    else {
+    } else {
       this._drawThumbnailMap(x, y);
       this._drawSentenceZone(x, y);
     }
@@ -484,5 +495,63 @@ if (!Array.prototype.filter) {
 
     res.length = c; // shrink down array to proper size
     return res;
+  };
+}
+
+// Object.keys poliyfil
+// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+if (!Object.keys) {
+  Object.keys = (function () {
+    var hasOwnProperty = Object.prototype.hasOwnProperty,
+      hasDontEnumBug = !{ toString: null }.propertyIsEnumerable("toString"),
+      dontEnums = [
+        "toString",
+        "toLocaleString",
+        "valueOf",
+        "hasOwnProperty",
+        "isPrototypeOf",
+        "propertyIsEnumerable",
+        "constructor"
+      ],
+      dontEnumsLength = dontEnums.length;
+
+    return function (obj) {
+      if (typeof obj !== "function" && (typeof obj !== "object" || obj === null)) {
+        throw new TypeError("Object.keys called on non-object");
+        return;
+      }
+
+      var result = [],
+        prop,
+        i;
+
+      for (prop in obj) {
+        if (hasOwnProperty.call(obj, prop)) {
+          result.push(prop);
+        }
+      }
+
+      if (hasDontEnumBug) {
+        for (i = 0; i < dontEnumsLength; i++) {
+          if (hasOwnProperty.call(obj, dontEnums[i])) {
+            result.push(dontEnums[i]);
+          }
+        }
+      }
+      return result;
+    };
+  })();
+}
+
+// Object.entries poliyfil
+// From https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Object/entries#polyfill
+if (!Object.entries) {
+  Object.entries = function (obj) {
+    var ownProps = Object.keys(obj),
+      i = ownProps.length,
+      resArray = new Array(i); // preallocate the Array
+    while (i--) resArray[i] = [ownProps[i], obj[ownProps[i]]];
+
+    return resArray;
   };
 }
