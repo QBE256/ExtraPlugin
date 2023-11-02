@@ -10,26 +10,28 @@
 ■使い方
 接近攻撃用のモーションを作った後は
 詳細情報->カスパラから
-directBowAttacks: [
-	{
-		motionId: <接近時の通常攻撃用のモーションID>,
-		attackType: MotionArcher.BOW
-	},
-  {
-		motionId: <接近時の通常攻撃用の2撃目のモーションID>,
-		attackType: MotionArcher.BOW2
-	},
-	{
-		motionId: <接近時のクリティカル攻撃用のモーションID>,
-		attackType: MotionArcher.CRITICALBOW
-	},
-	{
-		motionId: <接近時のとどめのクリティカル攻撃用のモーションID>,
-		attackType: MotionArcher.CRITICALFINISH
-	}
-]
+{
+  directBowAttacks: [
+    {
+      motionId: <接近時の通常攻撃用のモーションID>,
+      attackType: MotionArcher.BOW
+	  },
+    {
+      motionId: <接近時の通常攻撃用の2撃目のモーションID>,
+      attackType: MotionArcher.BOW2
+    },
+    {
+      motionId: <接近時のクリティカル攻撃用のモーションID>,
+      attackType: MotionArcher.CRITICALBOW
+    },
+    {
+      motionId: <接近時のとどめのクリティカル攻撃用のモーションID>,
+      attackType: MotionArcher.CRITICALFINISH
+    }
+  ]
+}
 
-を設定する。
+と設定する。
 クリティカル用のモーションを用意していない場合は
 全ての要素に通常攻撃用のモーションIDを指定しておけばOK
 
