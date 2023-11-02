@@ -37,28 +37,28 @@
 
 例.モーションID:100を接近通常攻撃(1,2回目共に同じモーション)、モーションID:101を接近クリティカル(とどめとクリティカル共に同じモーション)としたい時
 directBowAttacks: [
-	{
-		motionId: 100,
-		attackType: MotionArcher.BOW
-	},
   {
-		motionId: 100,
-		attackType: MotionArcher.BOW2
-	},
-	{
-		motionId: 101,
-		attackType: MotionArcher.CRITICALBOW
-	},
-	{
-		motionId: 101,
-		attackType: MotionArcher.CRITICALFINISH
-	}
+    motionId: 100,
+    attackType: MotionArcher.BOW
+  },
+  {
+    motionId: 100,
+    attackType: MotionArcher.BOW2
+  },
+  {
+    motionId: 101,
+    attackType: MotionArcher.CRITICALBOW
+  },
+  {
+    motionId: 101,
+    attackType: MotionArcher.CRITICALFINISH
+  }
 ]
 
 
 ■更新履歴
 ver2.0 2023/11/3
-最新版対応
+最新版対応,パラメータ名変更
 ver1.0 2017/10/29
 初版
 
