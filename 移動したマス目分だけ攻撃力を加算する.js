@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-移動したマス目分だけ攻撃力を加算する ver 1.1
+移動したマス目分だけ攻撃力を加算する ver 1.3
 
 ■作成者
 キュウブ
@@ -28,6 +28,12 @@ moveBonusCorrection: 3
 moveBonusCorrection: -1
 
 ■更新履歴
+ver 1.3 2024/04/09
+再移動したときに次の戦闘まで加算ボーナスが永続してしまう不具合を修正
+
+ver 1.2 2024/04/08
+CPUに効果が適用されない不具合を修正
+
 ver 1.1 2024/04/07
 行動キャンセル時のエラーを解消
 武器ウィンドウに表記を追加
@@ -168,25 +174,19 @@ SRPG Studio Version:1.287
     return false;
   };
 
-  var _MapSequenceArea__doCancelAction = MapSequenceArea._doCancelAction;
-  MapSequenceArea._doCancelAction = function () {
-    if (!!this._targetUnit) {
+  var _MapSequenceCommand_moveSequence = MapSequenceCommand.moveSequence;
+  MapSequenceCommand.moveSequence = function () {
+    var result = _MapSequenceCommand_moveSequence.apply(this, arguments);
+    var isEndCommand = result === MapSequenceCommandResult.CANCEL || result === MapSequenceCommandResult.COMPLETE;
+    if (!!isEndCommand && !!this._targetUnit) {
       delete this._targetUnit.custom.movementValue;
     }
-    _MapSequenceArea__doCancelAction.apply(this, arguments);
-  };
-
-  var _MapSequenceCommand__doLastAction = MapSequenceCommand._doLastAction;
-  MapSequenceCommand._doLastAction = function () {
-    if (!!this._targetUnit) {
-      delete this._targetUnit.custom.movementValue;
-    }
-    return _MapSequenceCommand__doLastAction.apply(this, arguments);
+    return result;
   };
 
   MoveAutoAction.enterAutoAction = function () {
     var isSkipMode = this.isSkipMode();
-    if (ItemControl.hasMoveBonusWeapon(this._targetUnit)) {
+    if (ItemControl.hasMoveBonusWeapon(this._unit)) {
       this._unit.custom.movementValue = this._moveCource.length;
     }
     if (isSkipMode) {
