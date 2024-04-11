@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-移動したマス目分だけ攻撃力を加算する ver 1.3
+移動したマス目分だけ攻撃力を加算する ver 1.4
 
 ■作成者
 キュウブ
@@ -28,6 +28,10 @@ moveBonusCorrection: 3
 moveBonusCorrection: -1
 
 ■更新履歴
+ver 1.4 2024/04/11
+CPUが移動するだけで攻撃に転じなかった時に
+次の戦闘まで加算ボーナスが永続してしまう不具合を修正
+
 ver 1.3 2024/04/09
 再移動したときに次の戦闘まで加算ボーナスが永続してしまう不具合を修正
 
@@ -54,7 +58,6 @@ SRPG Studio Version:1.287
 ・SRPG Studio利用規約は遵守してください。
 
 --------------------------------------------------------------------------*/
-
 (function () {
   ItemControl.hasMoveBonusWeapon = function (unit) {
     var count;
@@ -168,7 +171,11 @@ SRPG Studio Version:1.287
       if (ItemControl.hasMoveBonusWeapon(this._targetUnit)) {
         this._targetUnit.custom.movementValue = cource.length;
       }
-      this._simulateMove.startMove(this._targetUnit, cource);
+      if (!!this._movementLocus) {
+        this._simulateMove.startMove(this._targetUnit, this._movementLocus.cource);
+      } else {
+        this._simulateMove.startMove(this._targetUnit, cource);
+      }
     }
 
     return false;
@@ -199,10 +206,24 @@ SRPG Studio Version:1.287
     return EnterResult.OK;
   };
 
-  var _WaitAutoAction_setAutoActionInfo = WaitAutoAction.setAutoActionInfo;
-  WaitAutoAction.setAutoActionInfo = function (unit, combination) {
-    delete unit.custom.movementValue;
-    _WaitAutoAction_setAutoActionInfo.apply(this, arguments);
+  var _WaitAutoAction_enterAutoAction = WaitAutoAction.enterAutoAction;
+  WaitAutoAction.enterAutoAction = function () {
+    var enterResult = _WaitAutoAction_enterAutoAction.apply(this, arguments);
+    if (!enterResult && !!this._unit) {
+      delete this._unit.custom.movementValue;
+    }
+    return enterResult;
+  };
+
+  // デフォルトでは必要ないが、待機直後に移動を行うようなロジックが追加された事を考慮して、
+  // 待機直後処理の最後にも移動ボーナスのカスタムパラメータを削除する処理を入れる。
+  var _WaitAutoAction_moveAutoAction = WaitAutoAction.moveAutoAction;
+  WaitAutoAction.moveAutoAction = function () {
+    var moveResult = _WaitAutoAction_moveAutoAction.apply(this, arguments);
+    if (moveResult === MoveResult.END) {
+      delete this._unit.custom.movementValue;
+    }
+    return moveResult;
   };
 
   var _AbilityCalculator_getPower = AbilityCalculator.getPower;
