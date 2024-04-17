@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　スキル:リバイバル(復活) ver 1.1
+　スキル:リバイバル(復活) ver 1.2
 
 ■作成者
 キュウブ
@@ -28,6 +28,9 @@ maxActivateCountは必ず設定してもらう必要があります。
 スキルを所持している限り、必ず発動します。
 
 ■更新履歴
+ver 1.2 (2024/04/18)
+スリップダメージで死亡した場合に、スキル発動タイミングがズレたり台詞が表示されなくなるバグを修正
+
 ver 1.1 (2022/01/13)
 ユニットのHPが0でなくても発動してしまうバグを修正
 
@@ -48,209 +51,211 @@ SRPG Studio Version:1.161
 
 --------------------------------------------------------------------------*/
 var RevivalEventControl = {
-	_revivalUnit: null,
-	_activateSkill: null,
+  _revivalUnit: null,
+  _activateSkill: null,
 
-	setRevivalUnit: function(unit) {
-		var skill = SkillControl.getPossessionCustomSkill(unit, 'Revival');
-		if (!skill) {
-			return;
-		}
-		if (typeof unit.custom.revivalSkillActivateCount !== 'number') {
-			unit.custom.revivalSkillActivateCount = 0;
-		}
-		if (unit.custom.revivalSkillActivateCount >= skill.custom.maxActivateCount) {
-			return;
-		}
-		unit.custom.revivalSkillActivateCount++;
-		this._activateSkill = skill;
-		this._revivalUnit = unit;
-	},
+  setRevivalUnit: function (unit) {
+    var skill = SkillControl.getPossessionCustomSkill(unit, "Revival");
+    if (!skill) {
+      return;
+    }
+    if (typeof unit.custom.revivalSkillActivateCount !== "number") {
+      unit.custom.revivalSkillActivateCount = 0;
+    }
+    if (unit.custom.revivalSkillActivateCount >= skill.custom.maxActivateCount) {
+      return;
+    }
+    unit.custom.revivalSkillActivateCount++;
+    this._activateSkill = skill;
+    this._revivalUnit = unit;
+  },
 
-	getRevivalUnit: function() {
-		return this._revivalUnit;
-	},
+  getRevivalUnit: function () {
+    return this._revivalUnit;
+  },
 
-	resetRevivalSetting: function() {
-		this._revivalUnit = null;
-		this._activateSkill = null;
-	},
+  resetRevivalSetting: function () {
+    this._revivalUnit = null;
+    this._activateSkill = null;
+  },
 
-	getActivateSkill: function() {
-		return this._activateSkill;
-	},
+  getActivateSkill: function () {
+    return this._activateSkill;
+  },
 
-	resetActivateCount: function() {
-		var unit;
-		var unitList = PlayerList.getAliveDefaultList();
-		var unitListCount = unitList.getCount();
+  resetActivateCount: function () {
+    var unit;
+    var unitList = PlayerList.getAliveDefaultList();
+    var unitListCount = unitList.getCount();
 
-		for (var index = 0; index < unitListCount; index++) {
-			unit = unitList.getData(index);
-			if (unit) {
-				unit.custom.revivalSkillActivateCount = 0;
-			}
-		}
-	}
+    for (var index = 0; index < unitListCount; index++) {
+      unit = unitList.getData(index);
+      if (unit) {
+        unit.custom.revivalSkillActivateCount = 0;
+      }
+    }
+  }
 };
 
-(function(){
+(function () {
+  var _UnitDeathFlowEntry__completeMemberData = UnitDeathFlowEntry._completeMemberData;
+  UnitDeathFlowEntry._completeMemberData = function (coreAttack) {
+    // ユニットが死亡していないなどの場合、本処理は行わず
+    // 元のUnitDeathFlowEntry._completeMemberDataに移行
+    if (!coreAttack.getAttackFlow().isBattleUnitLosted()) {
+      return _UnitDeathFlowEntry__completeMemberData.call(this, coreAttack);
+    }
+    if (DamageControl.isSyncope(this._passiveUnit)) {
+      return _UnitDeathFlowEntry__completeMemberData.call(this, coreAttack);
+    }
 
-	var _UnitDeathFlowEntry__completeMemberData = UnitDeathFlowEntry._completeMemberData;
-	UnitDeathFlowEntry._completeMemberData = function(coreAttack) {
-		// ユニットが死亡していないなどの場合、本処理は行わず
-		// 元のUnitDeathFlowEntry._completeMemberDataに移行
-		if (!coreAttack.getAttackFlow().isBattleUnitLosted()) {
-			return _UnitDeathFlowEntry__completeMemberData.call(this, coreAttack);
-		}
-		if (DamageControl.isSyncope(this._passiveUnit)) {
-			return _UnitDeathFlowEntry__completeMemberData.call(this, coreAttack);
-		}
+    RevivalEventControl.setRevivalUnit(this._passiveUnit);
+    if (RevivalEventControl.getRevivalUnit()) {
+      // リーダーユニットが倒れた場合ゲームオーバーになってしまうのを阻止するため、この時点で復活させる
+      this._passiveUnit.setAliveState(AliveType.ALIVE);
+      return EnterResult.NOTENTER;
+    }
+    return _UnitDeathFlowEntry__completeMemberData.call(this, coreAttack);
+  };
 
-		RevivalEventControl.setRevivalUnit(this._passiveUnit);
-		if (RevivalEventControl.getRevivalUnit()) {
-			// リーダーユニットが倒れた場合ゲームオーバーになってしまうのを阻止するため、この時点で復活させる
-			this._passiveUnit.setAliveState(AliveType.ALIVE);
-			return EnterResult.NOTENTER;
-		}
-		return _UnitDeathFlowEntry__completeMemberData.call(this, coreAttack);
-	};
+  var _LoserMessageFlowEntry__completeMemberData = LoserMessageFlowEntry._completeMemberData;
+  LoserMessageFlowEntry._completeMemberData = function (preAttack) {
+    // ユニットが死亡していない場合、本処理は行わず
+    // 元のLoserMessageFlowEntry._completeMemberDataに移行
+    if (preAttack.getPassiveUnit().getHp() !== 0) {
+      return _LoserMessageFlowEntry__completeMemberData.call(this, preAttack);
+    }
+    // UnitDeathFlowEntryで既に蘇生ユニットが設定されている可能性があるので確認
+    if (RevivalEventControl.getRevivalUnit()) {
+      return _LoserMessageFlowEntry__completeMemberData.call(this, preAttack);
+    }
+    // UnitDeathFlowEntryをスキップしている可能性があるので、ここでもう一度蘇生ユニットを設定
+    RevivalEventControl.setRevivalUnit(preAttack.getPassiveUnit());
+    if (RevivalEventControl.getRevivalUnit()) {
+      // リーダーユニットが倒れた場合ゲームオーバーになってしまうのを阻止するため、この時点で復活させる
+      preAttack.getPassiveUnit().setAliveState(AliveType.ALIVE);
+      return EnterResult.NOTENTER;
+    }
+    return _LoserMessageFlowEntry__completeMemberData.call(this, preAttack);
+  };
 
-	var _LoserMessageFlowEntry__completeMemberData = LoserMessageFlowEntry._completeMemberData;
-	LoserMessageFlowEntry._completeMemberData = function(preAttack) {
-		// ユニットが死亡していない場合、本処理は行わず
-		// 元のLoserMessageFlowEntry._completeMemberDataに移行
-		if (preAttack.getPassiveUnit().getHp() !== 0) {
-			return _LoserMessageFlowEntry__completeMemberData.call(this, preAttack);
-		}
-		// UnitDeathFlowEntryで既に蘇生ユニットが設定されている可能性があるので確認
-		if (RevivalEventControl.getRevivalUnit()) {
-			return _LoserMessageFlowEntry__completeMemberData.call(this, preAttack);
-		}
-		// UnitDeathFlowEntryをスキップしている可能性があるので、ここでもう一度蘇生ユニットを設定
-		RevivalEventControl.setRevivalUnit(preAttack.getPassiveUnit());
-		if (RevivalEventControl.getRevivalUnit()) {
-			// リーダーユニットが倒れた場合ゲームオーバーになってしまうのを阻止するため、この時点で復活させる
-			preAttack.getPassiveUnit().setAliveState(AliveType.ALIVE);
-			return EnterResult.NOTENTER;
-		}
-		return _LoserMessageFlowEntry__completeMemberData.call(this, preAttack);
-	};
+  var _MapSequenceCommand__pushFlowEntries = MapSequenceCommand._pushFlowEntries;
+  MapSequenceCommand._pushFlowEntries = function (straightFlow) {
+    straightFlow.pushFlowEntry(RevivalFlowEntry);
+    _MapSequenceCommand__pushFlowEntries.call(this, straightFlow);
+  };
 
-	var _MapSequenceCommand__pushFlowEntries = MapSequenceCommand._pushFlowEntries;
-	MapSequenceCommand._pushFlowEntries = function(straightFlow) {
-		straightFlow.pushFlowEntry(RevivalFlowEntry);
-		_MapSequenceCommand__pushFlowEntries.call(this, straightFlow);
-	};
+  var _WaitAutoAction__pushFlowEntries = WaitAutoAction._pushFlowEntries;
+  WaitAutoAction._pushFlowEntries = function (straightFlow) {
+    straightFlow.pushFlowEntry(RevivalFlowEntry);
+    _WaitAutoAction__pushFlowEntries.call(this, straightFlow);
+  };
 
-	var _WaitAutoAction__pushFlowEntries = WaitAutoAction._pushFlowEntries;
-	WaitAutoAction._pushFlowEntries = function(straightFlow) {
-		straightFlow.pushFlowEntry(RevivalFlowEntry);
-		_WaitAutoAction__pushFlowEntries.call(this, straightFlow);
-	};
+  var RevivalFlowMode = {
+    SHOW_SKILL_NAME: 0,
+    REVIVAL: 1
+  };
 
-	var RevivalFlowMode = {
-		SHOW_SKILL_NAME: 0,
-		REVIVAL: 1
-	};
+  var RevivalFlowEntry = defineObject(BaseFlowEntry, {
+    _revivalUnits: null,
+    _activateSkill: null,
+    _playerTurn: null,
+    _dynamicEvent: null,
+    _showSkillNameCounter: null,
 
-	var RevivalFlowEntry = defineObject(BaseFlowEntry,
-	{
-		_revivalUnits: null,
-		_activateSkill: null,
-		_playerTurn: null,
-		_dynamicEvent: null,
-		_showSkillNameCounter: null,
-	
-		enterFlowEntry: function(playerTurn) {
-			this._prepareMemberData(playerTurn);
-			return this._completeMemberData(playerTurn);
-		},
-	
-		moveFlowEntry: function() {
-			var mode = this.getCycleMode();
-			var result = MoveResult.END;
+    enterFlowEntry: function (playerTurn) {
+      this._prepareMemberData(playerTurn);
+      return this._completeMemberData(playerTurn);
+    },
 
-			if (mode === RevivalFlowMode.SHOW_SKILL_NAME) {
-				result = this._moveShowSkillName();
-			}
-			else if (mode === RevivalFlowMode.REVIVAL) {
-				result = this._moveRevival();
-			}
-			return result;
-		},
-	
-		drawFlowEntry: function() {
-			var mode = this.getCycleMode();
+    moveFlowEntry: function () {
+      var mode = this.getCycleMode();
+      var result = MoveResult.END;
 
-			if (mode === RevivalFlowMode.SHOW_SKILL_NAME) {
-				result = this._drawShowSkillName();
-			}
-		},
+      if (mode === RevivalFlowMode.SHOW_SKILL_NAME) {
+        result = this._moveShowSkillName();
+      } else if (mode === RevivalFlowMode.REVIVAL) {
+        result = this._moveRevival();
+      }
+      return result;
+    },
 
-		_moveShowSkillName: function() {
-			var generator;
+    drawFlowEntry: function () {
+      var mode = this.getCycleMode();
 
-			if (this._showSkillNameCounter.moveCycleCounter() !== MoveResult.CONTINUE) {
-				this._revivalUnit.setInvisible(false);
-				generator = this._dynamicEvent.acquireEventGenerator();
-				generator.hpRecovery(this._revivalUnit, this._activateSkill.getEasyAnime(), 0, RecoveryType.MAX, false);
-				this._dynamicEvent.executeDynamicEvent();
-				this.changeCycleMode(RevivalFlowMode.REVIVAL);
-			}
-			return MoveResult.CONTINUE;
-		},
+      if (mode === RevivalFlowMode.SHOW_SKILL_NAME) {
+        result = this._drawShowSkillName();
+      }
+    },
 
-		_drawShowSkillName: function() {
-			var x, y;
-			var textui = root.queryTextUI('itemuse_title');
-			var color = textui.getColor();
-			var font = textui.getFont();
-			var pic = textui.getUIImage();
-			var text = this._activateSkill.getName();
-			var width = (TitleRenderer.getTitlePartsCount(text, font) + 2) * TitleRenderer.getTitlePartsWidth();
-		
-			x = LayoutControl.getUnitCenterX(this._revivalUnit, width, 0);
-			y = LayoutControl.getUnitBaseY(this._revivalUnit, TitleRenderer.getTitlePartsHeight()) - 20;
-		
-			TextRenderer.drawTitleText(x, y, text, color, font, TextFormat.CENTER, pic);
-		},
+    _moveShowSkillName: function () {
+      var generator;
 
-		_moveRevival: function() {
-			if (this._dynamicEvent.moveDynamicEvent() !== MoveResult.CONTINUE) {
-				return MoveResult.END;
-			}
-			return MoveResult.CONTINUE;
-		},
+      if (this._showSkillNameCounter.moveCycleCounter() !== MoveResult.CONTINUE) {
+        this._revivalUnit.setInvisible(false);
+        generator = this._dynamicEvent.acquireEventGenerator();
+        generator.hpRecovery(this._revivalUnit, this._activateSkill.getEasyAnime(), 0, RecoveryType.MAX, false);
+        this._dynamicEvent.executeDynamicEvent();
+        this.changeCycleMode(RevivalFlowMode.REVIVAL);
+      }
+      return MoveResult.CONTINUE;
+    },
 
-		_drawAnime: function() {
-			this._dynamicEvent.drawDynamicAnime();
-		},
-	
-		_prepareMemberData: function(playerTurn) {
-			this._playerTurn = playerTurn;
-			this._revivalUnit = RevivalEventControl.getRevivalUnit();
-			this._activateSkill = RevivalEventControl.getActivateSkill();
-			this._dynamicEvent = createObject(DynamicEvent);
-			this._showSkillNameCounter = createObject(CycleCounter);
-		},
-	
-		_completeMemberData: function(playerTurn) {
-			var generator, anime, posAnime;
+    _drawShowSkillName: function () {
+      var x, y;
+      var textui = root.queryTextUI("itemuse_title");
+      var color = textui.getColor();
+      var font = textui.getFont();
+      var pic = textui.getUIImage();
+      var text = this._activateSkill.getName();
+      var width = (TitleRenderer.getTitlePartsCount(text, font) + 2) * TitleRenderer.getTitlePartsWidth();
 
-			if (!this._revivalUnit || !this._activateSkill) {
-				RevivalEventControl.resetRevivalSetting();
-				return EnterResult.NOTENTER;
-			}
-			this._showSkillNameCounter.setCounterInfo(36);
-			generator = root.getEventGenerator();
-			generator.locationFocus(this._revivalUnit.getMapX(), this._revivalUnit.getMapY(), true);
-			generator.execute();
-			this.changeCycleMode(RevivalFlowMode.SHOW_SKILL_NAME);
-			MediaControl.soundDirect('skillinvocation');
-			RevivalEventControl.resetRevivalSetting();
-			return EnterResult.OK;
-		}
-	}
-	);
+      x = LayoutControl.getUnitCenterX(this._revivalUnit, width, 0);
+      y = LayoutControl.getUnitBaseY(this._revivalUnit, TitleRenderer.getTitlePartsHeight()) - 20;
+
+      TextRenderer.drawTitleText(x, y, text, color, font, TextFormat.CENTER, pic);
+    },
+
+    _moveRevival: function () {
+      if (this._dynamicEvent.moveDynamicEvent() !== MoveResult.CONTINUE) {
+        return MoveResult.END;
+      }
+      return MoveResult.CONTINUE;
+    },
+
+    _drawAnime: function () {
+      this._dynamicEvent.drawDynamicAnime();
+    },
+
+    _prepareMemberData: function (playerTurn) {
+      this._playerTurn = playerTurn;
+      this._revivalUnit = RevivalEventControl.getRevivalUnit();
+      this._activateSkill = RevivalEventControl.getActivateSkill();
+      this._dynamicEvent = createObject(DynamicEvent);
+      this._showSkillNameCounter = createObject(CycleCounter);
+    },
+
+    _completeMemberData: function (playerTurn) {
+      var generator, anime, posAnime;
+
+      if (!this._revivalUnit || !this._activateSkill) {
+        RevivalEventControl.resetRevivalSetting();
+        return EnterResult.NOTENTER;
+      }
+      this._showSkillNameCounter.setCounterInfo(36);
+      generator = root.getEventGenerator();
+      generator.locationFocus(this._revivalUnit.getMapX(), this._revivalUnit.getMapY(), true);
+      generator.execute();
+      this.changeCycleMode(RevivalFlowMode.SHOW_SKILL_NAME);
+      MediaControl.soundDirect("skillinvocation");
+      RevivalEventControl.resetRevivalSetting();
+      return EnterResult.OK;
+    }
+  });
+
+  var _DamageHitFlow__pushFlowEntries = DamageHitFlow._pushFlowEntries;
+  DamageHitFlow._pushFlowEntries = function (straightFlow) {
+    _DamageHitFlow__pushFlowEntries.call(this, straightFlow);
+    straightFlow.pushFlowEntry(RevivalFlowEntry);
+  };
 })();
