@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　戦闘後に自分か相手のHPを変動させるスキル ver 2.0
+　戦闘後に自分か相手のHPを変動させるスキル ver 2.1
 
 ■作成者
 キュウブ
@@ -7,7 +7,7 @@
 ■概要
 戦闘後に自分のHPを回復、あるいは敵のHPを削るスキルを設定できます。
 
-ver2.0にてPerimeterAttack(自分の周囲にいる敵のHPを削るスキル)を追加しました。
+※ ver2.0にてPerimeterAttack(自分の周囲にいる敵のHPを削るスキル)を追加しました。
 ただし他2種のスキルと異なり、
 ・先制戦闘時しか発動できない
 ・とどめを刺すことはできない
@@ -48,13 +48,13 @@ recoveryHpAfterBattle: {
   }
 }
 
-■■ 敵にダメージを与えるスキル
+■■ 敵にダメージ、もしくはステートを与えるスキル
 1.カスタムスキルにカスタムキーワード"Pursuit"と設定
 2.以下のようなカスタムパラメータを設定
 
 pursuit: {
-  type: <ダメージ量のタイプ。固定値であれば0(PursuitDamageType.FIXED),最大HP割合であれば1(PursuitDamageType.RATE)>,
-  value: <ダメージ量>,
+  type: <ダメージ量のタイプ。固定値であれば0(PursuitDamageType.FIXED),最大HP割合であれば1(PursuitDamageType.RATE)>,ステートを付与したい場合は2(PursuitDamageType.STATE)
+  value: <ダメージ量、もしくは付与したいステートID>,
   effect: {
     isRuntime: <ダメージエフェクトアニメがランタイムであればtrue,オリジナルであればfalse>,
     id: <ダメージエフェクトアニメのID>
@@ -63,6 +63,7 @@ pursuit: {
   isFastAttack: <先制でのみ発動させる場合はtrue or 後攻で発動させたい場合はfalse, どちらでも発動させたい場合はこのパラメータは記載しない事>,
   max: <ダメージ上限値, typeが1のときのみ有効。上限値が不要な場合はこのパラメータを記載する必要は無い>
 }
+※ステート付与の場合は、effect, isFinishはどんな値を入れても効果がありませんが。何かしら値を設定しておいてください。
 
 例:戦闘後敵に最大HP10%分のダメージを与えるスキル(エフェクトは炎の渦、とどめはささず最低でもHPは1残る)
 pursuit: {
@@ -83,6 +84,19 @@ pursuit: {
   effect: {
     isRuntime: true,
     id: 8
+  },
+  isFinish: false,
+  isFastAttack: true
+}
+
+例:下記の場合は、ID0のステートを付与する。（エフェクトはeffectの設定を無視してID0ステートに設定されているものになる）
+pursuit: {
+  type: PursuitDamageType.STATE,
+  value: 0,
+  max: 1,
+  effect: {
+    isRuntime: true,
+    id: 1
   },
   isFinish: false,
   isFastAttack: true
@@ -115,6 +129,11 @@ perimeterAttack: {
 }
 
 ■更新履歴
+var 2.1 2024/08/20
+・pursuitスキルのみ複数スキル発動可能なように変更
+・pursuitスキルでダメージではなくステート付与ができる設定を追加
+※pursuit以外の2種類での実装は未定となります
+
 ver 2.0 2022/06/24
 自分の周囲にいる敵のHPを削るスキルを追加
 
@@ -157,7 +176,8 @@ var RecoveryHpType = {
 
 var PursuitDamageType = {
   FIXED: 0,
-  RATE: 1
+  RATE: 1,
+  STATE: 2
 };
 
 var PerimeterAttackDamageType = {
@@ -199,13 +219,7 @@ var RecoveryHpFlowEntry = defineObject(BaseFlowEntry, {
     if (enabledEvent) {
       effect = this._getRecoveryEffect(skill);
       generator.locationFocus(unit.getMapX(), unit.getMapY(), true);
-      generator.hpRecovery(
-        unit,
-        effect,
-        this._getRecoveryValue(unit, skill),
-        RecoveryType.SPECIFY,
-        false
-      );
+      generator.hpRecovery(unit, effect, this._getRecoveryValue(unit, skill), RecoveryType.SPECIFY, false);
     }
   },
 
@@ -282,20 +296,47 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry, {
   },
 
   _setDynamicEvent: function (unit, targetUnit, generator, isFastAttack) {
-    var effect, damage, enabledEvent;
-    var skill = SkillControl.getPossessionCustomSkill(unit, "Pursuit");
-    var enabledSkill = this._enabledSkill(unit, targetUnit, skill, isFastAttack);
+    var skills = SkillControl.getDirectSkillArray(unit, SkillType.CUSTOM, "Pursuit");
+    var enabledSkills = skills
+      .map(function (skill) {
+        return skill.skill;
+      })
+      .filter(function (skill) {
+        if (!skill) {
+          return false;
+        } else if (!validatePursuitSkill(skill)) {
+          return false;
+        } else if (unit.getAliveState() !== AliveType.ALIVE) {
+          return false;
+        } else if (targetUnit.getAliveState() !== AliveType.ALIVE) {
+          return false;
+        }
 
-    if (enabledSkill) {
-      damage = this._getDamageValue(targetUnit, skill);
-      enabledEvent = damage > 0;
+        if (skill.custom.pursuit.hasOwnProperty("isFastAttack")) {
+          return skill.custom.pursuit.isFastAttack === isFastAttack;
+        } else {
+          return true;
+        }
+      });
 
-      if (enabledEvent) {
-        effect = this._getDamageEffect(skill);
-        generator.locationFocus(targetUnit.getMapX(), targetUnit.getMapY(), true);
-        generator.damageHit(targetUnit, effect, damage, DamageType.FIXED, unit, false);
+    var that = this;
+    enabledSkills.forEach(function (skill) {
+      if (skill.custom.pursuit.type === PursuitDamageType.STATE) {
+        var state = that._getState(targetUnit, skill);
+        if (!!state) {
+          generator.locationFocus(targetUnit.getMapX(), targetUnit.getMapY(), true);
+          var stateInvocation = root.createStateInvocation(state.getId(), 100, IncreaseType.INCREASE);
+          generator.unitStateAddition(targetUnit, stateInvocation, IncreaseType.INCREASE, unit, false);
+        }
+      } else {
+        var damage = that._getDamageValue(targetUnit, skill);
+        if (damage > 0) {
+          var effect = that._getDamageEffect(skill);
+          generator.locationFocus(targetUnit.getMapX(), targetUnit.getMapY(), true);
+          generator.damageHit(targetUnit, effect, damage, DamageType.FIXED, unit, false);
+        }
       }
-    }
+    });
   },
 
   _getDamageEffect: function (skill) {
@@ -303,6 +344,11 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry, {
     var id = skill.custom.pursuit.effect.id;
 
     return root.getBaseData().getEffectAnimationList(isRuntime).getDataFromId(id);
+  },
+
+  _getState: function (targetUnit, skill) {
+    var state = root.getBaseData().getStateList().getDataFromId(skill.custom.pursuit.value);
+    return state;
   },
 
   _getDamageValue: function (targetUnit, skill) {
@@ -328,24 +374,6 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry, {
     }
 
     return damage;
-  },
-
-  _enabledSkill: function (unit, targetUnit, skill, isFastAttack) {
-    if (!skill) {
-      return false;
-    } else if (!validatePursuitSkill(skill)) {
-      return false;
-    } else if (unit.getAliveState() !== AliveType.ALIVE) {
-      return false;
-    } else if (targetUnit.getAliveState() !== AliveType.ALIVE) {
-      return false;
-    }
-
-    if (skill.custom.pursuit.hasOwnProperty("isFastAttack")) {
-      return skill.custom.pursuit.isFastAttack === isFastAttack;
-    } else {
-      return true;
-    }
   }
 });
 
@@ -423,11 +451,7 @@ var PerimeterAttackFlowEntry = defineObject(BaseFlowEntry, {
       generator.locationFocus(x, y, true);
       generator.execute();
       // 発動エフェクトの設定
-      animePosition = LayoutControl.getMapAnimationPos(
-        LayoutControl.getPixelX(x),
-        LayoutControl.getPixelY(y),
-        effect
-      );
+      animePosition = LayoutControl.getMapAnimationPos(LayoutControl.getPixelX(x), LayoutControl.getPixelY(y), effect);
       this._dynamicAnimationEvent.startDynamicAnime(effect, animePosition.x, animePosition.y);
       this._damageEvents = reverseUnits.map(function (reverseUnit) {
         var info = that._getEventInfo(reverseUnit, skill);
@@ -486,10 +510,7 @@ var PerimeterAttackFlowEntry = defineObject(BaseFlowEntry, {
       maxHp = ParamBonus.getMhp(targetUnit);
       rate = skill.custom.perimeterAttack.value;
       damage = Math.floor(maxHp * rate);
-      if (
-        skill.custom.perimeterAttack.hasOwnProperty("max") &&
-        skill.custom.perimeterAttack.max < damage
-      ) {
+      if (skill.custom.perimeterAttack.hasOwnProperty("max") && skill.custom.perimeterAttack.max < damage) {
         damage = skill.custom.perimeterAttack.max;
       }
     }
@@ -578,10 +599,7 @@ var validatePursuitSkill = function (skill) {
     root.log("invalid pursuit parameter");
     return false;
   }
-  if (
-    !skill.custom.pursuit.effect.hasOwnProperty("isRuntime") ||
-    !skill.custom.pursuit.effect.hasOwnProperty("id")
-  ) {
+  if (!skill.custom.pursuit.effect.hasOwnProperty("isRuntime") || !skill.custom.pursuit.effect.hasOwnProperty("id")) {
     root.log("invalid pursuit parameter");
     return false;
   }
@@ -776,5 +794,46 @@ if (!Array.prototype.map) {
 
     // 9. return A
     return A;
+  };
+}
+
+// Array.filter poliyfill
+// Reference: https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/filter#polyfill
+if (!Array.prototype.filter) {
+  Array.prototype.filter = function (func, thisArg) {
+    "use strict";
+    if (!((typeof func === "Function" || typeof func === "function") && this)) throw new TypeError();
+
+    var len = this.length >>> 0,
+      res = new Array(len), // preallocate array
+      t = this,
+      c = 0,
+      i = -1;
+
+    var kValue;
+    if (thisArg === undefined) {
+      while (++i !== len) {
+        // checks to see if the key was set
+        if (i in this) {
+          kValue = t[i]; // in case t is changed in callback
+          if (func(t[i], i, t)) {
+            res[c++] = kValue;
+          }
+        }
+      }
+    } else {
+      while (++i !== len) {
+        // checks to see if the key was set
+        if (i in this) {
+          kValue = t[i];
+          if (func.call(thisArg, t[i], i, t)) {
+            res[c++] = kValue;
+          }
+        }
+      }
+    }
+
+    res.length = c; // shrink down array to proper size
+    return res;
   };
 }
