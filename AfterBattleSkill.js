@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　戦闘後に自分か相手のHPを変動させるスキル ver 2.1
+　戦闘後に自分か相手のHPを変動させるスキル ver 2.2
 
 ■作成者
 キュウブ
@@ -114,7 +114,7 @@ perimeterAttack: {
     isRuntime: <ダメージエフェクトアニメがランタイムであればtrue,オリジナルであればfalse>,
     id: <ダメージエフェクトアニメのID>
   },
-  max: <ダメージ上限値, typeが1のときのみ有効。上限値が不要な場合はこのパラメータを記載する必要は無い>
+  max: <ダメージ上限値, typeが1のときのみ有効。上限値が不要な場合はこのパラメータを記載しなくてもよい>
 }
 
 例:先制で戦闘後周囲2マスの敵に最大HP20%分のダメージを与えるスキル(エフェクトは氷魔法、とどめはさせない)
@@ -129,6 +129,9 @@ perimeterAttack: {
 }
 
 ■更新履歴
+ver 2.2 2024/08/24
+・pursuitスキルとperimeterAttackにて命中率、有効相手の設定を有効化
+
 var 2.1 2024/08/20
 ・pursuitスキルのみ複数スキル発動可能なように変更
 ・pursuitスキルでダメージではなくステート付与ができる設定を追加
@@ -167,6 +170,16 @@ SRPG Studio Version:1.161
     straightFlow.pushFlowEntry(PursuitFlowEntry);
     straightFlow.pushFlowEntry(PerimeterAttackFlowEntry);
   };
+
+  var _SkillRandomizer_isCustomSkillInvokedInternal = SkillRandomizer.isCustomSkillInvokedInternal;
+  SkillRandomizer.isCustomSkillInvokedInternal = function (active, passive, skill, keyword) {
+    if (keyword === "Pursuit") {
+      return this._isPursuit(active, passive, skill);
+    } else if (keyword === "PerimeterAttack") {
+      return this._isPerimeterAttack(active, passive, skill);
+    }
+    return _SkillRandomizer_isCustomSkillInvokedInternal.apply(this, arguments);
+  };
 })();
 
 var RecoveryHpType = {
@@ -183,6 +196,14 @@ var PursuitDamageType = {
 var PerimeterAttackDamageType = {
   FIXED: 0,
   RATE: 1
+};
+
+SkillRandomizer._isPursuit = function (active, passive, skill) {
+  return this._isSkillInvokedInternal(active, passive, skill);
+};
+
+SkillRandomizer._isPerimeterAttack = function (active, passive, skill) {
+  return this._isSkillInvokedInternal(active, passive, skill);
 };
 
 var RecoveryHpFlowEntry = defineObject(BaseFlowEntry, {
@@ -302,16 +323,16 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry, {
         return skill.skill;
       })
       .filter(function (skill) {
-        if (!skill) {
-          return false;
-        } else if (!validatePursuitSkill(skill)) {
+        if (!validatePursuitSkill(skill)) {
           return false;
         } else if (unit.getAliveState() !== AliveType.ALIVE) {
           return false;
         } else if (targetUnit.getAliveState() !== AliveType.ALIVE) {
           return false;
         }
-
+        if (!SkillRandomizer.isCustomSkillInvokedInternal(unit, targetUnit, skill, "Pursuit")) {
+          return false;
+        }
         if (skill.custom.pursuit.hasOwnProperty("isFastAttack")) {
           return skill.custom.pursuit.isFastAttack === isFastAttack;
         } else {
@@ -322,7 +343,7 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry, {
     var that = this;
     enabledSkills.forEach(function (skill) {
       if (skill.custom.pursuit.type === PursuitDamageType.STATE) {
-        var state = that._getState(targetUnit, skill);
+        var state = that._getState(skill);
         if (!!state) {
           generator.locationFocus(targetUnit.getMapX(), targetUnit.getMapY(), true);
           var stateInvocation = root.createStateInvocation(state.getId(), 100, IncreaseType.INCREASE);
@@ -346,7 +367,7 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry, {
     return root.getBaseData().getEffectAnimationList(isRuntime).getDataFromId(id);
   },
 
-  _getState: function (targetUnit, skill) {
+  _getState: function (skill) {
     var state = root.getBaseData().getStateList().getDataFromId(skill.custom.pursuit.value);
     return state;
   },
@@ -438,11 +459,15 @@ var PerimeterAttackFlowEntry = defineObject(BaseFlowEntry, {
   _setDynamicEvent: function (unit) {
     var effect, x, y, animePosition, generator;
     var skill = SkillControl.getPossessionCustomSkill(unit, "PerimeterAttack");
-    var reverseUnits = this._getSurroundingReverseUnits(unit, skill);
     var enabledSkill = this._enabledSkill(unit, skill);
+    var reverseUnits = enabledSkill
+      ? this._getSurroundingReverseUnits(unit, skill).filter(function (reverseUnit) {
+          return SkillRandomizer.isCustomSkillInvokedInternal(unit, reverseUnit, skill, "PerimeterAttack");
+        })
+      : [];
     var that = this;
 
-    if (enabledSkill && reverseUnits.length > 0) {
+    if (reverseUnits.length > 0) {
       effect = this._getDamageEffect(skill);
       x = unit.getMapX();
       y = unit.getMapY();
