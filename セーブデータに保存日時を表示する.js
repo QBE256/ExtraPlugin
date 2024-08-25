@@ -23,8 +23,8 @@ ver 1.0 2024/08/25
 SRPG Studio Version:1.300
 
 (C)2024 キュウブ
-This software is released under the MIT License.
-http://opensource.org/licenses/mit-license.php
+Released under the MIT license
+https://opensource.org/licenses/mit-license.php
 
 --------------------------------------------------------------------------*/
 
