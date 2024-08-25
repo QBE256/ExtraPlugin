@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　戦闘後に自分か相手のHPを変動させるスキル ver 2.2
+　戦闘後に自分か相手のHPを変動させるスキル ver 2.3
 
 ■作成者
 キュウブ
@@ -129,6 +129,9 @@ perimeterAttack: {
 }
 
 ■更新履歴
+ver 2.3 2024/08/25
+・とどめをさせない設定のpursuitスキルでとどめをさしてしまう事があるバグを修正
+
 ver 2.2 2024/08/24
 ・pursuitスキルとperimeterAttackにて命中率、有効相手の設定を有効化
 
@@ -199,11 +202,19 @@ var PerimeterAttackDamageType = {
 };
 
 SkillRandomizer._isPursuit = function (active, passive, skill) {
-  return this._isSkillInvokedInternal(active, passive, skill);
+  if (!skill.getTargetAggregation().isCondition(passive)) {
+    return false;
+  }
+
+  return Probability.getInvocationProbabilityFromSkill(active, skill);
 };
 
 SkillRandomizer._isPerimeterAttack = function (active, passive, skill) {
-  return this._isSkillInvokedInternal(active, passive, skill);
+  if (!skill.getTargetAggregation().isCondition(passive)) {
+    return false;
+  }
+
+  return Probability.getInvocationProbabilityFromSkill(active, skill);
 };
 
 var RecoveryHpFlowEntry = defineObject(BaseFlowEntry, {
@@ -341,6 +352,7 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry, {
       });
 
     var that = this;
+    var currentTargetHp = targetUnit.getHp();
     enabledSkills.forEach(function (skill) {
       if (skill.custom.pursuit.type === PursuitDamageType.STATE) {
         var state = that._getState(skill);
@@ -350,7 +362,8 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry, {
           generator.unitStateAddition(targetUnit, stateInvocation, IncreaseType.INCREASE, unit, false);
         }
       } else {
-        var damage = that._getDamageValue(targetUnit, skill);
+        var damage = that._getDamageValue(targetUnit, skill, currentTargetHp);
+        currentTargetHp -= damage;
         if (damage > 0) {
           var effect = that._getDamageEffect(skill);
           generator.locationFocus(targetUnit.getMapX(), targetUnit.getMapY(), true);
@@ -372,12 +385,13 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry, {
     return state;
   },
 
-  _getDamageValue: function (targetUnit, skill) {
+  _getDamageValue: function (targetUnit, skill, currentTargetHp) {
     var maxHp, rate;
     var enabledFinish = skill.custom.pursuit.isFinish;
-    var currentHp = targetUnit.getHp();
     var damage = 0;
-
+    if (currentTargetHp === 0) {
+      return 0;
+    }
     if (skill.custom.pursuit.type === PursuitDamageType.FIXED) {
       damage = skill.custom.pursuit.value;
     } else if (skill.custom.pursuit.type === PursuitDamageType.RATE) {
@@ -390,8 +404,8 @@ var PursuitFlowEntry = defineObject(BaseFlowEntry, {
       }
     }
 
-    if (!enabledFinish && currentHp - damage <= 0) {
-      damage = currentHp - 1;
+    if (!enabledFinish && currentTargetHp - damage <= 0) {
+      damage = currentTargetHp - 1;
     }
 
     return damage;
