@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　セーブ画面にあらすじや一枚絵を表示する ver 1.0
+　セーブ画面にあらすじや一枚絵を表示する ver 1.1
 
 ■作成者
 キュウブ
@@ -8,6 +8,7 @@
 セーブ画面を以下のように変更します
 ・サムネイルを任意の画像に差し替える事ができる
 ・サムネイルの上にあらすじなどの任意のテキストを表記できるようになる
+※ ver1.1でセーブ画面変更をグローバルスイッチで制御できるようにしました。
 
 ■使い方
 1.サムネイルの変更方法
@@ -51,7 +52,19 @@ saveWindowSummaries: [
   ]
 }
 
+3.グローバルスイッチによる制御
+セーブ画面の変更をグローバルスイッチで制御したい場合は、
+81行目にあるIS_CHANGE_SAVE_WINDOW_GLOBAL_SWITCH_IDにグローバルスイッチのIDを入力してください。
+例えば、下記のように設定すると、グローバルスイッチIDが1のスイッチがONの時のみセーブ画面の変更が有効になります。
+var IS_CHANGE_SAVE_WINDOW_GLOBAL_SWITCH_ID = 1;
+
+※例えば、自軍ターン開始時にONにするイベント、マップクリア時にOFFにするイベントを用意しておけば
+途中セーブだけは本機能を無効化して攻略マップを表示する事ができます。
+
 ■更新履歴
+ver 1.1 2024/08/29
+本機能をグローバルスイッチで制御できるようにした
+
 ver 1.0 2024/08/27
 公開
 
@@ -63,12 +76,27 @@ Released under the MIT license
 https://opensource.org/licenses/mit-license.php
 
 --------------------------------------------------------------------------*/
-
+// ここにグローバルスイッチIDを設定すると、そのスイッチがONの時のみセーブ画面変更が有効になります。
+// グローバルスイッチによる変更機能を使用しない場合は-1にしておいてください。
+var IS_CHANGE_SAVE_WINDOW_GLOBAL_SWITCH_ID = -1;
 (function () {
+  var _LoadSaveScreenEx__getCustomObject = LoadSaveScreenEx._getCustomObject;
+  LoadSaveScreenEx._getCustomObject = function () {
+    var customObject = _LoadSaveScreenEx__getCustomObject.apply(this, arguments);
+    if (IS_CHANGE_SAVE_WINDOW_GLOBAL_SWITCH_ID >= 0) {
+      var switchTable = root.getMetaSession().getGlobalSwitchTable();
+      var switchIndex = switchTable.getSwitchIndexFromId(IS_CHANGE_SAVE_WINDOW_GLOBAL_SWITCH_ID);
+      customObject.disabledChangeSaveWindow = !switchTable.isSwitchOn(switchIndex);
+    } else {
+      customObject.disabledChangeSaveWindow = false;
+    }
+    return customObject;
+  };
+
   var _SaveFileDetailWindow__drawThumbnailMap = SaveFileDetailWindow._drawThumbnailMap;
   SaveFileDetailWindow._drawThumbnailMap = function (x, y) {
     var mapData = this._saveFileInfo.getMapInfo();
-    if (typeof mapData.custom.saveWindowImage === "object") {
+    if (!this._saveFileInfo.custom.disabledChangeSaveWindow && typeof mapData.custom.saveWindowImage === "object") {
       var resourceList = root
         .getBaseData()
         .getGraphicsResourceList(GraphicsType.SCREENBACK, mapData.custom.saveWindowImage.isRuntime);
@@ -98,7 +126,10 @@ https://opensource.org/licenses/mit-license.php
 
   var _SaveFileDetailWindow__configureSentence = SaveFileDetailWindow._configureSentence;
   SaveFileDetailWindow._configureSentence = function (groupArray) {
-    if (typeof this._saveFileInfo.getMapInfo().custom.saveWindowSummaries !== "undefined") {
+    if (
+      !this._saveFileInfo.custom.disabledChangeSaveWindow &&
+      typeof this._saveFileInfo.getMapInfo().custom.saveWindowSummaries !== "undefined"
+    ) {
       groupArray.appendObject(LoadSaveSentence.Summary);
     }
     _SaveFileDetailWindow__configureSentence.apply(this, arguments);
