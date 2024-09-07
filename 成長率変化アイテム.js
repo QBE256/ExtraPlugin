@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　成長率変化アイテム ver 1.0
+　成長率変化アイテム ver 1.1
 
 ■作成者
 キュウブ
@@ -95,11 +95,14 @@ growthBonusDopingArray: [
 };
 
 ■更新履歴
+ver 1.1 (2024/09/07)
+素のドーピング設定や取得経験値が0のままだと使用不可になる仕様に対処
+
 ver 1.0 (2021/02/08)
 初版公開
 
 ■対応バージョン
-SRPG Studio Version:1.161
+SRPG Studio Version:1.301
 
 ■規約
 ・利用はSRPG Studioを使ったゲームに限ります。
@@ -111,41 +114,52 @@ SRPG Studio Version:1.161
 ・SRPG Studio利用規約は遵守してください。
 --------------------------------------------------------------------------*/
 
-(function(){
-	var temp1 = DopingItemUse.mainAction;
-	DopingItemUse.mainAction = function() {
-		var growthBonus, count;
-		var itemTargetInfo = this._itemUseParent.getItemTargetInfo();
-		var item = itemTargetInfo.item;
-		var unit = itemTargetInfo.targetUnit;
+(function () {
+  var temp1 = DopingItemUse.mainAction;
+  DopingItemUse.mainAction = function () {
+    var growthBonus, count;
+    var itemTargetInfo = this._itemUseParent.getItemTargetInfo();
+    var item = itemTargetInfo.item;
+    var unit = itemTargetInfo.targetUnit;
 
-		temp1.call(this);
-		if (typeof item.custom.growthBonusDopingArray === 'object') {
-			count = ParamGroup.getParameterCount();
-			count = item.custom.growthBonusDopingArray.length < count
-				 	? item.custom.growthBonusDopingArray.length : count;
-			growthBonus = unit.getGrowthBonus();
-			for (var index = 0; index < count; index++) {
-				if (typeof item.custom.growthBonusDopingArray[index] !== 'number') {
-					root.log("成長変化アイテム[警告]:" + index + "番目の値が数値ではありません");
-					continue;
-				}
-				growthBonus.setAssistValue(
-					index,
-					growthBonus.getAssistValue(index) +
-					item.custom.growthBonusDopingArray[index]
-				);
-			}
+    temp1.call(this);
+    if (typeof item.custom.growthBonusDopingArray === "object") {
+      count = ParamGroup.getParameterCount();
+      count = item.custom.growthBonusDopingArray.length < count ? item.custom.growthBonusDopingArray.length : count;
+      growthBonus = unit.getGrowthBonus();
+      for (var index = 0; index < count; index++) {
+        if (typeof item.custom.growthBonusDopingArray[index] !== "number") {
+          root.log("成長変化アイテム[警告]:" + index + "番目の値が数値ではありません");
+          continue;
+        }
+        growthBonus.setAssistValue(
+          index,
+          growthBonus.getAssistValue(index) + item.custom.growthBonusDopingArray[index]
+        );
+      }
+    }
+  };
 
-		}
-	};
+  var temp2 = DopingItemUse.moveMainUseCycle;
+  DopingItemUse.moveMainUseCycle = function () {
+    if (this._itemUseParent.getItemTargetInfo().item.custom.isEraseWindow === true) {
+      this.mainAction();
+      return MoveResult.END;
+    }
+    return temp2.call(this);
+  };
 
-	var temp2 = DopingItemUse.moveMainUseCycle;
-	DopingItemUse.moveMainUseCycle = function() {
-		if (this._itemUseParent.getItemTargetInfo().item.custom.isEraseWindow === true) {
-			this.mainAction();
-			return MoveResult.END;
-		}
-		return temp2.call(this);
-	};
+  var temp3 = DopingItemControl.isItemAllowed;
+  DopingItemControl.isItemAllowed = function (targetUnit, item) {
+    var isItemAllowed = temp3.call(this, targetUnit, item);
+    if (isItemAllowed || typeof item.custom.growthBonusDopingArray !== "object") {
+      return isItemAllowed;
+    }
+    for (var index = 0; index < item.custom.growthBonusDopingArray.length; index++) {
+      if (item.custom.growthBonusDopingArray[index] !== 0) {
+        return true;
+      }
+    }
+    return false;
+  };
 })();
