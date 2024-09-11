@@ -88,7 +88,7 @@ var HIGH_CLASS_CORRECTION = 0;
     var afterLv = isLevelUp ? currentLv + 1 : currentLv;
     var afterExp = isLevelUp ? this._exp + currentExp - 100 : this._exp + currentExp;
     var currentRate = isLevelUp ? this._getRate() + BASE_LV_CORRECTION : this._getRate();
-    var requiredBonus = this._calculateRequiredBonus(this._exp, currentRate, currentExp);
+    var requiredBonus = this._calculateRequiredBonus(this._exp, this._getRate(), currentExp);
     this._currentBonusInput = {
       currentRate: currentRate,
       requiredBonus: requiredBonus,
@@ -120,6 +120,7 @@ var HIGH_CLASS_CORRECTION = 0;
 
   BonusInputWindow._calculateRequiredBonus = function (restExp, currentRate, currentExp) {
     var requiredLvUpExp = 100 - currentExp;
+    root.log(restExp + "a" + requiredLvUpExp + "b" + currentRate);
     if (restExp > requiredLvUpExp) {
       var nextRate = currentRate + BASE_LV_CORRECTION;
       return this._calculateRequiredBonus(restExp - requiredLvUpExp, nextRate, 0) + currentRate * requiredLvUpExp;
