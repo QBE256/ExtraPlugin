@@ -120,7 +120,6 @@ var HIGH_CLASS_CORRECTION = 0;
 
   BonusInputWindow._calculateRequiredBonus = function (restExp, currentRate, currentExp) {
     var requiredLvUpExp = 100 - currentExp;
-    root.log(restExp + "a" + requiredLvUpExp + "b" + currentRate);
     if (restExp > requiredLvUpExp) {
       var nextRate = currentRate + BASE_LV_CORRECTION;
       return this._calculateRequiredBonus(restExp - requiredLvUpExp, nextRate, 0) + currentRate * requiredLvUpExp;
