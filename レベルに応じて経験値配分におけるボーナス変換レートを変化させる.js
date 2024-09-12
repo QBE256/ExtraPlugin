@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　レベルに応じて経験値配分におけるボーナス変換レートを変化させる ver 1.0
+　レベルに応じて経験値配分におけるボーナス変換レートを変化させる ver 1.1
 
 ■作成者
 キュウブ
@@ -9,23 +9,33 @@
 
 
 ■使い方
-1.本プラグイン41行目のBASE_LV_CORRECTIONにレベル毎のボーナス増加量を設定する
+1.本プラグイン51行目のBASE_LV_CORRECTIONにレベル毎のボーナス増加量を設定する
 var BASE_LV_CORRECTION = 2;
 と設定し、
 コンフィグでの経験値配分レートを10とした場合、
 LV1の時は経験値を1得るためにボーナスを10(コンフィグ設定と同じ),
 LV2の時は経験値を1得るためにボーナスを12(2×1増加),
-LV3の時は経験値を1得るためにボーナスを14(2×2増加),
-...
-LV20の時は経験値を1得るためにボーナスを48消費(2×19増加)するようになる
+LV3の時は経験値を1得るためにボーナスを14(2×2増加)消費するようになる
 
-2.クラスチェンジでLV1に戻る場合は、本プラグイン45行目のHIGH_CLASS_CORRECTIONにレベル補正値を設定する
+※ また、難易度設定のカスタムパラメータで下記のように設定を行うとそちらの値が優先されるようになる。
+高難易度で補正を厳しくしたり、低難易度で緩くするといった使い方ができる
+{
+	experienceDistributionRate: {
+		baseLvCorrection: <数値>
+	}
+}
+
+3.クラスチェンジでLV1に戻る場合は、本プラグイン55行目のHIGH_CLASS_CORRECTIONにレベル補正値を設定する
 例えば、
 var HIGH_CLASS_CORRECTION = 20;
 と設定すると、上級職LV1はLV21という扱いでレート計算が行われるようになる。
 ※クラスチェンジ時にLVが戻らない場合は0にしておくこと。
 
+
 ■更新履歴
+ver 1.1 2024/9/13
+難易度別に変換レートを変更できるように改修
+
 ver 1.0 2024/09/12
 公開
 
@@ -46,35 +56,43 @@ var HIGH_CLASS_CORRECTION = 0;
 
 (function () {
   BonusInputWindow._currentBonusInput = null;
+  BonusInputWindow._experienceDistributionSetting = null;
   BonusInputWindow._edgeCursor = null;
   var _BonusInputWindow_initialize = BonusInputWindow.initialize;
   BonusInputWindow.initialize = function () {
     _BonusInputWindow_initialize.apply(this, arguments);
     this._edgeCursor = createObject(EdgeCursor);
     this._edgeCursor.setEdgeRange(30, 30);
+    var difficultly = root.getMetaSession().getDifficulty();
+    var difficultlySetting = difficultly.custom.experienceDistributionRate;
+    this._experienceDistributionSetting = {
+      baseLvCorrection:
+        typeof difficultlySetting === "object" ? difficultlySetting.baseLvCorrection : BASE_LV_CORRECTION,
+      highClassCorrection: HIGH_CLASS_CORRECTION
+    };
   };
 
-  BonusInputWindow._getCurrentLvCorrection = function () {
-    var currentLvCorrection = this._unit.getLv() - 1;
+  BonusInputWindow._getCurrentLvCorrection = function (currentLv) {
+    var currentLvCorrection = currentLv - 1;
 
     if (this._unit.getClass().getClassRank() === ClassRank.HIGH) {
-      currentLvCorrection += HIGH_CLASS_LV_CORRECTION;
+      currentLvCorrection += this._experienceDistributionSetting.highClassCorrection;
     }
     return currentLvCorrection;
   };
 
   var _BonusInputWindow__getRate = BonusInputWindow._getRate;
-  BonusInputWindow._getRate = function () {
-    var currentLvCorrection = this._getCurrentLvCorrection();
+  BonusInputWindow._getRate = function (currentLv) {
+    var currentLvCorrection = this._getCurrentLvCorrection(currentLv);
     var baseRate = _BonusInputWindow__getRate.apply(this, arguments);
-    return baseRate + currentLvCorrection * BASE_LV_CORRECTION;
+    return baseRate + currentLvCorrection * this._experienceDistributionSetting.baseLvCorrection;
   };
 
   BonusInputWindow._calculateMax = function (bonus, currentRate, currentExp) {
     var requiredLvUpExp = 100 - currentExp;
     var restBonus = bonus - requiredLvUpExp * currentRate;
     if (restBonus > 0) {
-      var nextRate = currentRate + BASE_LV_CORRECTION;
+      var nextRate = currentRate + this._experienceDistributionSetting.baseLvCorrection;
       return this._calculateMax(restBonus, nextRate, 0) + requiredLvUpExp;
     } else {
       return Math.floor(bonus / currentRate);
@@ -87,8 +105,8 @@ var HIGH_CLASS_CORRECTION = 0;
     var isLevelUp = this._exp + currentExp >= 100;
     var afterLv = isLevelUp ? currentLv + 1 : currentLv;
     var afterExp = isLevelUp ? this._exp + currentExp - 100 : this._exp + currentExp;
-    var currentRate = isLevelUp ? this._getRate() + BASE_LV_CORRECTION : this._getRate();
-    var requiredBonus = this._calculateRequiredBonus(this._exp, this._getRate(), currentExp);
+    var currentRate = isLevelUp ? this._getRate(currentLv + 1) : this._getRate(currentLv);
+    var requiredBonus = this._calculateRequiredBonus(this._exp, this._getRate(currentLv), currentExp);
     this._currentBonusInput = {
       currentRate: currentRate,
       requiredBonus: requiredBonus,
@@ -121,7 +139,7 @@ var HIGH_CLASS_CORRECTION = 0;
   BonusInputWindow._calculateRequiredBonus = function (restExp, currentRate, currentExp) {
     var requiredLvUpExp = 100 - currentExp;
     if (restExp > requiredLvUpExp) {
-      var nextRate = currentRate + BASE_LV_CORRECTION;
+      var nextRate = currentRate + this._experienceDistributionSetting.baseLvCorrection;
       return this._calculateRequiredBonus(restExp - requiredLvUpExp, nextRate, 0) + currentRate * requiredLvUpExp;
     } else {
       return restExp * currentRate;
