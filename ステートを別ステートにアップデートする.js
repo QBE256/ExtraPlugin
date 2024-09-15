@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-　ステートを別ステートにアップデートする ver 1.0
+　ステートを別ステートにアップデートする ver 1.1
 
 ■作成者
 キュウブ
@@ -46,19 +46,18 @@ typeは定数で定義しており、
 消去で変化させたい場合はUpdateStateType.DECREASEと記述しても動作します。
 
 ■更新履歴
+ver 1.1 2024/09/15
+最新版に対応
+
 ver 1.0 2023/06/15
 公開
 
 ■対応バージョン
-SRPG Studio Version:1.161
+SRPG Studio Version:1.301
 
-■規約
-・利用はSRPG Studioを使ったゲームに限ります。
-・商用・非商用問いません。フリーです。
-・加工等、問題ありません。
-・クレジット明記無し　OK (明記する場合は"キュウブ"でお願いします)
-・再配布、転載　OK (バグなどがあったらプルリクエストお願いします)
-・SRPG Studio利用規約は遵守してください。
+(C)2023 キュウブ
+Released under the MIT license
+https://opensource.org/licenses/mit-license.php
 
 --------------------------------------------------------------------------*/
 
@@ -93,20 +92,17 @@ SRPG Studio Version:1.161
   var _StateControl_arrangeState = StateControl.arrangeState;
   StateControl.arrangeState = function (unit, currentState, increaseType) {
     if (!isValidUpdateState(currentState)) {
-      _StateControl_arrangeState.apply(this, arguments);
-      return;
+      return _StateControl_arrangeState.apply(this, arguments);
     }
 
     var isOverLapping =
-      increaseType === IncreaseType.INCREASE &&
-      currentState.custom.updateState.type === UpdateStateType.OVER_LAPPING;
+      increaseType === IncreaseType.INCREASE && currentState.custom.updateState.type === UpdateStateType.OVER_LAPPING;
     var isDecrease =
-      increaseType === IncreaseType.DECREASE &&
-      currentState.custom.updateState.type === UpdateStateType.DECREASE;
+      increaseType === IncreaseType.DECREASE && currentState.custom.updateState.type === UpdateStateType.DECREASE;
 
     if (!isOverLapping && !isDecrease) {
       _StateControl_arrangeState.apply(this, arguments);
-      return;
+      return _StateControl_arrangeState.apply(this, arguments);
     }
 
     var replacedStateId = currentState.custom.updateState.id;
@@ -115,8 +111,7 @@ SRPG Studio Version:1.161
 
     if (!replacedState) {
       root.log("[WARNING]ID:" + replacedStateId + "のステートは存在しません");
-      _StateControl_arrangeState.apply(this, arguments);
-      return;
+      return _StateControl_arrangeState.apply(this, arguments);
     }
 
     var currentTurnState = this.getTurnState(unit, currentState);
@@ -124,9 +119,9 @@ SRPG Studio Version:1.161
       var list = unit.getTurnStateList();
       var editor = root.getDataEditor();
       editor.deleteTurnStateData(list, currentState);
-      editor.addTurnStateData(list, replacedState);
+      return editor.addTurnStateData(list, replacedState);
     } else {
-      _StateControl_arrangeState.apply(this, arguments);
+      return _StateControl_arrangeState.apply(this, arguments);
     }
   };
 })();
