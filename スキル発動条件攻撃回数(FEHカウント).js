@@ -1,5 +1,5 @@
 /*
-  攻撃回数をスキル発動条件とする(FEHのカウント) ver 1.0
+  攻撃回数をスキル発動条件とする(FEHのカウント) ver 1.1
 
 [概要]
 スキルに以下のような発動条件を設定ができるようになります。
@@ -52,7 +52,7 @@ attackCountCondition: {
 ※ 他に条件表示を設定している場合はそちらが優先されて数字が表示されない可能性があります。
 
 [推奨バージョン]
-srpg studio ver 1.161以降
+srpg studio ver 1.301
 
 [製作者名]
 キュウブ
@@ -60,467 +60,467 @@ srpg studio ver 1.161以降
 [更新履歴]
 
 [規約]
-・利用はSRPG Studioを使ったゲームに限ります。
-・商用・非商用問いません。フリーです。
-・加工等、問題ありません。
-・クレジット明記無し　OK (明記する場合は"キュウブ"でお願いします)
-・再配布、転載　OK (バグなどがあったら修正できる方はご自身で修正版を配布してもらっても構いません)
-・wiki掲載　OK
-・SRPG Studio利用規約は遵守してください。
+(C)2020 キュウブ
+Released under the MIT license
+https://opensource.org/licenses/mit-license.php
 */
-
 
 InvocationType.ACTIVE_COUNT = 312;
 InvocationType.PASSIVE_COUNT = 313;
 InvocationType.ACTIVE_AND_PASSIVE_COUNT = 314;
 
-SkillControl.initAttackCountSkill = function(unit) {
-	unit.custom.attackCountSkill = {
-		activeCount: 0,
-		passiveCount: 0
-	};
+SkillControl.initAttackCountSkill = function (unit) {
+  unit.custom.attackCountSkill = {
+    activeCount: 0,
+    passiveCount: 0
+  };
 };
 
-SkillControl.getAttackCountSkill = function(unit) {
-	var weapon = ItemControl.getEquippedWeapon(unit);
-	var arr = SkillControl.getSkillMixArray(unit, weapon, -1, '');
+SkillControl.getAttackCountSkill = function (unit) {
+  var weapon = ItemControl.getEquippedWeapon(unit);
+  var arr = SkillControl.getSkillMixArray(unit, weapon, -1, "");
 
-	for (var i = 0; i < arr.length; i++) {
-		if (validateAttackCountConditionCustomParameter(arr[i].skill)) {
-			return arr[i].skill;
-		}
-	}
+  for (var i = 0; i < arr.length; i++) {
+    if (validateAttackCountConditionCustomParameter(arr[i].skill)) {
+      return arr[i].skill;
+    }
+  }
 
-	return null;
+  return null;
 };
 
-NormalAttackOrderBuilder._attackCountUp = function(active, passive) {
-	if (typeof active.custom.attackCountSkill !== 'object') {
-		SkillControl.initAttackCountSkill(active);
-	}
+NormalAttackOrderBuilder._attackCountUp = function (active, passive) {
+  if (typeof active.custom.attackCountSkill !== "object") {
+    SkillControl.initAttackCountSkill(active);
+  }
 
-	if (active.custom.attackCountSkill.activeCount >= 0) {
-		active.custom.attackCountSkill.activeCount++;
-	}
+  if (active.custom.attackCountSkill.activeCount >= 0) {
+    active.custom.attackCountSkill.activeCount++;
+  }
 
-	if (typeof passive.custom.attackCountSkill !== 'object') {
-		SkillControl.initAttackCountSkill(passive);
-	}
+  if (typeof passive.custom.attackCountSkill !== "object") {
+    SkillControl.initAttackCountSkill(passive);
+  }
 
-	if (passive.custom.attackCountSkill.passiveCount >= 0) {
-		passive.custom.attackCountSkill.passiveCount++;
-	}
+  if (passive.custom.attackCountSkill.passiveCount >= 0) {
+    passive.custom.attackCountSkill.passiveCount++;
+  }
 };
 
-NormalAttackOrderBuilder._endCountSet = function(active, passive) {
-	if (typeof active.custom.attackCountSkill !== 'object') {
-		SkillControl.initAttackCountSkill(active);
-	}
-	
-	this._skillCountReset(active);
+NormalAttackOrderBuilder._endCountSet = function (active, passive) {
+  if (typeof active.custom.attackCountSkill !== "object") {
+    SkillControl.initAttackCountSkill(active);
+  }
 
-	if (typeof passive.custom.attackCountSkill !== 'object') {
-		SkillControl.initAttackCountSkill(passive);
-	}
+  this._skillCountReset(active);
 
-	this._skillCountReset(passive);
+  if (typeof passive.custom.attackCountSkill !== "object") {
+    SkillControl.initAttackCountSkill(passive);
+  }
+
+  this._skillCountReset(passive);
 };
 
-NormalAttackOrderBuilder._skillCountReset = function(unit) {
-	if (unit.custom.attackCountSkill.activeCount === -1) {
-		unit.custom.attackCountSkill.activeCount = 0;
-	}
+NormalAttackOrderBuilder._skillCountReset = function (unit) {
+  if (unit.custom.attackCountSkill.activeCount === -1) {
+    unit.custom.attackCountSkill.activeCount = 0;
+  }
 
-	if (unit.custom.attackCountSkill.passiveCount === -1) {
-		unit.custom.attackCountSkill.passiveCount = 0;
-	}
+  if (unit.custom.attackCountSkill.passiveCount === -1) {
+    unit.custom.attackCountSkill.passiveCount = 0;
+  }
 };
 
-NormalAttackOrderBuilder._startVirtualAttack = function() {
-	var i, j, isFinal, attackCount, src, dest;
-	var virtualActive, virtualPassive, isDefaultPriority;
-	var unitSrc = this._attackInfo.unitSrc;
-	var unitDest = this._attackInfo.unitDest;
-			
-	src = VirtualAttackControl.createVirtualAttackUnit(unitSrc, unitDest, true, this._attackInfo);
-	dest = VirtualAttackControl.createVirtualAttackUnit(unitDest, unitSrc, false, this._attackInfo);
-		
-	src.isWeaponLimitless = DamageCalculator.isWeaponLimitless(unitSrc, unitDest, src.weapon);
-	dest.isWeaponLimitless = DamageCalculator.isWeaponLimitless(unitDest, unitSrc, dest.weapon);
-		
-	isDefaultPriority = this._isDefaultPriority(src, dest);
-	if (isDefaultPriority) {
-		src.isInitiative = true;
-	}
-	else {
-		dest.isInitiative = true;
-	}
-		
-	for (i = 0;; i++) {
-		// if文とelse文が交互に実行される。
-		// これにより、こちらが攻撃をした後は、相手が攻撃のように順番が変わる。
-		if ((i % 2) === 0) {
-			if (isDefaultPriority) {
-				virtualActive = src;
-				virtualPassive = dest;
-			}
-			else {
-				virtualActive = dest;
-				virtualPassive = src;
-			}
-		}
-		else {
-			if (isDefaultPriority) {
-				virtualActive = dest;
-				virtualPassive = src;
-			}
-			else {
-				virtualActive = src;
-				virtualPassive = dest;
-			}
-		}
-			
-		// 行動回数は残っているか
-		if (VirtualAttackControl.isRound(virtualActive)) {
-			VirtualAttackControl.decreaseRoundCount(virtualActive);
-				
-			attackCount = this._getAttackCount(virtualActive, virtualPassive);
-			
-			// 2回連続で攻撃するようなこともあるため、ループ処理
-			for (j = 0; j < attackCount; j++) {
-				isFinal = this._setDamage(virtualActive, virtualPassive);
-				this._attackCountUp(virtualActive.unitSelf, virtualPassive.unitSelf);
-				if (isFinal) {
-					// ユニットが死亡したから、これ以上戦闘を継続しない
-					virtualActive.roundCount = 0;
-					virtualPassive.roundCount = 0;
-					break;
-				}
-			}
-		}
+NormalAttackOrderBuilder._startVirtualAttack = function () {
+  var i, j, isFinal, attackCount, src, dest;
+  var virtualActive, virtualPassive, isDefaultPriority;
+  var unitSrc = this._attackInfo.unitSrc;
+  var unitDest = this._attackInfo.unitDest;
 
-		if (virtualActive.roundCount === 0 && virtualPassive.roundCount === 0) {
-			break;
-		}
-	}
+  src = VirtualAttackControl.createVirtualAttackUnit(unitSrc, unitDest, true, this._attackInfo);
+  dest = VirtualAttackControl.createVirtualAttackUnit(unitDest, unitSrc, false, this._attackInfo);
 
-	this._endCountSet(src.unitSelf, dest.unitSelf);
-		
-	this._endVirtualAttack(src, dest);
+  src.isWeaponLimitless = DamageCalculator.isWeaponLimitless(unitSrc, unitDest, src.weapon);
+  dest.isWeaponLimitless = DamageCalculator.isWeaponLimitless(unitDest, unitSrc, dest.weapon);
+
+  isDefaultPriority = this._isDefaultPriority(src, dest);
+  if (isDefaultPriority) {
+    src.isInitiative = true;
+  } else {
+    dest.isInitiative = true;
+  }
+
+  for (i = 0; ; i++) {
+    // if文とelse文が交互に実行される。
+    // これにより、こちらが攻撃をした後は、相手が攻撃のように順番が変わる。
+    if (i % 2 === 0) {
+      if (isDefaultPriority) {
+        virtualActive = src;
+        virtualPassive = dest;
+      } else {
+        virtualActive = dest;
+        virtualPassive = src;
+      }
+    } else {
+      if (isDefaultPriority) {
+        virtualActive = dest;
+        virtualPassive = src;
+      } else {
+        virtualActive = src;
+        virtualPassive = dest;
+      }
+    }
+
+    // 行動回数は残っているか
+    if (VirtualAttackControl.isRound(virtualActive)) {
+      VirtualAttackControl.decreaseRoundCount(virtualActive);
+
+      attackCount = this._getAttackCount(virtualActive, virtualPassive);
+
+      // 2回連続で攻撃するようなこともあるため、ループ処理
+      for (j = 0; j < attackCount; j++) {
+        isFinal = this._setDamage(virtualActive, virtualPassive);
+        this._attackCountUp(virtualActive.unitSelf, virtualPassive.unitSelf);
+        if (isFinal) {
+          // ユニットが死亡したから、これ以上戦闘を継続しない
+          virtualActive.roundCount = 0;
+          virtualPassive.roundCount = 0;
+          break;
+        }
+      }
+    }
+
+    if (virtualActive.roundCount === 0 && virtualPassive.roundCount === 0) {
+      break;
+    }
+  }
+
+  this._endCountSet(src.unitSelf, dest.unitSelf);
+
+  this._endVirtualAttack(src, dest);
 };
 
-var validateAttackCountConditionCustomParameter = function(skill) {
-	if (!skill) {
-		return false;
-	}
-	if (typeof skill.custom.attackCountCondition !== 'object') {
-		return false;
-	}
+var validateAttackCountConditionCustomParameter = function (skill) {
+  if (!skill) {
+    return false;
+  }
+  if (typeof skill.custom.attackCountCondition !== "object") {
+    return false;
+  }
 
-	if (! 'countConditionType' in skill.custom.attackCountCondition || ! 'value' in skill.custom.attackCountCondition) {
-		return false;
-	}
+  if (!"countConditionType" in skill.custom.attackCountCondition || !"value" in skill.custom.attackCountCondition) {
+    return false;
+  }
 
-	if (typeof skill.custom.attackCountCondition.countConditionType !== 'number' ||
-			typeof skill.custom.attackCountCondition.value !== 'number') {
-		return false;
-	}
+  if (
+    typeof skill.custom.attackCountCondition.countConditionType !== "number" ||
+    typeof skill.custom.attackCountCondition.value !== "number"
+  ) {
+    return false;
+  }
 
-	if (skill.custom.attackCountCondition.countConditionType < InvocationType.ACTIVE_COUNT || 
-		skill.custom.attackCountCondition.countConditionType > InvocationType.ACTIVE_AND_PASSIVE_COUNT ||
-		skill.custom.attackCountCondition.value < 0) {
-		return false;
-	}
+  if (
+    skill.custom.attackCountCondition.countConditionType < InvocationType.ACTIVE_COUNT ||
+    skill.custom.attackCountCondition.countConditionType > InvocationType.ACTIVE_AND_PASSIVE_COUNT ||
+    skill.custom.attackCountCondition.value < 0
+  ) {
+    return false;
+  }
 
-	return true;
+  return true;
 };
 
-(function(){
-	var temp1 = SkillRandomizer._isSkillInvokedInternal;
-	SkillRandomizer._isSkillInvokedInternal = function(active, passive, skill) {
-		var variableTable, index, result, variable, value, activeWeaponDrillLevel, passiveWeaponDrillLevel;
+(function () {
+  var temp1 = SkillRandomizer._isSkillInvokedInternal;
+  SkillRandomizer._isSkillInvokedInternal = function (active, passive, skill) {
+    var variableTable, index, result, variable, value, activeWeaponDrillLevel, passiveWeaponDrillLevel;
 
-		if (!skill.getTargetAggregation().isCondition(passive)) {
-			return false;
-		}
+    if (!skill.getTargetAggregation().isCondition(passive)) {
+      return false;
+    }
 
-		// 相手がスキルを無効化できる場合は、スキルを発動しない
-		if (SkillControl.getBattleSkillFromFlag(passive, active, SkillType.INVALID, InvalidFlag.SKILL) !== null) {
-			return false;
-		}
+    // 相手がスキルを無効化できる場合は、スキルを発動しない
+    if (SkillControl.getBattleSkillFromFlag(passive, active, SkillType.INVALID, InvalidFlag.SKILL) !== null) {
+      return false;
+    }
 
-		if (validateAttackCountConditionCustomParameter(skill)) {
-			return Probability.getInvocationProbability(active, skill.custom.attackCountCondition.countConditionType, skill.custom.attackCountCondition.value);
-		} else {
-			return temp1.call(this, active, passive, skill);
-		}
-	};
+    if (validateAttackCountConditionCustomParameter(skill)) {
+      return Probability.getInvocationProbability(
+        active,
+        skill.custom.attackCountCondition.countConditionType,
+        skill.custom.attackCountCondition.value
+      );
+    } else {
+      return temp1.call(this, active, passive, skill);
+    }
+  };
 
-	var temp2 = Probability.getInvocationProbability;
-	Probability.getInvocationProbability = function(unit, type, value) {
-		var result;
+  var temp2 = Probability.getInvocationProbability;
+  Probability.getInvocationProbability = function (unit, type, value) {
+    var result;
 
-		if (type >= InvocationType.ACTIVE_COUNT && type <= InvocationType.ACTIVE_AND_PASSIVE_COUNT) {
-			if (typeof unit.custom.attackCountSkill !== 'object') {
-				SkillControl.initAttackCountSkill(unit);
-			}
+    if (type >= InvocationType.ACTIVE_COUNT && type <= InvocationType.ACTIVE_AND_PASSIVE_COUNT) {
+      if (typeof unit.custom.attackCountSkill !== "object") {
+        SkillControl.initAttackCountSkill(unit);
+      }
 
-			switch(type) {
-				case InvocationType.ACTIVE_COUNT:
-					result = unit.custom.attackCountSkill.activeCount >= value;
-					unit.custom.attackCountSkill.activeCount = result === true ? -1 : unit.custom.attackCountSkill.activeCount;
-					break;
-				case InvocationType.PASSIVE_COUNT:
-					result = unit.custom.attackCountSkill.passiveCount >= value;
-					unit.custom.attackCountSkill.passiveCount = result === true ? -1 : unit.custom.attackCountSkill.passiveCount;
-					break;
-				case InvocationType.ACTIVE_AND_PASSIVE_COUNT:
-					result = unit.custom.attackCountSkill.activeCount + unit.custom.attackCountSkill.passiveCount >= value;
-					unit.custom.attackCountSkill.activeCount = result === true ? -1 : unit.custom.attackCountSkill.activeCount;
-					unit.custom.attackCountSkill.passiveCount = result === true ? -1 : unit.custom.attackCountSkill.passiveCount;
-					break;
-				default:
-					result = false;
-					break;					
-			};
-		} else {
-			result = temp2.call(this, unit, type, value);
-		}
-		return result;
-	};
+      switch (type) {
+        case InvocationType.ACTIVE_COUNT:
+          result = unit.custom.attackCountSkill.activeCount >= value;
+          unit.custom.attackCountSkill.activeCount = result === true ? -1 : unit.custom.attackCountSkill.activeCount;
+          break;
+        case InvocationType.PASSIVE_COUNT:
+          result = unit.custom.attackCountSkill.passiveCount >= value;
+          unit.custom.attackCountSkill.passiveCount = result === true ? -1 : unit.custom.attackCountSkill.passiveCount;
+          break;
+        case InvocationType.ACTIVE_AND_PASSIVE_COUNT:
+          result = unit.custom.attackCountSkill.activeCount + unit.custom.attackCountSkill.passiveCount >= value;
+          unit.custom.attackCountSkill.activeCount = result === true ? -1 : unit.custom.attackCountSkill.activeCount;
+          unit.custom.attackCountSkill.passiveCount = result === true ? -1 : unit.custom.attackCountSkill.passiveCount;
+          break;
+        default:
+          result = false;
+          break;
+      }
+    } else {
+      result = temp2.call(this, unit, type, value);
+    }
+    return result;
+  };
 
-	var temp3 = SkillInfoWindow._drawInvocationValue;
-	SkillInfoWindow._drawInvocationValue = function(x, y, skill, length, color, font) {
-		var text;
+  var temp3 = SkillInfoWindow._drawInvocationValue;
+  SkillInfoWindow._drawInvocationValue = function (x, y, skill, length, color, font) {
+    var text;
 
-		if (validateAttackCountConditionCustomParameter(skill)) {
-			text = InvocationRenderer.getInvocationAttackCountConditionCustomParameter(skill.custom.attackCountCondition.value, skill.custom.attackCountCondition.countConditionType);
+    if (validateAttackCountConditionCustomParameter(skill)) {
+      text = InvocationRenderer.getInvocationAttackCountConditionCustomParameter(
+        skill.custom.attackCountCondition.value,
+        skill.custom.attackCountCondition.countConditionType
+      );
 
-			TextRenderer.drawKeywordText(x, y, "発動条件", length, ColorValue.KEYWORD, font);
+      TextRenderer.drawKeywordText(x, y, "発動条件", length, ColorValue.KEYWORD, font);
 
-			x += ItemInfoRenderer.getSpaceX();
+      x += ItemInfoRenderer.getSpaceX();
 
-			TextRenderer.drawKeywordText(x, y, text, -1, color, font);
-		}
-		else {
-			temp3.call(this, x, y, skill, length, color, font);
-		}
-	};
+      TextRenderer.drawKeywordText(x, y, text, -1, color, font);
+    } else {
+      temp3.call(this, x, y, skill, length, color, font);
+    }
+  };
 
-	InvocationRenderer.getInvocationAttackCountConditionCustomParameter = function(value, type) {
-		var text = '';
-		if (type === InvocationType.ACTIVE_COUNT) {
-			text = value + "回攻撃後";
-		}
-		else if (type === InvocationType.PASSIVE_COUNT) {
-			text = value + "回攻撃された後";
-		}
-		else if (type === InvocationType.ACTIVE_AND_PASSIVE_COUNT) {
-			text = value + "回攻防後";
-		} 
+  InvocationRenderer.getInvocationAttackCountConditionCustomParameter = function (value, type) {
+    var text = "";
+    if (type === InvocationType.ACTIVE_COUNT) {
+      text = value + "回攻撃後";
+    } else if (type === InvocationType.PASSIVE_COUNT) {
+      text = value + "回攻撃された後";
+    } else if (type === InvocationType.ACTIVE_AND_PASSIVE_COUNT) {
+      text = value + "回攻防後";
+    }
 
-		return text;
-	};
+    return text;
+  };
 
-	var temp4 = CustomCharChipGroup._configureCustomCharChip;
-	CustomCharChipGroup._configureCustomCharChip = function(groupArray) {
-		temp4.call(this, groupArray);
-		groupArray.appendObject(CustomCharChip.AttackCountSkill);
-	};
+  var temp4 = CustomCharChipGroup._configureCustomCharChip;
+  CustomCharChipGroup._configureCustomCharChip = function (groupArray) {
+    temp4.call(this, groupArray);
+    groupArray.appendObject(CustomCharChip.AttackCountSkill);
+  };
 
-	var temp5 = ScriptExecuteEventCommand._configureOriginalEventCommand;
-	ScriptExecuteEventCommand._configureOriginalEventCommand = function(groupArray) {
-		temp5.call(this, groupArray);
-		groupArray.appendObject(AttackCountSkillResetCommand);
-	};
+  var temp5 = ScriptExecuteEventCommand._configureOriginalEventCommand;
+  ScriptExecuteEventCommand._configureOriginalEventCommand = function (groupArray) {
+    temp5.call(this, groupArray);
+    groupArray.appendObject(AttackCountSkillResetCommand);
+  };
 
-	var AttackCountSkillResetCommand = defineObject(BaseEventCommand,
-	{
+  var AttackCountSkillResetCommand = defineObject(BaseEventCommand, {
+    enterEventCommandCycle: function () {
+      this._prepareEventCommandMemberData();
 
-		enterEventCommandCycle: function() {
-			this._prepareEventCommandMemberData();
-		
-			if (!this._checkEventCommand()) {
-				return EnterResult.NOTENTER;
-			}
-		
-			return this._completeEventCommandMemberData();
-		},
+      if (!this._checkEventCommand()) {
+        return EnterResult.NOTENTER;
+      }
 
-		moveEventCommandCycle: function() {
-			return MoveResult.END;
-		},
+      return this._completeEventCommandMemberData();
+    },
 
-		drawEventCommandCycle: function() {
-		},
-	
-		getEventCommmandName: function() {
-			return 'AttackCountSkillResetCommand';
-		},
-		isEventCommandSkipAllowed: function() {
-			return false;
-		},
+    moveEventCommandCycle: function () {
+      return MoveResult.END;
+    },
 
-		_prepareEventCommandMemberData: function() {
-		},
+    drawEventCommandCycle: function () {},
 
-		_checkEventCommand: function() {
-			var unitList = root.getCurrentSession().getPlayerList();
-			var unitCount  = unitList.getCount();
+    getEventCommmandName: function () {
+      return "AttackCountSkillResetCommand";
+    },
+    isEventCommandSkipAllowed: function () {
+      return false;
+    },
 
-			for (var i = 0; i < unitCount; i++) {
-				unit = unitList.getData(i);
+    _prepareEventCommandMemberData: function () {},
 
-				if (typeof unit.custom.attackCountSkill === 'object') {
-					unit.custom.attackCountSkill.activeCount = 0;
-					unit.custom.attackCountSkill.passiveCount = 0;
-				}
-			}
+    _checkEventCommand: function () {
+      var unitList = root.getCurrentSession().getPlayerList();
+      var unitCount = unitList.getCount();
 
-			return true;
-		},
-	
-		_completeEventCommandMemberData: function() {	
-			return EnterResult.OK;
-		},
-	
-		_createScreenParam: function() {
-			return true;
-		}		
-	}
-	);
+      for (var i = 0; i < unitCount; i++) {
+        unit = unitList.getData(i);
 
+        if (typeof unit.custom.attackCountSkill === "object") {
+          unit.custom.attackCountSkill.activeCount = 0;
+          unit.custom.attackCountSkill.passiveCount = 0;
+        }
+      }
+
+      return true;
+    },
+
+    _completeEventCommandMemberData: function () {
+      return EnterResult.OK;
+    },
+
+    _createScreenParam: function () {
+      return true;
+    }
+  });
 })();
 
-UnitRenderer.drawCharChipColor = function(x, y, unitRenderParam) {
-	var dx, dy;
-	var directionArray = [4, 1, 2, 3, 0];
-	var handle = unitRenderParam.handle;
-	var width = GraphicsFormat.CHARCHIP_WIDTH;
-	var height = GraphicsFormat.CHARCHIP_HEIGHT;
-	var xSrc = handle.getSrcX() * (width * 3);
-	var ySrc = handle.getSrcY() * (height * 5);
-	var pic = this._getGraphics(handle, unitRenderParam.colorIndex);
-		
-	if (pic === null) {
-		return;
-	}
-		
-	dx = unitRenderParam.animationIndex;
-	dy = directionArray[unitRenderParam.direction];
+UnitRenderer.drawCharChip = function (x, y, unitRenderParam) {
+  var dx, dy, dxSrc, dySrc;
+  var directionArray = [4, 1, 2, 3, 0];
+  var handle = unitRenderParam.handle;
+  var width = GraphicsFormat.CHARCHIP_WIDTH;
+  var height = GraphicsFormat.CHARCHIP_HEIGHT;
+  var xSrc = handle.getSrcX() * (width * 3);
+  var ySrc = handle.getSrcY() * (height * 5);
+  var pic = this._getGraphics(handle, unitRenderParam.colorIndex);
+  var tileSize = this._getTileSize(unitRenderParam);
 
-	pic.setColor(unitRenderParam.color, unitRenderParam.alpha);
-	pic.setDegree(unitRenderParam.degree);
-	pic.setReverse(unitRenderParam.isReverse);
-		
-	pic.drawStretchParts(x - 16, y - 16, width, height, xSrc + (dx * width), ySrc + (dy * height), width, height);
+  if (pic === null) {
+    return;
+  }
+
+  dx = Math.floor((width - tileSize.width) / 2);
+  dy = Math.floor((height - tileSize.height) / 2);
+  dxSrc = unitRenderParam.animationIndex;
+  dySrc = directionArray[unitRenderParam.direction];
+  if (!!unitRenderParam.color) {
+    pic.setColor(unitRenderParam.color, unitRenderParam.alpha);
+  }
+  pic.setAlpha(255);
+  pic.setDegree(unitRenderParam.degree);
+  pic.setReverse(unitRenderParam.isReverse);
+  pic.drawStretchParts(x - dx, y - dy, width, height, xSrc + dxSrc * width, ySrc + dySrc * height, width, height);
 };
 
-CustomCharChip.AttackCountSkill = defineObject(BaseCustomCharChip,
-{
-	_attackCountSkill: null,
-	_preUnit: null,
+CustomCharChip.AttackCountSkill = defineObject(BaseCustomCharChip, {
+  _attackCountSkill: null,
+  _preUnit: null,
 
-	moveCustomCharChip: function() {
-		return MoveResult.CONTINUE;
-	},
-	
-	drawCustomCharChip: function(cpData) {
-		var session = root.getCurrentSession();
-		var x = cpData.xPixel;
-		var y = cpData.yPixel;
-		var unitRenderParam = StructureBuilder.buildUnitRenderParam();
-		var handle = cpData.unit.getCharChipResourceHandle();
-		var session = root.getCurrentSession();
+  moveCustomCharChip: function () {
+    return MoveResult.CONTINUE;
+  },
 
-		if (handle !== null) {
-			unitRenderParam.handle = handle;
-		}
+  drawCustomCharChip: function (cpData) {
+    var x = cpData.xPixel;
+    var y = cpData.yPixel;
+    var unitRenderParam = StructureBuilder.buildUnitRenderParam();
+    var handle = cpData.unit.getCharChipResourceHandle();
 
-		unitRenderParam.colorIndex = this._getColorIndex(cpData);
-		unitRenderParam.color = this._getColor();
-		unitRenderParam.alpha = this._getAlpha();
-		unitRenderParam.direction = cpData.unit.getDirection();
-		unitRenderParam.animationIndex = cpData.animationIndex;
+    if (handle !== null || !handle.isNullHandle()) {
+      unitRenderParam.handle = handle;
+    }
 
-		unitRenderParam.isScroll = true;
+    unitRenderParam.colorIndex = this._getColorIndex(cpData);
+    unitRenderParam.color = this._getColor();
+    unitRenderParam.alpha = this._getAlpha();
+    unitRenderParam.direction = cpData.unit.getDirection();
+    unitRenderParam.animationIndex = cpData.animationIndex;
+    unitRenderParam.direction = cpData.direction;
 
-		this._drawGround(cpData, x, y);
-		UnitRenderer.drawCharChipColor(x, y, unitRenderParam);
+    unitRenderParam.isScroll = true;
 
-		if (!this._preUnit || this._preUnit.getId() !== cpData.unit.getId()) {
+    this._drawGround(cpData, x, y);
+    UnitRenderer.drawCharChip(x, y, unitRenderParam);
 
-			this._attackCountSkill = SkillControl.getAttackCountSkill(cpData.unit);
-			this._preUnit = cpData.unit;
+    if (!this._preUnit || this._preUnit.getId() !== cpData.unit.getId()) {
+      this._attackCountSkill = SkillControl.getAttackCountSkill(cpData.unit);
+      this._preUnit = cpData.unit;
 
-			if (typeof cpData.unit.custom.attackCountSkill !== 'object') {
-				SkillControl.initAttackCountSkill(cpData.unit);
-			}
-		}
+      if (typeof cpData.unit.custom.attackCountSkill !== "object") {
+        SkillControl.initAttackCountSkill(cpData.unit);
+      }
+    }
 
-		this._drawInfo(cpData, x, y);
-	},
+    this._drawInfo(cpData, x, y);
+  },
 
-	_getColorIndex: function(cpData) {
-		return cpData.unit.getUnitType();
-	},
+  drawMenuCharChip: function (cpData) {
+    this.drawCustomCharChip(cpData);
+  },
 
-	_getColor: function() {
-		return 0xffffff;
-	},
+  _getColorIndex: function (cpData) {
+    return cpData.unit.getUnitType();
+  },
 
-	_getAlpha: function() {
-		return 0;
-	},
-	
-	_drawGround: function(cpData, x, y) {
-		if (cpData.isSymbol) {
-			root.drawCharChipSymbol(x, y, cpData.unit);
-		}
-	},
-	
-	_drawInfo: function(cpData, x, y) {
-		if (cpData.isHpVisible) {
-			root.drawCharChipHpGauge(x, y, cpData.unit);
-		}
-		
-		if (cpData.isStateIcon) {
-			root.drawCharChipStateIcon(x, y, cpData.unit);
-		}
+  _getColor: function () {
+    return 0xffffff;
+  },
 
-		if (this._attackCountSkill) {
-			this._drawCount(x, y, cpData.unit);
-		}
-	},
+  _getAlpha: function () {
+    return 0;
+  },
 
-	_drawCount: function(x, y, unit) {
-		var handle;
-		var skillRestCount = 0;
-		var color = 0;
+  _drawGround: function (cpData, x, y) {
+    if (cpData.isSymbol) {
+      root.drawCharChipSymbol(x, y, cpData.unit);
+    }
+  },
 
-		if(this._attackCountSkill.custom.attackCountCondition.countConditionType === InvocationType.ACTIVE_COUNT) {
-			skillRestCount = this._attackCountSkill.custom.attackCountCondition.value - unit.custom.attackCountSkill.activeCount;
-			color = 1;
-		}
-		else if (this._attackCountSkill.custom.attackCountCondition.countConditionType === InvocationType.PASSIVE_COUNT) {
-			skillRestCount = this._attackCountSkill.custom.attackCountCondition.value - unit.custom.attackCountSkill.passiveCount;
-			color = 3;
-		}
-		else if (this._attackCountSkill.custom.attackCountCondition.countConditionType === InvocationType.ACTIVE_AND_PASSIVE_COUNT) {
-			skillRestCount = this._attackCountSkill.custom.attackCountCondition.value - unit.custom.attackCountSkill.activeCount - unit.custom.attackCountSkill.passiveCount;
-			color = 2;
-		}
+  _drawInfo: function (cpData, x, y) {
+    if (cpData.isHpVisible) {
+      root.drawCharChipHpGauge(x, y, cpData.unit);
+    }
 
-		if (skillRestCount <= 0) {
-			NumberRenderer.drawNumberColor(x, y - 5, 0, color, 255);
-		}
-		else {
-			NumberRenderer.drawNumberColor(x, y - 5, skillRestCount, color, 255);
-		}
-	},
+    if (cpData.isStateIcon) {
+      root.drawCharChipStateIcon(x, y, cpData.unit);
+    }
 
-	getCustomCharChipKeyword: function() {
-		return 'SkillCount';
-	}
-}
-);
+    if (this._attackCountSkill) {
+      this._drawCount(x, y, cpData.unit);
+    }
+  },
+
+  _drawCount: function (x, y, unit) {
+    var skillRestCount = 0;
+    var color = 0;
+
+    if (this._attackCountSkill.custom.attackCountCondition.countConditionType === InvocationType.ACTIVE_COUNT) {
+      skillRestCount =
+        this._attackCountSkill.custom.attackCountCondition.value - unit.custom.attackCountSkill.activeCount;
+      color = 1;
+    } else if (this._attackCountSkill.custom.attackCountCondition.countConditionType === InvocationType.PASSIVE_COUNT) {
+      skillRestCount =
+        this._attackCountSkill.custom.attackCountCondition.value - unit.custom.attackCountSkill.passiveCount;
+      color = 3;
+    } else if (
+      this._attackCountSkill.custom.attackCountCondition.countConditionType === InvocationType.ACTIVE_AND_PASSIVE_COUNT
+    ) {
+      skillRestCount =
+        this._attackCountSkill.custom.attackCountCondition.value -
+        unit.custom.attackCountSkill.activeCount -
+        unit.custom.attackCountSkill.passiveCount;
+      color = 2;
+    }
+
+    if (skillRestCount <= 0) {
+      NumberRenderer.drawNumberColor(x, y - 5, 0, color, 255);
+    } else {
+      NumberRenderer.drawNumberColor(x, y - 5, skillRestCount, color, 255);
+    }
+  },
+
+  getKeyword: function () {
+    return "SkillCount";
+  }
+});
