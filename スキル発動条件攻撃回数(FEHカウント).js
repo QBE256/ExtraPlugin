@@ -1,5 +1,5 @@
 /*
-  攻撃回数をスキル発動条件とする(FEHのカウント) ver 1.1
+  攻撃回数をスキル発動条件とする(FEHのカウント) ver 1.2
 
 [概要]
 スキルに以下のような発動条件を設定ができるようになります。
@@ -431,7 +431,7 @@ CustomCharChip.AttackCountSkill = defineObject(BaseCustomCharChip, {
       unitRenderParam.handle = handle;
     }
 
-    unitRenderParam.colorIndex = this._getColorIndex(cpData);
+    unitRenderParam.colorIndex = cpData.isWait ? 3 : cpData.colorIndex;
     unitRenderParam.color = this._getColor();
     unitRenderParam.alpha = this._getAlpha();
     unitRenderParam.direction = cpData.unit.getDirection();
