@@ -1,5 +1,5 @@
 /*
-  攻撃回数をスキル発動条件とする(FEHのカウント) ver 1.2
+  攻撃回数をスキル発動条件とする(FEHのカウント) ver 1.3
 
 [概要]
 スキルに以下のような発動条件を設定ができるようになります。
@@ -404,10 +404,7 @@ UnitRenderer.drawCharChip = function (x, y, unitRenderParam) {
   dy = Math.floor((height - tileSize.height) / 2);
   dxSrc = unitRenderParam.animationIndex;
   dySrc = directionArray[unitRenderParam.direction];
-  if (!!unitRenderParam.color) {
-    pic.setColor(unitRenderParam.color, unitRenderParam.alpha);
-  }
-  pic.setAlpha(255);
+  pic.setAlpha(unitRenderParam.alpha);
   pic.setDegree(unitRenderParam.degree);
   pic.setReverse(unitRenderParam.isReverse);
   pic.drawStretchParts(x - dx, y - dy, width, height, xSrc + dxSrc * width, ySrc + dySrc * height, width, height);
@@ -432,8 +429,7 @@ CustomCharChip.AttackCountSkill = defineObject(BaseCustomCharChip, {
     }
 
     unitRenderParam.colorIndex = cpData.isWait ? 3 : cpData.colorIndex;
-    unitRenderParam.color = this._getColor();
-    unitRenderParam.alpha = this._getAlpha();
+    unitRenderParam.alpha = cpData.alpha;
     unitRenderParam.direction = cpData.unit.getDirection();
     unitRenderParam.animationIndex = cpData.animationIndex;
     unitRenderParam.direction = cpData.direction;
@@ -461,10 +457,6 @@ CustomCharChip.AttackCountSkill = defineObject(BaseCustomCharChip, {
 
   _getColorIndex: function (cpData) {
     return cpData.unit.getUnitType();
-  },
-
-  _getColor: function () {
-    return 0xffffff;
   },
 
   _getAlpha: function () {
