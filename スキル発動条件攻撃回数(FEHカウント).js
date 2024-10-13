@@ -1,5 +1,5 @@
 /*
-  攻撃回数をスキル発動条件とする(FEHのカウント) ver 1.4
+  攻撃回数をスキル発動条件とする(FEHのカウント) ver 1.5
 
 [概要]
 スキルに以下のような発動条件を設定ができるようになります。
@@ -350,7 +350,7 @@ var validateAttackCountConditionCustomParameter = function (skill) {
 
     drawEventCommandCycle: function () {},
 
-    getEventCommmandName: function () {
+    getEventCommandName: function () {
       return "AttackCountSkillResetCommand";
     },
     isEventCommandSkipAllowed: function () {
