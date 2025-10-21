@@ -92,12 +92,12 @@ var MultiShowMessageGlobalSwitchId = 25; //同時台詞フラグ用のグロー�
   FaceView._isReadyFirstMessage = false;
   FaceView._activeSecondPos = MessagePos.NONE;
   FaceView.isMultiShowMessageSwitchOn = function () {
-    var metaSession = root.getMetaSession();
-    if (!metaSession) {
+    var getGlobalSwitchTable = root.getMetaSession().getGlobalSwitchTable();
+    if (!getGlobalSwitchTable) {
       return false;
     }
-    var index = metaSession.getGlobalSwitchTable().getSwitchIndexFromId(MultiShowMessageGlobalSwitchId);
-    return metaSession.getGlobalSwitchTable().isSwitchOn(index);
+    var index = getGlobalSwitchTable.getSwitchIndexFromId(MultiShowMessageGlobalSwitchId);
+    return getGlobalSwitchTable.isSwitchOn(index);
   };
 
   var _FaceView_setupMessageView = FaceView.setupMessageView;
